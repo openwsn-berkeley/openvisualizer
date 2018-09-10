@@ -111,7 +111,7 @@ env['ROOT_BUILD_DIR'] = os.path.join(os.getcwd(), 'build')
 
 # External openwsn-fw repository directory. An environment variable makes it
 # easy to change since it depends on the host running this script.
-env['FW_DIR']         = os.path.join('..', '..', '..', 'openwsn-fw')
+env['FW_DIR']         = os.path.join('..', 'openwsn-fw')
 
 def default(env,target,source): 
     print SCons.Script.help_text
@@ -217,8 +217,7 @@ Alias('copy-simfw', sconsUtils.copySimfw(env, 'simcopy'))
 # Must define run targets below the copy-simfw target so SIMHOSTOPT is available. 
 # Run targets may copy simulation firmware before starting.
 
-appdir = os.path.join('bin', 'openVisualizerApp')
-
+appdir = os.path.join('bin')
 SConscript(
     os.path.join(appdir, 'SConscript'),
     exports = {"env": runnerEnv},
@@ -242,7 +241,7 @@ def makeTreeSdist(env, target):
     Cleans up the temporary package data file.
     '''
     datadir = os.path.join('openvisualizer', 'data')
-    appdir  = os.path.join('bin', 'openVisualizerApp')
+    appdir  = os.path.join('bin')
     distdir = os.path.join('build', 'dist')
     topdir  = os.path.join('..', '..')
     cmdlist = []

@@ -32,7 +32,7 @@ def copySimfw(env, target):
     libext    = 'pyd' if archAndOs[1]=='windows' else 'so'
     srcname   = 'oos_openwsn.{0}'.format(libext)
     destname  = 'oos_openwsn-{0}.{1}'.format(archAndOs[0], libext)
-    simdir    = os.path.join('bin', 'openVisualizerApp', 'sim_files')
+    simdir    = os.path.join('bin', 'sim_files')
     destdir   = os.path.join(simdir, archAndOs[1])
     
     cmdlist   = [

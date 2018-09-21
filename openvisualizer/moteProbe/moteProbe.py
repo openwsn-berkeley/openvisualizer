@@ -34,7 +34,7 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 #============================ defines =========================================
 
 BROKER_ADDRESS              = "argus.paris.inria.fr"
-NOTIFY_SERIALBYTES_TOPIC    = 'opentestbed/deviceType/mote/deviceId/+/notif/fromoteserialbytes'
+NOTIFY_SERIALBYTES_TOPIC    = 'opentestbed/deviceType/mote/deviceId/+/notif/frommoteserialbytes'
 TOTAL_NUMBER_MOTES_TESTBED  = 76
 DISCOVER_MOTES_TIMEOUT      = 30
 
@@ -217,7 +217,7 @@ class moteProbe(threading.Thread):
         
         if self.mode == self.MODE_TESTBED:
             # initialize variable for testbedmote
-            self.mqttclient_topic_format = 'opentestbed/deviceType/mote/deviceId/{0}/notif/fromoteserialbytes'
+            self.mqttclient_topic_format = 'opentestbed/deviceType/mote/deviceId/{0}/notif/frommoteserialbytes'
             self.serialbytes_queue       = Queue.Queue() # create queue for receiving serialbytes messages
             
             # mqtt client
@@ -267,7 +267,7 @@ class moteProbe(threading.Thread):
                     self.serial = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
                     self.serial.connect((self.iotlabmote,20000))
                 elif self.mode==self.MODE_TESTBED:
-                    # subscribe to topic: opentestbed/deviceType/mote/deviceId/00-12-4b-00-14-b5-b6-49/notif/fromoteserialbytes
+                    # subscribe to topic: opentestbed/deviceType/mote/deviceId/00-12-4b-00-14-b5-b6-49/notif/frommoteserialbytes
                     self.serial = self.serialbytes_queue
                 else:
                     raise SystemError()

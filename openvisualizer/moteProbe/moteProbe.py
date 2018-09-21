@@ -27,12 +27,47 @@ import openvisualizer.openvisualizer_utils as u
 from   openvisualizer.moteConnector import OpenParser
 from   openvisualizer.moteConnector.SerialTester import SerialTester
 
-#============================ functions =======================================
+#============================ defines =========================================
+
+BROKER_ADDRESS              = "argus.paris.inria.fr"
+DISCOVERMOTES_CMD_TOPIC     = 'opentestbed/deviceType/box/deviceId/all/cmd/discovermotes'
+DISCOVERMOTES_RESP_TOPIC    = 'opentestbed/deviceType/box/deviceId/+/resp/discovermotes'
+TOTAL_NUMBER_MOTES_TESTBED  = 76
+DISCOVER_MOTES_TIMEOUT      = 30
 
 BAUDRATE_LOCAL_BOARD  = 115200
 BAUDRATE_IOTLAB       = 500000
 
-def findSerialPorts(isIotMotes=False):
+#============================ variables =======================================
+
+
+testbedmotes = []
+discovermotes_queue = Queue.Queue()
+
+#============================ functions =======================================
+
+def on_connect(client, userdata, flags, rc):
+
+    print("subscribe to {0}".format(DISCOVERMOTES_TOPIC)
+
+    # subscribe to DISCOVERMOTES_TOPIC
+    client.subscribe(DISCOVERMOTES_TOPIC)
+
+
+def on_message(client, userdata, msg):
+
+    print("Message received-> " + msg.topic + " " + str(msg.payload))
+    
+    # get the motes list from payload
+    payload = json.loads(message.payload)
+    if payload['success']:
+        for mote in payload['motes']:
+            testbedmotes += [mote['EUI64']]
+    if len(testbedmotes) == TOTAL_NUMBER_MOTES_TESTBED:
+        discovermotes_queue.put('all motes responsed')
+
+
+def findSerialPorts(isIotMotes=False, isTestbedMotes=False):
     '''
     Returns the serial ports of the motes connected to the computer.
     
@@ -41,6 +76,34 @@ def findSerialPorts(isIotMotes=False):
         - baudrate is an int representing the baurate, e.g. 115200
     '''
     serialports = []
+    
+    if isTestbedMotes:
+    
+        # create mqtt client
+        client                = mqtt.Client('FindMotes')
+        client.on_connect     = on_connect
+        client.on_message     = on_message
+        client.connect(BROKER_ADDRESS)
+        client.loop_start()
+        
+        payload_discovermotes = {
+            'token':       123,
+        }
+        
+        # publish discovermotes cmd
+        client.publish(
+            topic   = DISCOVERMOTES_CMD_TOPIC,
+            payload = json.dumps(payload_discovermotes),
+        )
+        
+        try:
+            # wait maxmium DISCOVER_MOTES_TIMEOUT seconds before return
+            discovermotes_queue.get(timeout=DISCOVER_MOTES_TIMEOUT)
+        except Queue.Empty as error:
+            print "Getting Response messages timeout in {0} seconds".format(DISCOVER_MOTES_TIMEOUT)
+        finally:
+            client.loop_stop()
+            return testbedmotes
     
     if os.name=='nt':
         path = 'HARDWARE\\DEVICEMAP\\SERIALCOMM'
@@ -96,27 +159,37 @@ class moteProbe(threading.Thread):
     MODE_SERIAL    = 'serial'
     MODE_EMULATED  = 'emulated'
     MODE_IOTLAB    = 'IoT-LAB'
+    MODE_TESTBED   = 'opentestbed'
     MODE_ALL       = [
         MODE_SERIAL,
         MODE_EMULATED,
         MODE_IOTLAB,
+        MODE_TESTBED,
     ]
     
-    def __init__(self,serialport=None,emulatedMote=None,iotlabmote=None):
+    def __init__(self,serialport=None,emulatedMote=None,iotlabmote=None,testbedmote=None):
         
         # verify params
         if   serialport:
             assert not emulatedMote
             assert not iotlabmote
+            assert not testbedmote
             self.mode             = self.MODE_SERIAL
         elif emulatedMote:
             assert not serialport
             assert not iotlabmote
+            assert not testbedmote
             self.mode             = self.MODE_EMULATED
         elif iotlabmote:
             assert not serialport
             assert not emulatedMote
+            assert not testbedmote
             self.mode             = self.MODE_IOTLAB
+        elif testbedmote:
+            assert not serialport
+            assert not emulatedMote
+            assert not iotlabmote
+            self.mode             = self.MODE_TESTBED
         else:
             raise SystemError()
         
@@ -131,6 +204,9 @@ class moteProbe(threading.Thread):
         elif self.mode==self.MODE_IOTLAB:
             self.iotlabmote       = iotlabmote
             self.portname         = 'IoT-LAB{0}'.format(iotlabmote)
+        elif self.mode==self.MODE_TESTBED:
+            self.testbedmote      = testbedmote
+            self.portname         = 'opentestbed{0}'.format(testbedmote)
         else:
             raise SystemError()
         
@@ -150,6 +226,18 @@ class moteProbe(threading.Thread):
         self.dataLock             = threading.Lock()
         # flag to permit exit from read loop
         self.goOn                 = True
+        
+        if self.mode == self.MODE_TESTBED:
+            # initialize variable for testbedmote
+            self.mqttclient_topic_format = 'opentestbed/deviceType/mote/deviceId/{0}/notif/fromoteserialbytes'
+            self.serialbytes_queue       = Queue.Queue() # create queue for receiving serialbytes messages
+            
+            # mqtt client
+            self.mqttclient                = mqtt.Client(self.CLIENT_ID)
+            self.mqttclient.on_connect     = self._on_mqtt_connect
+            self.mqttclient.on_message     = self._on_mqtt_message
+            self.mqttclient.connect(BROKER_ADDRESS)
+            self.mqttclient.loop_start()
         
         # initialize the parent class
         threading.Thread.__init__(self)
@@ -190,6 +278,9 @@ class moteProbe(threading.Thread):
                 elif self.mode==self.MODE_IOTLAB:
                     self.serial = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
                     self.serial.connect((self.iotlabmote,20000))
+                elif self.mode==self.MODE_TESTBED:
+                    # subscribe to topic: opentestbed/deviceType/mote/deviceId/00-12-4b-00-14-b5-b6-49/notif/fromoteserialbytes
+                    self.serial = self.serialbytes_queue
                 else:
                     raise SystemError()
                 
@@ -203,6 +294,8 @@ class moteProbe(threading.Thread):
                             rxBytes = self.serial.read()
                         elif self.mode==self.MODE_IOTLAB:
                             rxBytes = self.serial.recv(1024)
+                        elif self.mode==self.MODE_TESTBED:
+                            rxBytes = self.serial.get()
                         else:
                             raise SystemError()
                     except Exception as err:
@@ -303,3 +396,16 @@ class moteProbe(threading.Thread):
         # add to outputBuf
         with self.outputBufLock:
             self.outputBuf += [hdlcData]
+            
+    #==== mqtt callback functions
+    
+    def _on_mqtt_connect(self, client, userdata, flags, rc):
+        
+        client.subscribe(self.mqttclient_topic_format.format(self.testbedmote))
+        # print "subscribe at {0}".format(self.mqttclient_topic_format)
+        
+        client.loop_start()
+        
+    def _on_mqtt_message(self, client, userdata, message):
+    
+        self.serialbytes_queue.put(message.payload['serialbytes'])

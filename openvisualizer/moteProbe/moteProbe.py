@@ -21,6 +21,10 @@ import socket
 import time
 import sys
 
+import paho.mqtt.client as mqtt
+import json
+import Queue
+
 from   pydispatch import dispatcher
 import OpenHdlc
 import openvisualizer.openvisualizer_utils as u
@@ -30,8 +34,7 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 #============================ defines =========================================
 
 BROKER_ADDRESS              = "argus.paris.inria.fr"
-DISCOVERMOTES_CMD_TOPIC     = 'opentestbed/deviceType/box/deviceId/all/cmd/discovermotes'
-DISCOVERMOTES_RESP_TOPIC    = 'opentestbed/deviceType/box/deviceId/+/resp/discovermotes'
+NOTIFY_SERIALBYTES_TOPIC    = 'opentestbed/deviceType/mote/deviceId/+/notif/fromoteserialbytes'
 TOTAL_NUMBER_MOTES_TESTBED  = 76
 DISCOVER_MOTES_TIMEOUT      = 30
 
@@ -48,21 +51,16 @@ discovermotes_queue = Queue.Queue()
 
 def on_connect(client, userdata, flags, rc):
 
-    print("subscribe to {0}".format(DISCOVERMOTES_TOPIC)
-
-    # subscribe to DISCOVERMOTES_TOPIC
-    client.subscribe(DISCOVERMOTES_TOPIC)
+    print "connect to :", NOTIFY_SERIALBYTES_TOPIC
+    client.subscribe(NOTIFY_SERIALBYTES_TOPIC)
 
 
-def on_message(client, userdata, msg):
+def on_message(client, userdata, message):
 
-    print("Message received-> " + msg.topic + " " + str(msg.payload))
-    
     # get the motes list from payload
-    payload = json.loads(message.payload)
-    if payload['success']:
-        for mote in payload['motes']:
-            testbedmotes += [mote['EUI64']]
+    
+    testbedmotes.append(message.topic.split('/')[4])
+    
     if len(testbedmotes) == TOTAL_NUMBER_MOTES_TESTBED:
         discovermotes_queue.put('all motes responsed')
 
@@ -80,21 +78,11 @@ def findSerialPorts(isIotMotes=False, isTestbedMotes=False):
     if isTestbedMotes:
     
         # create mqtt client
-        client                = mqtt.Client('FindMotes')
-        client.on_connect     = on_connect
-        client.on_message     = on_message
-        client.connect(BROKER_ADDRESS)
-        client.loop_start()
-        
-        payload_discovermotes = {
-            'token':       123,
-        }
-        
-        # publish discovermotes cmd
-        client.publish(
-            topic   = DISCOVERMOTES_CMD_TOPIC,
-            payload = json.dumps(payload_discovermotes),
-        )
+        findserialPort_client                = mqtt.Client('FindMotes')
+        findserialPort_client.on_connect     = on_connect
+        findserialPort_client.on_message     = on_message
+        findserialPort_client.connect(BROKER_ADDRESS)
+        findserialPort_client.loop_start()
         
         try:
             # wait maxmium DISCOVER_MOTES_TIMEOUT seconds before return
@@ -102,7 +90,7 @@ def findSerialPorts(isIotMotes=False, isTestbedMotes=False):
         except Queue.Empty as error:
             print "Getting Response messages timeout in {0} seconds".format(DISCOVER_MOTES_TIMEOUT)
         finally:
-            client.loop_stop()
+            findserialPort_client.loop_stop()
             return testbedmotes
     
     if os.name=='nt':
@@ -233,7 +221,7 @@ class moteProbe(threading.Thread):
             self.serialbytes_queue       = Queue.Queue() # create queue for receiving serialbytes messages
             
             # mqtt client
-            self.mqttclient                = mqtt.Client(self.CLIENT_ID)
+            self.mqttclient                = mqtt.Client()
             self.mqttclient.on_connect     = self._on_mqtt_connect
             self.mqttclient.on_message     = self._on_mqtt_message
             self.mqttclient.connect(BROKER_ADDRESS)
@@ -296,6 +284,7 @@ class moteProbe(threading.Thread):
                             rxBytes = self.serial.recv(1024)
                         elif self.mode==self.MODE_TESTBED:
                             rxBytes = self.serial.get()
+                            rxBytes = [chr(i) for i in rxBytes]
                         else:
                             raise SystemError()
                     except Exception as err:
@@ -400,6 +389,8 @@ class moteProbe(threading.Thread):
     #==== mqtt callback functions
     
     def _on_mqtt_connect(self, client, userdata, flags, rc):
+    
+        print "connect to :", self.mqttclient_topic_format.format(self.testbedmote)
         
         client.subscribe(self.mqttclient_topic_format.format(self.testbedmote))
         # print "subscribe at {0}".format(self.mqttclient_topic_format)
@@ -408,4 +399,4 @@ class moteProbe(threading.Thread):
         
     def _on_mqtt_message(self, client, userdata, message):
     
-        self.serialbytes_queue.put(message.payload['serialbytes'])
+        self.serialbytes_queue.put(json.loads(message.payload)['serialbytes'])

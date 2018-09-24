@@ -17,14 +17,6 @@ RPL Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`UDPInject` Module
-------------------------
-
-.. automodule:: openvisualizer.RPL.UDPInject
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`topology` Module
 ----------------------
 

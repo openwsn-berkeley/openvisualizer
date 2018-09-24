@@ -34,45 +34,13 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 #============================ defines =========================================
 
 OPENTESTBED_BROKER_ADDRESS          = "argus.paris.inria.fr"
-OPENTESTBED_CMD_STATUS_TOPIC        = 'opentestbed/deviceType/box/deviceId/all/cmd/status'
-OPENTESTBED_REPS_STATUS_TOPIC       = 'opentestbed/deviceType/box/deviceId/+/resp/status'
-OPENTESTBED_REPS_STATUS_TIMEOUT     = 10
 
 BAUDRATE_LOCAL_BOARD  = 115200
 BAUDRATE_IOTLAB       = 500000
 
-#============================ variables =======================================
-
-opentestbed_motelist = []
-
 #============================ functions =======================================
 
-def on_connect(client, userdata, flags, rc):
-    
-    print "connect to :", OPENTESTBED_REPS_STATUS_TOPIC
-    client.subscribe(OPENTESTBED_REPS_STATUS_TOPIC)
-    
-    payload_status = {
-        'token':       123,
-    }
-    # publish the cmd message
-    client.publish(
-        topic   = OPENTESTBED_CMD_STATUS_TOPIC,
-        payload = json.dumps(payload_status),
-    )
-
-
-def on_message(client, userdata, message):
-
-    # get the motes list from payload
-    payload_status = json.loads(message.payload)
-    
-    for mote in payload_status['returnVal']['motes']:
-        if 'EUI64' in mote:
-            opentestbed_motelist.append(mote['EUI64'])
-
-
-def findSerialPorts(isIotMotes=False, isTestbedMotes=False):
+def findSerialPorts(isIotMotes=False):
     '''
     Returns the serial ports of the motes connected to the computer.
     
@@ -81,25 +49,6 @@ def findSerialPorts(isIotMotes=False, isTestbedMotes=False):
         - baudrate is an int representing the baurate, e.g. 115200
     '''
     serialports = []
-    
-    if isTestbedMotes:
-    
-        # create mqtt client
-        findserialPort_client                = mqtt.Client('FindMotes')
-        findserialPort_client.on_connect     = on_connect
-        findserialPort_client.on_message     = on_message
-        findserialPort_client.connect(OPENTESTBED_BROKER_ADDRESS)
-        findserialPort_client.loop_start()
-        
-        # wait for a while to gather the response from otboxes
-        time.sleep(OPENTESTBED_REPS_STATUS_TIMEOUT)
-        
-        # close the client and return the motes list
-        findserialPort_client.loop_stop()
-        
-        print "{0} motes are found".format(len(opentestbed_motelist))
-        
-        return opentestbed_motelist
     
     if os.name=='nt':
         path = 'HARDWARE\\DEVICEMAP\\SERIALCOMM'
@@ -149,6 +98,59 @@ def findSerialPorts(isIotMotes=False, isTestbedMotes=False):
     return mote_ports
 
 #============================ class ===========================================
+
+class findOpenTestbedMotes(object):
+
+    OPENTESTBED_RESP_STATUS_TIMEOUT     = 10
+
+    def __init__(self):
+    
+        # motelist 
+        self.opentestbed_motelist = []
+        
+        # create mqtt client
+        self.mqtt_client                = mqtt.Client('FindMotes')
+        self.mqtt_client.on_connect     = self._on_mqtt_connect
+        self.mqtt_client.on_message     = self._on_mqtt_message
+        self.mqtt_client.connect(OPENTESTBED_BROKER_ADDRESS)
+        self.mqtt_client.loop_start()
+        
+        # wait for a while to gather the response from otboxes
+        time.sleep(self.OPENTESTBED_RESP_STATUS_TIMEOUT)
+        
+        # close the client and return the motes list
+        self.mqtt_client.loop_stop()
+        
+        print "{0} motes are found".format(len(self.opentestbed_motelist))
+        
+    def get_opentestbed_motelist(self):
+        
+        return self.opentestbed_motelist
+
+    def _on_mqtt_connect(self, client, userdata, flags, rc):
+        
+        print "connected to : {0}".format(OPENTESTBED_BROKER_ADDRESS)
+        
+        client.subscribe('opentestbed/deviceType/box/deviceId/+/resp/status')
+        
+        payload_status = {
+            'token':       123,
+        }
+        # publish the cmd message
+        client.publish(
+            topic   = 'opentestbed/deviceType/box/deviceId/all/cmd/status',
+            payload = json.dumps(payload_status),
+        )
+
+
+    def _on_mqtt_message(self, client, userdata, message):
+
+        # get the motes list from payload
+        payload_status = json.loads(message.payload)
+        
+        for mote in payload_status['returnVal']['motes']:
+            if 'EUI64' in mote:
+                self.opentestbed_motelist.append(mote['EUI64'])
 
 class moteProbe(threading.Thread):
     
@@ -225,7 +227,6 @@ class moteProbe(threading.Thread):
         
         if self.mode == self.MODE_TESTBED:
             # initialize variable for testbedmote
-            self.mqttclient_topic_format = 'opentestbed/deviceType/mote/deviceId/{0}/notif/frommoteserialbytes'
             self.serialbytes_queue       = Queue.Queue() # create queue for receiving serialbytes messages
             
             # mqtt client
@@ -398,8 +399,13 @@ class moteProbe(threading.Thread):
     
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         
-        client.subscribe(self.mqttclient_topic_format.format(self.testbedmote_eui64))
+        client.subscribe('opentestbed/deviceType/mote/deviceId/{0}/notif/frommoteserialbytes'.format(self.testbedmote_eui64))
         
     def _on_mqtt_message(self, client, userdata, message):
     
-        self.serialbytes_queue.put(json.loads(message.payload)['serialbytes'])
+        try:
+            serialbytes = json.loads(message.payload)['serialbytes']
+        except:
+            print "Error: failed to parse message payload {0}".format(message.payload)
+        else:
+            self.serialbytes_queue.put(json.loads(message.payload)['serialbytes'])

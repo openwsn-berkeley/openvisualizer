@@ -412,11 +412,11 @@ def _addParserArgs(parser):
         action     = 'store',
         help       = 'comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
     )
-    parser.add_argument('-tb', '--testbed',
+    parser.add_argument('-tb', '--opentestbed',
         dest       = 'testbedmotes',
         default    = False,
         action     = 'store_true',
-        help       = 'comma-separated list of testbed motes'
+        help       = 'connect motes from opentestbed'
     )
     parser.add_argument('-i', '--pathTopo', 
         dest       = 'pathTopo',

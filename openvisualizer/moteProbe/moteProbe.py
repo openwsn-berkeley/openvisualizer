@@ -33,36 +33,43 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 
 #============================ defines =========================================
 
-OPENTESTBED_BROKER_ADDRESS              = "argus.paris.inria.fr"
-OPENTESTBED_NOTIFY_SERIALBYTES_TOPIC    = 'opentestbed/deviceType/mote/deviceId/+/notif/frommoteserialbytes'
-OPENTESTBED_TOTAL_NUMBER_MOTES_TESTBED  = 76
-OPENTESTBED_DISCOVER_MOTES_TIMEOUT      = 30
+OPENTESTBED_BROKER_ADDRESS          = "argus.paris.inria.fr"
+OPENTESTBED_CMD_STATUS_TOPIC        = 'opentestbed/deviceType/box/deviceId/all/cmd/status'
+OPENTESTBED_REPS_STATUS_TOPIC       = 'opentestbed/deviceType/box/deviceId/+/resp/status'
+OPENTESTBED_REPS_STATUS_TIMEOUT     = 10
 
 BAUDRATE_LOCAL_BOARD  = 115200
 BAUDRATE_IOTLAB       = 500000
 
 #============================ variables =======================================
 
-
-testbedmotes = []
-discovermotes_queue = Queue.Queue()
+opentestbed_motelist = []
 
 #============================ functions =======================================
 
 def on_connect(client, userdata, flags, rc):
-
-    print "connect to :", OPENTESTBED_NOTIFY_SERIALBYTES_TOPIC
-    client.subscribe(OPENTESTBED_NOTIFY_SERIALBYTES_TOPIC)
+    
+    print "connect to :", OPENTESTBED_REPS_STATUS_TOPIC
+    client.subscribe(OPENTESTBED_REPS_STATUS_TOPIC)
+    
+    payload_status = {
+        'token':       123,
+    }
+    # publish the cmd message
+    client.publish(
+        topic   = OPENTESTBED_CMD_STATUS_TOPIC,
+        payload = json.dumps(payload_status),
+    )
 
 
 def on_message(client, userdata, message):
 
     # get the motes list from payload
+    payload_status = json.loads(message.payload)
     
-    testbedmotes.append(message.topic.split('/')[4])
-    
-    if len(testbedmotes) == OPENTESTBED_TOTAL_NUMBER_MOTES_TESTBED:
-        discovermotes_queue.put('all motes responsed')
+    for mote in payload_status['returnVal']['motes']:
+        if 'EUI64' in mote:
+            opentestbed_motelist.append(mote['EUI64'])
 
 
 def findSerialPorts(isIotMotes=False, isTestbedMotes=False):
@@ -84,14 +91,15 @@ def findSerialPorts(isIotMotes=False, isTestbedMotes=False):
         findserialPort_client.connect(OPENTESTBED_BROKER_ADDRESS)
         findserialPort_client.loop_start()
         
-        try:
-            # wait maxmium OPENTESTBED_DISCOVER_MOTES_TIMEOUT seconds before return
-            discovermotes_queue.get(timeout=OPENTESTBED_DISCOVER_MOTES_TIMEOUT)
-        except Queue.Empty as error:
-            print "Getting Response messages timeout in {0} seconds".format(OPENTESTBED_DISCOVER_MOTES_TIMEOUT)
-        finally:
-            findserialPort_client.loop_stop()
-            return testbedmotes
+        # wait for a while to gather the response from otboxes
+        time.sleep(OPENTESTBED_REPS_STATUS_TIMEOUT)
+        
+        # close the client and return the motes list
+        findserialPort_client.loop_stop()
+        
+        print "{0} motes are found".format(len(opentestbed_motelist))
+        
+        return opentestbed_motelist
     
     if os.name=='nt':
         path = 'HARDWARE\\DEVICEMAP\\SERIALCOMM'

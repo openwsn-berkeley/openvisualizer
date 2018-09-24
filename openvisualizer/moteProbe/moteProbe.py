@@ -104,26 +104,24 @@ class OpentestbedMoteFinder (object):
     OPENTESTBED_RESP_STATUS_TIMEOUT     = 10
 
     def __init__(self):
-    
-        # motelist 
         self.opentestbed_motelist = []
         
+    def get_opentestbed_motelist(self):
+        
         # create mqtt client
-        self.mqtt_client                = mqtt.Client('FindMotes')
-        self.mqtt_client.on_connect     = self._on_mqtt_connect
-        self.mqtt_client.on_message     = self._on_mqtt_message
-        self.mqtt_client.connect(OPENTESTBED_BROKER_ADDRESS)
-        self.mqtt_client.loop_start()
+        mqtt_client                = mqtt.Client('FindMotes')
+        mqtt_client.on_connect     = self._on_mqtt_connect
+        mqtt_client.on_message     = self._on_mqtt_message
+        mqtt_client.connect(OPENTESTBED_BROKER_ADDRESS)
+        mqtt_client.loop_start()
         
         # wait for a while to gather the response from otboxes
         time.sleep(self.OPENTESTBED_RESP_STATUS_TIMEOUT)
         
         # close the client and return the motes list
-        self.mqtt_client.loop_stop()
+        mqtt_client.loop_stop()
         
         print "{0} motes are found".format(len(self.opentestbed_motelist))
-        
-    def get_opentestbed_motelist(self):
         
         return self.opentestbed_motelist
 

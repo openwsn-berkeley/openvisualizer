@@ -104,7 +104,7 @@ class OpentestbedMoteFinder (object):
     OPENTESTBED_RESP_STATUS_TIMEOUT     = 10
 
     def __init__(self):
-        self.opentestbed_motelist = []
+        self.opentestbed_motelist = set()
         
     def get_opentestbed_motelist(self):
         
@@ -148,7 +148,7 @@ class OpentestbedMoteFinder (object):
         
         for mote in payload_status['returnVal']['motes']:
             if 'EUI64' in mote:
-                self.opentestbed_motelist.append(mote['EUI64'])
+                self.opentestbed_motelist.add(mote['EUI64'])
 
 class moteProbe(threading.Thread):
     

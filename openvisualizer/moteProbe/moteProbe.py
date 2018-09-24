@@ -33,10 +33,10 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 
 #============================ defines =========================================
 
-BROKER_ADDRESS              = "argus.paris.inria.fr"
-NOTIFY_SERIALBYTES_TOPIC    = 'opentestbed/deviceType/mote/deviceId/+/notif/frommoteserialbytes'
-TOTAL_NUMBER_MOTES_TESTBED  = 76
-DISCOVER_MOTES_TIMEOUT      = 30
+OPENTESTBED_BROKER_ADDRESS              = "argus.paris.inria.fr"
+OPENTESTBED_NOTIFY_SERIALBYTES_TOPIC    = 'opentestbed/deviceType/mote/deviceId/+/notif/frommoteserialbytes'
+OPENTESTBED_TOTAL_NUMBER_MOTES_TESTBED  = 76
+OPENTESTBED_DISCOVER_MOTES_TIMEOUT      = 30
 
 BAUDRATE_LOCAL_BOARD  = 115200
 BAUDRATE_IOTLAB       = 500000
@@ -51,8 +51,8 @@ discovermotes_queue = Queue.Queue()
 
 def on_connect(client, userdata, flags, rc):
 
-    print "connect to :", NOTIFY_SERIALBYTES_TOPIC
-    client.subscribe(NOTIFY_SERIALBYTES_TOPIC)
+    print "connect to :", OPENTESTBED_NOTIFY_SERIALBYTES_TOPIC
+    client.subscribe(OPENTESTBED_NOTIFY_SERIALBYTES_TOPIC)
 
 
 def on_message(client, userdata, message):
@@ -61,7 +61,7 @@ def on_message(client, userdata, message):
     
     testbedmotes.append(message.topic.split('/')[4])
     
-    if len(testbedmotes) == TOTAL_NUMBER_MOTES_TESTBED:
+    if len(testbedmotes) == OPENTESTBED_TOTAL_NUMBER_MOTES_TESTBED:
         discovermotes_queue.put('all motes responsed')
 
 
@@ -81,14 +81,14 @@ def findSerialPorts(isIotMotes=False, isTestbedMotes=False):
         findserialPort_client                = mqtt.Client('FindMotes')
         findserialPort_client.on_connect     = on_connect
         findserialPort_client.on_message     = on_message
-        findserialPort_client.connect(BROKER_ADDRESS)
+        findserialPort_client.connect(OPENTESTBED_BROKER_ADDRESS)
         findserialPort_client.loop_start()
         
         try:
-            # wait maxmium DISCOVER_MOTES_TIMEOUT seconds before return
-            discovermotes_queue.get(timeout=DISCOVER_MOTES_TIMEOUT)
+            # wait maxmium OPENTESTBED_DISCOVER_MOTES_TIMEOUT seconds before return
+            discovermotes_queue.get(timeout=OPENTESTBED_DISCOVER_MOTES_TIMEOUT)
         except Queue.Empty as error:
-            print "Getting Response messages timeout in {0} seconds".format(DISCOVER_MOTES_TIMEOUT)
+            print "Getting Response messages timeout in {0} seconds".format(OPENTESTBED_DISCOVER_MOTES_TIMEOUT)
         finally:
             findserialPort_client.loop_stop()
             return testbedmotes
@@ -224,7 +224,7 @@ class moteProbe(threading.Thread):
             self.mqttclient                = mqtt.Client()
             self.mqttclient.on_connect     = self._on_mqtt_connect
             self.mqttclient.on_message     = self._on_mqtt_message
-            self.mqttclient.connect(BROKER_ADDRESS)
+            self.mqttclient.connect(OPENTESTBED_BROKER_ADDRESS)
             self.mqttclient.loop_start()
         
         # initialize the parent class

@@ -163,25 +163,25 @@ class moteProbe(threading.Thread):
         MODE_TESTBED,
     ]
     
-    def __init__(self,serialport=None,emulatedMote=None,iotlabmote=None,testbedmote=None):
+    def __init__(self,serialport=None,emulatedMote=None,iotlabmote=None,testbedmote_eui64=None):
         
         # verify params
         if   serialport:
             assert not emulatedMote
             assert not iotlabmote
-            assert not testbedmote
+            assert not testbedmote_eui64
             self.mode             = self.MODE_SERIAL
         elif emulatedMote:
             assert not serialport
             assert not iotlabmote
-            assert not testbedmote
+            assert not testbedmote_eui64
             self.mode             = self.MODE_EMULATED
         elif iotlabmote:
             assert not serialport
             assert not emulatedMote
-            assert not testbedmote
+            assert not testbedmote_eui64
             self.mode             = self.MODE_IOTLAB
-        elif testbedmote:
+        elif testbedmote_eui64:
             assert not serialport
             assert not emulatedMote
             assert not iotlabmote
@@ -191,18 +191,18 @@ class moteProbe(threading.Thread):
         
         # store params
         if   self.mode==self.MODE_SERIAL:
-            self.serialport       = serialport[0]
-            self.baudrate         = serialport[1]
-            self.portname         = self.serialport
+            self.serialport         = serialport[0]
+            self.baudrate           = serialport[1]
+            self.portname           = self.serialport
         elif self.mode==self.MODE_EMULATED:
-            self.emulatedMote     = emulatedMote
-            self.portname         = 'emulated{0}'.format(self.emulatedMote.getId())
+            self.emulatedMote       = emulatedMote
+            self.portname           = 'emulated{0}'.format(self.emulatedMote.getId())
         elif self.mode==self.MODE_IOTLAB:
-            self.iotlabmote       = iotlabmote
-            self.portname         = 'IoT-LAB{0}'.format(iotlabmote)
+            self.iotlabmote         = iotlabmote
+            self.portname           = 'IoT-LAB{0}'.format(iotlabmote)
         elif self.mode==self.MODE_TESTBED:
-            self.testbedmote      = testbedmote
-            self.portname         = 'opentestbed{0}'.format(testbedmote)
+            self.testbedmote_eui64  = testbedmote_eui64
+            self.portname           = 'opentestbed_{0}'.format(testbedmote_eui64)
         else:
             raise SystemError()
         
@@ -276,7 +276,7 @@ class moteProbe(threading.Thread):
                     self.serial.connect((self.iotlabmote,20000))
                 elif self.mode==self.MODE_TESTBED:
                     # subscribe to topic: opentestbed/deviceType/mote/deviceId/00-12-4b-00-14-b5-b6-49/notif/frommoteserialbytes
-                    self.serial = self.serialbytes_queue
+                    self.mqtt_seriaqueue = self.serialbytes_queue
                 else:
                     raise SystemError()
                 
@@ -291,7 +291,7 @@ class moteProbe(threading.Thread):
                         elif self.mode==self.MODE_IOTLAB:
                             rxBytes = self.serial.recv(1024)
                         elif self.mode==self.MODE_TESTBED:
-                            rxBytes = self.serial.get()
+                            rxBytes = self.mqtt_seriaqueue.get()
                             rxBytes = [chr(i) for i in rxBytes]
                         else:
                             raise SystemError()
@@ -397,13 +397,8 @@ class moteProbe(threading.Thread):
     #==== mqtt callback functions
     
     def _on_mqtt_connect(self, client, userdata, flags, rc):
-    
-        print "connect to :", self.mqttclient_topic_format.format(self.testbedmote)
         
-        client.subscribe(self.mqttclient_topic_format.format(self.testbedmote))
-        # print "subscribe at {0}".format(self.mqttclient_topic_format)
-        
-        client.loop_start()
+        client.subscribe(self.mqttclient_topic_format.format(self.testbedmote_eui64))
         
     def _on_mqtt_message(self, client, userdata, message):
     

@@ -101,7 +101,7 @@ class OpenVisualizerApp(object):
             ]
         elif self.testbedmotes:
             self.moteProbes       = [
-                moteProbe.moteProbe(testbedmote=p) for p in moteProbe.findSerialPorts(isTestbedMotes=True)
+                moteProbe.moteProbe(testbedmote_eui64=p) for p in moteProbe.findSerialPorts(isTestbedMotes=True)
             ]
             
         else:

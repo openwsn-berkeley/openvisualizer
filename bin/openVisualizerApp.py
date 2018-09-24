@@ -100,9 +100,9 @@ class OpenVisualizerApp(object):
                 moteProbe.moteProbe(iotlabmote=p) for p in self.iotlabmotes.split(',')
             ]
         elif self.testbedmotes:
-            findmotes = moteProbe.findOpenTestbedMotes()
+            motesfinder = moteProbe.OpentestbedMoteFinder()
             self.moteProbes       = [
-                moteProbe.moteProbe(testbedmote_eui64=p) for p in findmotes.get_opentestbed_motelist()
+                moteProbe.moteProbe(testbedmote_eui64=p) for p in motesfinder.get_opentestbed_motelist()
             ]
             
         else:

@@ -99,7 +99,7 @@ def findSerialPorts(isIotMotes=False):
 
 #============================ class ===========================================
 
-class findOpenTestbedMotes(object):
+class OpentestbedMoteFinder (object):
 
     OPENTESTBED_RESP_STATUS_TIMEOUT     = 10
 

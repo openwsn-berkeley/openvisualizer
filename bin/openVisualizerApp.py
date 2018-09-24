@@ -25,7 +25,6 @@ from openvisualizer.RPL             import RPL
 from openvisualizer.JRC             import JRC
 from openvisualizer.openLbr         import openLbr
 from openvisualizer.openTun         import openTun
-from openvisualizer.RPL             import UDPInject
 from openvisualizer.RPL             import topology
 from openvisualizer                 import appdirs
 from openvisualizer.remoteConnectorServer   import remoteConnectorServer
@@ -38,7 +37,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, pathTopo):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, testbedmotes, pathTopo):
         
         # store params
         self.confdir              = confdir
@@ -48,8 +47,9 @@ class OpenVisualizerApp(object):
         self.numMotes             = numMotes
         self.trace                = trace
         self.debug                = debug
-        self.usePageZero           = usePageZero
+        self.usePageZero          = usePageZero
         self.iotlabmotes          = iotlabmotes
+        self.testbedmotes         = testbedmotes
         self.pathTopo             = pathTopo
 
         # local variables
@@ -58,7 +58,6 @@ class OpenVisualizerApp(object):
         self.rpl                  = RPL.RPL()
         self.jrc                  = JRC.JRC()
         self.topology             = topology.topology()
-        self.udpInject            = UDPInject.UDPInject()
         self.DAGrootList          = []
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 
@@ -97,6 +96,11 @@ class OpenVisualizerApp(object):
             
             self.moteProbes       = [
                 moteProbe.moteProbe(iotlabmote=p) for p in self.iotlabmotes.split(',')
+            ]
+        elif self.testbedmotes:
+            motesfinder = moteProbe.OpentestbedMoteFinder()
+            self.moteProbes       = [
+                moteProbe.moteProbe(testbedmote_eui64=p) for p in motesfinder.get_opentestbed_motelist()
             ]
             
         else:
@@ -332,6 +336,8 @@ def main(parser=None):
                            'simCount    = {0}'.format(argspace.numMotes),
                            'trace       = {0}'.format(argspace.trace),
                            'debug       = {0}'.format(argspace.debug),
+                           'testbedmotes= {0}'.format(argspace.testbedmotes),
+                           
                            'usePageZero = {0}'.format(argspace.usePageZero)],
             )))
     log.info('Using external dirs:\n\t{0}'.format(
@@ -352,6 +358,7 @@ def main(parser=None):
         usePageZero     = argspace.usePageZero,
         simTopology     = argspace.simTopology,
         iotlabmotes     = argspace.iotlabmotes,
+        testbedmotes    = argspace.testbedmotes,
         pathTopo        = argspace.pathTopo
     )
 
@@ -403,6 +410,12 @@ def _addParserArgs(parser):
         default    = '',
         action     = 'store',
         help       = 'comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
+    )
+    parser.add_argument('-tb', '--opentestbed',
+        dest       = 'testbedmotes',
+        default    = False,
+        action     = 'store_true',
+        help       = 'connect motes from opentestbed'
     )
     parser.add_argument('-i', '--pathTopo', 
         dest       = 'pathTopo',

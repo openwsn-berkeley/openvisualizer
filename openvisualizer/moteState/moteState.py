@@ -13,6 +13,11 @@ log = logging.getLogger('moteState')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
+# a special logger that writes to a separate file: each log line is a JSON string corresponding to network events
+# with information sufficient to calculate network-wide KPIs
+networkEventLogger = logging.getLogger('networkEventLogger')
+networkEventLogger.setLevel(logging.INFO)
+
 import copy
 import time
 import threading
@@ -26,6 +31,8 @@ from openvisualizer.openType      import openType,         \
                                          typeCellType,     \
                                          typeComponent,    \
                                          typeRssi
+
+from openvisualizer import openvisualizer_utils as u
 
 class OpenEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -121,7 +128,8 @@ class StateElem(object):
 
 class StateOutputBuffer(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -130,7 +138,8 @@ class StateOutputBuffer(StateElem):
 
 class StateAsn(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -141,19 +150,39 @@ class StateAsn(StateElem):
                                    notif.asn_4)
 class StateJoined(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
         if 'joinedAsn' not in self.data[0]:
             self.data[0]['joinedAsn']             = typeAsn.typeAsn()
-        self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1,
+
+        receivedJoinAsn = typeAsn.typeAsn()
+        receivedJoinAsn.update(notif.joinedAsn_0_1,
                                    notif.joinedAsn_2_3,
                                    notif.joinedAsn_4)
 
+        if self.data[0]['joinedAsn'] != receivedJoinAsn and receivedJoinAsn.asn != [0xff, 0xff, 0xff, 0xff, 0xff]:
+
+            self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1,
+                                   notif.joinedAsn_2_3,
+                                   notif.joinedAsn_4)
+
+            networkEventLogger.info(
+                json.dumps(
+                    {
+                        "_type": "secjoin.joined",
+                        "_mote_id": my64bID,
+                        "_asn" : str(self.data[0]['joinedAsn']),
+                    }
+                )
+            )
+
 class StateMacStats(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -170,7 +199,8 @@ class StateMacStats(StateElem):
 
 class StateScheduleRow(StateElem):
 
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -196,7 +226,8 @@ class StateScheduleRow(StateElem):
 
 class StateBackoff(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -225,7 +256,8 @@ class StateQueue(StateElem):
         for i in range(20):
             self.data.append(StateQueueRow())
     
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         self.data[0].update(notif.creator_0,notif.owner_0)
         self.data[1].update(notif.creator_1,notif.owner_1)
@@ -250,7 +282,8 @@ class StateQueue(StateElem):
 
 class StateNeighborsRow(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -285,7 +318,8 @@ class StateNeighborsRow(StateElem):
 
 class StateIsSync(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -304,8 +338,16 @@ class StateIdManager(StateElem):
             return self.data[0]['my16bID'].addr[:]
         except IndexError:
             return None
-    
-    def update(self,notif):
+
+    def get64bAddr(self):
+        try:
+            return self.data[0]['my64bID'].addr[:]
+        except IndexError:
+            return None
+
+    def update(self,data):
+
+        (my64bID, notif) = data
     
         # update state
         StateElem.update(self)
@@ -376,7 +418,8 @@ class StateIdManager(StateElem):
 
 class StateMyDagRank(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -384,7 +427,8 @@ class StateMyDagRank(StateElem):
 
 class StatekaPeriod(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -399,11 +443,12 @@ class StateTable(StateElem):
             self.meta[0]['columnOrder']     = columnOrder
         self.data                           = []
 
-    def update(self,notif):
+    def update(self,data):
+        (my64bID, notif) = data
         StateElem.update(self)
         while len(self.data)<notif.row+1:
             self.data.append(self.meta[0]['rowClass']())
-        self.data[notif.row].update(notif)
+        self.data[notif.row].update(data)
 
 class moteState(eventBusClient.eventBusClient):
     
@@ -641,13 +686,17 @@ class moteState(eventBusClient.eventBusClient):
         
         # lock the state data
         self.stateLock.acquire()
-        
+
         # call handler
         found = False
         for k,v in self.notifHandlers.items():
             if self._isnamedtupleinstance(data,k):
                 found = True
-                v(data)
+                try:
+                    myId = u.formatAddr(self.state[self.ST_IDMANAGER].get64bAddr())
+                except:
+                    myId = ''
+                v((myId, data))
                 break
         
         # unlock the state data

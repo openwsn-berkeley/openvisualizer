@@ -18,10 +18,22 @@ class typeAsn(openType.openType):
         
         # initialize parent class
         openType.openType.__init__(self)
+
+        self.asn = None
     
     def __str__(self):
         return '0x{0}'.format(''.join(["%.2x"%b for b in self.asn]))
-    
+
+    def __eq__(self, other):
+        if isinstance(other, typeAsn):
+                return self.asn == other.asn
+        return False
+
+    def __ne__(self, other):
+        if isinstance(other, typeAsn):
+                return self.asn != other.asn
+        return True
+
     #======================== public ==========================================
     
     def update(self,byte0_1,byte2_3,byte4):

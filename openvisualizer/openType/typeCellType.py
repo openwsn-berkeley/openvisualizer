@@ -48,6 +48,9 @@ class typeCellType(openType.openType):
         else:
             self.desc = 'unknown'
             self.addr = None
+
+    def getCellType(self):
+        return self.desc
     
     #======================== private =========================================
     

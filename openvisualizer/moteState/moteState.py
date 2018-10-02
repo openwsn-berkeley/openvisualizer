@@ -434,6 +434,7 @@ class StatekaPeriod(StateElem):
             self.data.append({})
         self.data[0]['kaPeriod']            = notif.kaPeriod
 
+# abstract class
 class StateTable(StateElem):
 
     def __init__(self,rowClass,columnOrder=None):
@@ -449,6 +450,79 @@ class StateTable(StateElem):
         while len(self.data)<notif.row+1:
             self.data.append(self.meta[0]['rowClass']())
         self.data[notif.row].update(data)
+
+        if notif.row + 1 == len(self.data):
+            self.log(my64bID)
+
+    def log(self, id):
+        raise NotImplementedError
+
+class StateSchedule(StateTable):
+
+    def __init__(self, *args, **kwargs):
+        super(StateSchedule, self).__init__(*args, **kwargs)
+
+    def log(self, id):
+
+        try:
+            numCellsTx = sum(row.getType().getCellType() == "TX" for row in self.data)
+            numCellsRx = sum(row.getType().getCellType() == "RX" for row in self.data)
+            numCellsTxRx = sum(row.getType().getCellType() == "TXRX" for row in self.data)
+            numCells = numCellsTx + numCellsRx + numCellsTxRx
+
+            networkEventLogger.info(
+                json.dumps(
+                    {
+                        "numCellsTx": str(numCellsTx),
+                        "_type": "tsch.numCellsTx",
+                        "_mote_id": id,
+                        "_timestamp": self.meta[0]['lastUpdated'],
+                    }
+                )
+            )
+
+            networkEventLogger.info(
+                json.dumps(
+                    {
+                        "numCellsRx": str(numCellsRx),
+                        "_type": "tsch.numCellsRx",
+                        "_mote_id": id,
+                        "_timestamp": self.meta[0]['lastUpdated'],
+                    }
+                )
+            )
+
+            networkEventLogger.info(
+                json.dumps(
+                    {
+                        "numCellsTxRx": str(numCellsTxRx),
+                        "_type": "tsch.numCellsTxRx",
+                        "_mote_id": id,
+                        "_timestamp": self.meta[0]['lastUpdated'],
+                    }
+                )
+            )
+
+            networkEventLogger.info(
+                json.dumps(
+                    {
+                        "numCells": str(numCells),
+                        "_type": "tsch.numCells",
+                        "_mote_id": id,
+                        "_timestamp": self.meta[0]['lastUpdated'],
+                    }
+                )
+            )
+        except:
+            pass
+
+
+class StateNeighbors(StateTable):
+    def __init__(self, *args, **kwargs):
+        super(StateNeighbors, self).__init__(*args, **kwargs)
+
+    def log(self,id):
+        pass
 
 class moteState(eventBusClient.eventBusClient):
     
@@ -551,7 +625,7 @@ class moteState(eventBusClient.eventBusClient):
         self.state[self.ST_ASN]             = StateAsn()
         self.state[self.ST_JOINED]          = StateJoined()
         self.state[self.ST_MACSTATS]        = StateMacStats()
-        self.state[self.ST_SCHEDULE]        = StateTable(
+        self.state[self.ST_SCHEDULE]        = StateSchedule(
                                                 StateScheduleRow,
                                                 columnOrder = '.'.join(
                                                     [
@@ -569,7 +643,7 @@ class moteState(eventBusClient.eventBusClient):
                                               )
         self.state[self.ST_BACKOFF]         = StateBackoff()
         self.state[self.ST_QUEUE]           = StateQueue()
-        self.state[self.ST_NEIGHBORS]       = StateTable(
+        self.state[self.ST_NEIGHBORS]       = StateNeighbors(
                                                 StateNeighborsRow,
                                                 columnOrder = '.'.join(
                                                     [

@@ -163,21 +163,25 @@ class StateJoined(StateElem):
                                    notif.joinedAsn_2_3,
                                    notif.joinedAsn_4)
 
-        if self.data[0]['joinedAsn'] != receivedJoinAsn and receivedJoinAsn.asn != [0xff, 0xff, 0xff, 0xff, 0xff]:
+        try:
+            if self.data[0]['joinedAsn'] != receivedJoinAsn and receivedJoinAsn.asn != [0x00, 0x00, 0x00, 0x00, 0x00]:
 
-            self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1,
-                                   notif.joinedAsn_2_3,
-                                   notif.joinedAsn_4)
+                self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1,
+                                       notif.joinedAsn_2_3,
+                                       notif.joinedAsn_4)
 
-            networkEventLogger.info(
-                json.dumps(
-                    {
-                        "_type": "secjoin.joined",
-                        "_mote_id": my64bID,
-                        "_asn" : str(self.data[0]['joinedAsn']),
-                    }
+                networkEventLogger.info(
+                    json.dumps(
+                        {
+                            "asn" : str(self.data[0]['joinedAsn']),
+                            "_type": "secjoin.joined",
+                            "_mote_id": my64bID,
+                            "_timestamp": self.meta[0]['lastUpdated'],
+                        }
+                    )
                 )
-            )
+        except:
+            pass
 
 class StateMacStats(StateElem):
     
@@ -196,6 +200,20 @@ class StateMacStats(StateElem):
             self.data[0]['dutyCycle']       = '{0:.02f}%'.format(dutyCycle)
         else:
             self.data[0]['dutyCycle']       = '?'
+
+        try:
+            networkEventLogger.info(
+                json.dumps(
+                    {
+                        "dutycycle": str(self.data[0]['dutyCycle']),
+                        "_type": "tsch.dutycycle",
+                        "_mote_id": my64bID,
+                        "_timestamp": self.meta[0]['lastUpdated'],
+                    }
+                )
+            )
+        except:
+            pass
 
 class StateScheduleRow(StateElem):
 
@@ -223,6 +241,57 @@ class StateScheduleRow(StateElem):
         self.data[0]['lastUsedAsn'].update(notif.lastUsedAsn_0_1,
                                            notif.lastUsedAsn_2_3,
                                            notif.lastUsedAsn_4)
+
+        try:
+            networkEventLogger.info(
+                json.dumps(
+                    {
+                        "numTx": str(self.data[0]['numTx']),
+                        "_type": "tsch.numTx",
+                        "_mote_id": my64bID,
+                        "_timestamp": self.meta[0]['lastUpdated'],
+                    }
+                )
+            )
+
+            networkEventLogger.info(
+                json.dumps(
+                    {
+                        "numRx": str(self.data[0]['numRx']),
+                        "_type": "tsch.numRx",
+                        "_mote_id": my64bID,
+                        "_timestamp": self.meta[0]['lastUpdated'],
+                    }
+                )
+            )
+
+            networkEventLogger.info(
+                json.dumps(
+                    {
+                        "numTxAck": str(self.data[0]['numTxAck']),
+                        "_type": "tsch.numTxAck",
+                        "_mote_id": my64bID,
+                        "_timestamp": self.meta[0]['lastUpdated'],
+                    }
+                )
+            )
+
+            networkEventLogger.info(
+                json.dumps(
+                    {
+                        "numTxAck": str(self.data[0]['numTxAck']),
+                        "_type": "tsch.numTxAck",
+                        "_mote_id": my64bID,
+                        "_timestamp": self.meta[0]['lastUpdated'],
+                    }
+                )
+            )
+
+        except:
+            pass
+
+    def getType(self):
+        return self.data[0]['type']
 
 class StateBackoff(StateElem):
     

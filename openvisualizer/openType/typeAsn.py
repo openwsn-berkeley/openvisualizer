@@ -22,6 +22,8 @@ class typeAsn(openType.openType):
         self.asn = None
     
     def __str__(self):
+        if self.asn is None:
+            return '?'
         return '0x{0}'.format(''.join(["%.2x"%b for b in self.asn]))
 
     def __eq__(self, other):

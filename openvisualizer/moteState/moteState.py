@@ -129,7 +129,7 @@ class StateElem(object):
 class StateOutputBuffer(StateElem):
     
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -139,7 +139,7 @@ class StateOutputBuffer(StateElem):
 class StateAsn(StateElem):
     
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -151,7 +151,7 @@ class StateAsn(StateElem):
 class StateJoined(StateElem):
     
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -175,7 +175,7 @@ class StateJoined(StateElem):
                         {
                             "asn" : str(self.data[0]['joinedAsn']),
                             "_type": "secjoin.joined",
-                            "_mote_id": my64bID,
+                            "_mote_info": moteInfo,
                             "_timestamp": self.meta[0]['lastUpdated'],
                         }
                     )
@@ -186,7 +186,7 @@ class StateJoined(StateElem):
 class StateMacStats(StateElem):
     
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -207,7 +207,7 @@ class StateMacStats(StateElem):
                     {
                         "dutycycle": str(self.data[0]['dutyCycle']),
                         "_type": "tsch.dutycycle",
-                        "_mote_id": my64bID,
+                        "_mote_info": moteInfo,
                         "_timestamp": self.meta[0]['lastUpdated'],
                     }
                 )
@@ -218,7 +218,7 @@ class StateMacStats(StateElem):
 class StateScheduleRow(StateElem):
 
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -248,7 +248,7 @@ class StateScheduleRow(StateElem):
                     {
                         "numTx": str(self.data[0]['numTx']),
                         "_type": "tsch.numTx",
-                        "_mote_id": my64bID,
+                        "_mote_info": moteInfo,
                         "_timestamp": self.meta[0]['lastUpdated'],
                     }
                 )
@@ -259,7 +259,7 @@ class StateScheduleRow(StateElem):
                     {
                         "numRx": str(self.data[0]['numRx']),
                         "_type": "tsch.numRx",
-                        "_mote_id": my64bID,
+                        "_mote_info": moteInfo,
                         "_timestamp": self.meta[0]['lastUpdated'],
                     }
                 )
@@ -270,7 +270,7 @@ class StateScheduleRow(StateElem):
                     {
                         "numTxAck": str(self.data[0]['numTxAck']),
                         "_type": "tsch.numTxAck",
-                        "_mote_id": my64bID,
+                        "_mote_info": moteInfo,
                         "_timestamp": self.meta[0]['lastUpdated'],
                     }
                 )
@@ -281,7 +281,7 @@ class StateScheduleRow(StateElem):
                     {
                         "numTxAck": str(self.data[0]['numTxAck']),
                         "_type": "tsch.numTxAck",
-                        "_mote_id": my64bID,
+                        "_mote_info": moteInfo,
                         "_timestamp": self.meta[0]['lastUpdated'],
                     }
                 )
@@ -296,7 +296,7 @@ class StateScheduleRow(StateElem):
 class StateBackoff(StateElem):
     
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -326,7 +326,7 @@ class StateQueue(StateElem):
             self.data.append(StateQueueRow())
     
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         self.data[0].update(notif.creator_0,notif.owner_0)
         self.data[1].update(notif.creator_1,notif.owner_1)
@@ -352,7 +352,7 @@ class StateQueue(StateElem):
 class StateNeighborsRow(StateElem):
     
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -388,7 +388,7 @@ class StateNeighborsRow(StateElem):
 class StateIsSync(StateElem):
     
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -414,9 +414,20 @@ class StateIdManager(StateElem):
         except IndexError:
             return None
 
+    def get_serial(self):
+        return self.moteConnector.serialport
+
+    def get_info(self):
+        return {
+            '64bAddr'   : u.formatAddr(self.get64bAddr()),
+            '16bAddr'   : u.formatAddr(self.get16bAddr()),
+            'isDAGroot' : self.isDAGroot,
+            'serial'    : self.get_serial(),
+        }
+
     def update(self,data):
 
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
     
         # update state
         StateElem.update(self)
@@ -488,7 +499,7 @@ class StateIdManager(StateElem):
 class StateMyDagRank(StateElem):
     
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -497,7 +508,7 @@ class StateMyDagRank(StateElem):
 class StatekaPeriod(StateElem):
     
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -514,14 +525,14 @@ class StateTable(StateElem):
         self.data                           = []
 
     def update(self,data):
-        (my64bID, notif) = data
+        (moteInfo, notif) = data
         StateElem.update(self)
         while len(self.data)<notif.row+1:
             self.data.append(self.meta[0]['rowClass']())
         self.data[notif.row].update(data)
 
         if notif.row + 1 == len(self.data):
-            self.log(my64bID)
+            self.log(moteInfo)
 
     def log(self, id):
         raise NotImplementedError
@@ -531,7 +542,7 @@ class StateSchedule(StateTable):
     def __init__(self, *args, **kwargs):
         super(StateSchedule, self).__init__(*args, **kwargs)
 
-    def log(self, id):
+    def log(self, moteInfo):
 
         try:
             numCellsTx = sum(row.getType().getCellType() == "TX" for row in self.data)
@@ -544,7 +555,7 @@ class StateSchedule(StateTable):
                     {
                         "numCellsTx": str(numCellsTx),
                         "_type": "tsch.numCellsTx",
-                        "_mote_id": id,
+                        "_mote_info": moteInfo,
                         "_timestamp": self.meta[0]['lastUpdated'],
                     }
                 )
@@ -555,7 +566,7 @@ class StateSchedule(StateTable):
                     {
                         "numCellsRx": str(numCellsRx),
                         "_type": "tsch.numCellsRx",
-                        "_mote_id": id,
+                        "_mote_info": moteInfo,
                         "_timestamp": self.meta[0]['lastUpdated'],
                     }
                 )
@@ -566,7 +577,7 @@ class StateSchedule(StateTable):
                     {
                         "numCellsTxRx": str(numCellsTxRx),
                         "_type": "tsch.numCellsTxRx",
-                        "_mote_id": id,
+                        "_mote_info": moteInfo,
                         "_timestamp": self.meta[0]['lastUpdated'],
                     }
                 )
@@ -577,7 +588,7 @@ class StateSchedule(StateTable):
                     {
                         "numCells": str(numCells),
                         "_type": "tsch.numCells",
-                        "_mote_id": id,
+                        "_mote_info": moteInfo,
                         "_timestamp": self.meta[0]['lastUpdated'],
                     }
                 )
@@ -590,7 +601,7 @@ class StateNeighbors(StateTable):
     def __init__(self, *args, **kwargs):
         super(StateNeighbors, self).__init__(*args, **kwargs)
 
-    def log(self,id):
+    def log(self,moteInfo):
         pass
 
 class moteState(eventBusClient.eventBusClient):
@@ -836,10 +847,10 @@ class moteState(eventBusClient.eventBusClient):
             if self._isnamedtupleinstance(data,k):
                 found = True
                 try:
-                    myId = u.formatAddr(self.state[self.ST_IDMANAGER].get64bAddr())
+                    moteInfo = self.state[self.ST_IDMANAGER].get_info()
                 except:
-                    myId = ''
-                v((myId, data))
+                    moteInfo = ''
+                v((moteInfo, data))
                 break
         
         # unlock the state data

@@ -146,10 +146,19 @@ class OpentestbedMoteFinder (object):
 
         # get the motes list from payload
         payload_status = json.loads(message.payload)
+
+        try:
+            host = payload_status['returnVal']['host_name']
+        except KeyError:
+            host = payload_status['returnVal']['IP_address']
+        except:
+            host = ''
         
         for mote in payload_status['returnVal']['motes']:
             if 'EUI64' in mote:
-                self.opentestbed_motelist.add(mote['EUI64'])
+                self.opentestbed_motelist.add(
+                    (host, mote['EUI64'])
+                )
 
 class moteProbe(threading.Thread):
     
@@ -163,7 +172,7 @@ class moteProbe(threading.Thread):
         MODE_IOTLAB,
         MODE_TESTBED,
     ]
-    
+
     XOFF           = 0x13
     XON            = 0x11
     XONXOFF_ESCAPE = 0x12
@@ -172,25 +181,25 @@ class moteProbe(threading.Thread):
     # XON             is transmitted as [XONXOFF_ESCAPE,            XON^XONXOFF_MASK]==[0x12,0x11^0x10]==[0x12,0x01]
     # XONXOFF_ESCAPE  is transmitted as [XONXOFF_ESCAPE, XONXOFF_ESCAPE^XONXOFF_MASK]==[0x12,0x12^0x10]==[0x12,0x02]
     
-    def __init__(self,mqtt_broker_address,serialport=None,emulatedMote=None,iotlabmote=None,testbedmote_eui64=None):
+    def __init__(self,mqtt_broker_address,serialport=None,emulatedMote=None,iotlabmote=None,testbedmote=None):
         
         # verify params
         if   serialport:
             assert not emulatedMote
             assert not iotlabmote
-            assert not testbedmote_eui64
+            assert not testbedmote
             self.mode             = self.MODE_SERIAL
         elif emulatedMote:
             assert not serialport
             assert not iotlabmote
-            assert not testbedmote_eui64
+            assert not testbedmote
             self.mode             = self.MODE_EMULATED
         elif iotlabmote:
             assert not serialport
             assert not emulatedMote
-            assert not testbedmote_eui64
+            assert not testbedmote
             self.mode             = self.MODE_IOTLAB
-        elif testbedmote_eui64:
+        elif testbedmote:
             assert not serialport
             assert not emulatedMote
             assert not iotlabmote
@@ -210,8 +219,8 @@ class moteProbe(threading.Thread):
             self.iotlabmote         = iotlabmote
             self.portname           = 'IoT-LAB{0}'.format(iotlabmote)
         elif self.mode==self.MODE_TESTBED:
-            self.testbedmote_eui64  = testbedmote_eui64
-            self.portname           = 'opentestbed_{0}'.format(testbedmote_eui64)
+            (self.testbed_host, self.testbedmote_eui64) = testbedmote
+            self.portname           = 'opentestbed_{0}_{1}'.format(self.testbed_host, self.testbedmote_eui64)
         else:
             raise SystemError()
         # at this moment, MQTT broker is used even if the mode is not

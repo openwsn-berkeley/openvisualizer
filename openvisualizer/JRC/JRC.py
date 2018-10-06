@@ -204,8 +204,8 @@ class coapServer(eventBusClient.eventBusClient):
         # UDP
         udplen = len(data) + 8
 
-        udp = u.int2buf(self.coapClient.udpPort,2)  # src port
-        udp += u.int2buf(sender[1],2) # dest port
+        udp = u.int2buf(sender[1], 2)  # src port
+        udp += u.int2buf(self.coapClient.udpPort, 2)  # dest port
         udp += [udplen >> 8, udplen & 0xff]  # length
         udp += [0x00, 0x00]  # checksum
         udp += data
@@ -226,7 +226,7 @@ class coapServer(eventBusClient.eventBusClient):
             dst=dstIpv6Address,
             length=[0x00, 0x00] + udp[4:6],
             nh=[0x00, 0x00, 0x00, 17], # UDP as next header
-            payload=data,
+            payload=udp,
         )
 
         # IPv6

@@ -402,8 +402,19 @@ class moteProbe(threading.Thread):
         # frame with HDLC
         hdlcData = self.hdlc.hdlcify(data)
         
-        # write to serial
-        self.serial.write(hdlcData)
+        if self.mode==self.MODE_TESTBED:
+            payload_buffer = {
+                'token':       123,
+            }
+            payload_buffer['serialbytes'] = [ord(i) for i in hdlcData]
+            # publish the cmd message
+            self.mqttclient.publish(
+                topic   = 'opentestbed/deviceType/mote/deviceId/{0}/cmd/tomoteserialbytes'.format(self.testbedmote_eui64),
+                payload = json.dumps(payload_buffer),
+            )
+        else:
+            # write to serial
+            self.serial.write(hdlcData)
 
     #==== mqtt callback functions
     

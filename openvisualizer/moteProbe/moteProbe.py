@@ -390,7 +390,7 @@ class moteProbe(threading.Thread):
             if self.xonxoffEscaping==True:
                 self.inputBuf += chr(ord(byte)^self.XONXOFF_MASK)
                 self.xonxoffEscaping=False
-            else:
+            elif byte!=chr(self.XON) and byte!=chr(self.XOFF):
                 self.inputBuf += byte
     
     def _sendData(self,data):

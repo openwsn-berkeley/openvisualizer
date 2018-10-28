@@ -87,7 +87,8 @@ class remoteConnectorRover():
             if self.numberOfSignalData == 0:
                 #send the data after appending @roverID
                 self.publisher.send_json({'sender' : '{0}@{1}'.format(sender,self.roverID), 'signal' : '{0}@{1}'.format(signal,self.roverID), 'data':self.singalDataBuffer})
-                log.debug('message sent to remote host :\n sender : {0}, signal : {1}, data : {2}'.format('{0}@{1}'.format(sender,self.roverID), '{0}@{1}'.format(signal,self.roverID), self.singalDataBuffer))
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug('message sent to remote host :\n sender : {0}, signal : {1}, data : {2}'.format('{0}@{1}'.format(sender,self.roverID), '{0}@{1}'.format(signal,self.roverID), self.singalDataBuffer))
                 self.singalDataBuffer = []
                 self.sendDone_queue.put('sendDone')
                 self.okToSendTimeout = False
@@ -96,7 +97,8 @@ class remoteConnectorRover():
         while self.goOn :
             try :
                 event = self.subscriber.recv_json()
-                log.debug("\nReceived remote command\n"+event['data']+"from sender : "+event['sender']+"\nDispatching to event bus")
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug("\nReceived remote command\n"+event['data']+"from sender : "+event['sender']+"\nDispatching to event bus")
                 signal = event['signal']
                 sender = event['sender']
                 # check that it is for this rover

@@ -62,7 +62,8 @@ def randomFrame(request):
 
 def test_buildRequestFrame():
     
-    log.debug("\n---------- test_buildRequestFrame")
+    if log.isEnabledFor(logging.DEBUG):
+        log.debug("\n---------- test_buildRequestFrame")
     
     hdlc = OpenHdlc.OpenHdlc()
     

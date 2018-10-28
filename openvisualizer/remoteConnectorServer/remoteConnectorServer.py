@@ -97,7 +97,8 @@ class remoteConnectorServer(object):
         try:
             event["data"] = event.get("data", None)._asdict()
         except AttributeError:
-            log.debug("The data was not a tuple")
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug("The data was not a tuple")
         return event
 
     def _handle_admin(self):

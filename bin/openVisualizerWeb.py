@@ -228,7 +228,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
 
         :param moteid: 16-bit ID of mote (optional)
         '''
-        log.debug("moteview moteid parameter is {0}".format(moteid))
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("moteview moteid parameter is {0}".format(moteid))
 
         motelist = self.app.getMoteDict().keys()
 
@@ -254,11 +255,13 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         log.info('Toggle root status for moteid {0}'.format(moteid))
         ms = self.app.getMoteState(moteid)
         if ms:
-            log.debug('Found mote {0} in moteStates'.format(moteid))
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug('Found mote {0} in moteStates'.format(moteid))
             ms.triggerAction(ms.TRIGGER_DAGROOT)
             return '{"result" : "success"}'
         else:
-            log.debug('Mote {0} not found in moteStates'.format(moteid))
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug('Mote {0} not found in moteStates'.format(moteid))
             return '{"result" : "fail"}'
 
     def _getMoteData(self, moteid):
@@ -267,10 +270,12 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
 
         :param moteid: 16-bit ID of mote
         '''
-        log.debug('Get JSON data for moteid {0}'.format(moteid))
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug('Get JSON data for moteid {0}'.format(moteid))
         ms = self.app.getMoteState(moteid)
         if ms:
-            log.debug('Found mote {0} in moteStates'.format(moteid))
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug('Found mote {0} in moteStates'.format(moteid))
             states = {
                 ms.ST_IDMANAGER   : ms.getStateElem(ms.ST_IDMANAGER).toJson('data'),
                 ms.ST_ASN         : ms.getStateElem(ms.ST_ASN).toJson('data'),
@@ -286,7 +291,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                 ms.ST_JOINED      : ms.getStateElem(ms.ST_JOINED).toJson('data'),
             }
         else:
-            log.debug('Mote {0} not found in moteStates'.format(moteid))
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug('Mote {0} not found in moteStates'.format(moteid))
             states = {}
         return states
 

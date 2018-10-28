@@ -29,7 +29,8 @@ class ParserPrintf(Parser.Parser):
     def __init__(self):
         
         # log
-        log.debug('create ParserPrintf instance')
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug('create ParserPrintf instance')
           
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)

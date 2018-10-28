@@ -233,9 +233,11 @@ class moteProbe(threading.Thread):
         # flag to permit exit from read loop
         self.goOn                 = True
         
+        self.sendToParser         = None # to be assigned
+        
         if self.mode == self.MODE_TESTBED:
             # initialize variable for testbedmote
-            self.serialbytes_queue       = Queue.Queue() # create queue for receiving serialbytes messages
+            self.serialbytes_queue       = Queue.Queue(maxsize=10) # create queue for receiving serialbytes messages
             
             # mqtt client
             self.mqttclient                = mqtt.Client()
@@ -348,12 +350,8 @@ class moteProbe(threading.Thread):
                                 except OpenHdlc.HdlcException as err:
                                     log.warning('{0}: invalid serial frame: {2} {1}'.format(self.name, err, u.formatStringBuf(tempBuf)))
                                 else:
-                                    # dispatch
-                                    dispatcher.send(
-                                        sender        = self.name,
-                                        signal        = 'fromMoteProbe@'+self.portname,
-                                        data          = [ord(c) for c in self.inputBuf],
-                                    )
+                                    if self.sendToParser:
+                                        self.sendToParser([ord(c) for c in self.inputBuf])
                             
                             self.lastRxByte = rxByte
                         
@@ -429,4 +427,7 @@ class moteProbe(threading.Thread):
         except:
             print "Error: failed to parse message payload {0}".format(message.payload)
         else:
-            self.serialbytes_queue.put(json.loads(message.payload)['serialbytes'])
+            try:
+                self.serialbytes_queue.put(json.loads(message.payload)['serialbytes'], block = False)
+            except:
+                print "queue overflow"

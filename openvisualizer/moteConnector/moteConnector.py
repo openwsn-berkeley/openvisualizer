@@ -25,13 +25,14 @@ import ParserException
 
 class moteConnector(eventBusClient.eventBusClient):
     
-    def __init__(self,serialport):
+    def __init__(self,moteProbe):
         
         # log
         log.info("creating instance")
         
+        self.moteProbe                 = moteProbe
         # store params
-        self.serialport                = serialport
+        self.serialport                = self.moteProbe.getPortName()
         
         # local variables
         self.parser                    = OpenParser.OpenParser()
@@ -58,12 +59,9 @@ class moteConnector(eventBusClient.eventBusClient):
                 },
             ]
         )
-        
-        # subscribe to dispatcher
-        dispatcher.connect(
-            self._sendToParser,
-            signal = 'fromMoteProbe@'+self.serialport,
-        )
+
+        self.moteProbe.sendToParser     = self._sendToParser
+        self.receivedStatus_notif       = None
         
     def _sendToParser(self,data):
         
@@ -82,8 +80,12 @@ class moteConnector(eventBusClient.eventBusClient):
             log.error(str(err))
             pass
         else:
-            # dispatch
-            self.dispatch('fromMote.'+eventSubType,parsedNotif)
+            if eventSubType == 'status':
+                if self.receivedStatus_notif:
+                    self.receivedStatus_notif(parsedNotif)
+            else:
+                # dispatch
+                self.dispatch('fromMote.'+eventSubType,parsedNotif)
         
     #======================== eventBus interaction ============================
     

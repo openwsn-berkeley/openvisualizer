@@ -588,6 +588,8 @@ class moteState(eventBusClient.eventBusClient):
                 },
             ]
         )
+
+        self.moteConnector.receivedStatus_notif  = self._receivedStatus_notif
     
     #======================== public ==========================================
     
@@ -623,7 +625,7 @@ class moteState(eventBusClient.eventBusClient):
     
     #======================== private =========================================
     
-    def _receivedStatus_notif(self,sender,signal,data):
+    def _receivedStatus_notif(self,data):
         
         # log
         if log.isEnabledFor(logging.DEBUG):

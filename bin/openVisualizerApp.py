@@ -112,7 +112,7 @@ class OpenVisualizerApp(object):
         
         # create a moteConnector for each moteProbe
         self.moteConnectors       = [
-            moteConnector.moteConnector(mp.getPortName()) for mp in self.moteProbes
+            moteConnector.moteConnector(mp) for mp in self.moteProbes
         ]
         
         # create a moteState for each moteConnector

@@ -44,28 +44,26 @@ class typeComponent(openType.openType):
     COMPONENT_ICMPv6ROUTER              = 0x15
     COMPONENT_ICMPv6RPL                 = 0x16
     #TRAN
-    COMPONENT_OPENTCP                   = 0x17
-    COMPONENT_OPENUDP                   = 0x18
-    COMPONENT_OPENCOAP                  = 0x19
+    COMPONENT_OPENUDP                   = 0x17
+    COMPONENT_OPENCOAP                  = 0x18
     #applications
-    COMPONENT_C6T                       = 0x1a
-    COMPONENT_CEXAMPLE                  = 0x1b
-    COMPONENT_CINFO                     = 0x1c
-    COMPONENT_CLEDS                     = 0x1d
-    COMPONENT_CSENSORS                  = 0x1e
-    COMPONENT_CSTORM                    = 0x1f
-    COMPONENT_CWELLKNOWN                = 0x20
-    COMPONENT_TECHO                     = 0x21
-    COMPONENT_TOHLONE                   = 0x22
-    COMPONENT_UECHO                     = 0x23
-    COMPONENT_UINJECT                   = 0x24
-    COMPONENT_RRT                       = 0x25
-    COMPONENT_SECURITY                  = 0x26
-    COMPONENT_USERIALBRIDGE             = 0x27
-    COMPONENT_UEXPIRATION               = 0x28
-    COMPONENT_UMONITOR                  = 0x29
-    COMPONENT_CJOIN                     = 0x2a
-    COMPONENT_OPENOSCOAP                = 0x2b
+    COMPONENT_C6T                       = 0x19
+    COMPONENT_CEXAMPLE                  = 0x1a
+    COMPONENT_CINFO                     = 0x1b
+    COMPONENT_CLEDS                     = 0x1c
+    COMPONENT_CSENSORS                  = 0x1d
+    COMPONENT_CSTORM                    = 0x1e
+    COMPONENT_CWELLKNOWN                = 0x1f
+    COMPONENT_TOHLONE                   = 0x20
+    COMPONENT_UECHO                     = 0x21
+    COMPONENT_UINJECT                   = 0x22
+    COMPONENT_RRT                       = 0x23
+    COMPONENT_SECURITY                  = 0x24
+    COMPONENT_USERIALBRIDGE             = 0x25
+    COMPONENT_UEXPIRATION               = 0x26
+    COMPONENT_UMONITOR                  = 0x27
+    COMPONENT_CJOIN                     = 0x28
+    COMPONENT_OPENOSCOAP                = 0x29
     
     def __init__(self):
         # log

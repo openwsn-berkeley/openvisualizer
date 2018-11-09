@@ -24,13 +24,14 @@ class SerialTester(eventBusClient.eventBusClient):
     DFLT_NUM_TESTPKT    = 20  ##< number of test packets to send
     DFLT_TIMEOUT        = 5   ##< timeout in second for getting a reply
     
-    def __init__(self,moteProbeSerialPort):
+    def __init__(self,moteProbe):
         
         # log
         log.info("creating instance")
         
         # store params
-        self.moteProbeSerialPort  = moteProbeSerialPort
+        self.moteProbe            = moteProbe
+        self.moteProbeSerialPort  = self.moteProbe.getPortName()
         
         # local variables
         self.dataLock             = threading.RLock()
@@ -48,24 +49,14 @@ class SerialTester(eventBusClient.eventBusClient):
         self.name = 'SerialTester@{0}'.format(self)
         
         # initialize parent 
-        eventBusClient.eventBusClient.__init__(
-            self,
-            name             = self.name,
-            registrations =  [
-                {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'fromMoteProbe@'+self.moteProbeSerialPort,
-                    'callback' : self._receiveDataFromMoteSerial,
-                },
-            ]
-        )
+        self.moteProbe.sendToParser     = self._receiveDataFromMoteSerial
         
     def quit(self):
         self.goOn = False
     
     #======================== public ==========================================
     
-    def _receiveDataFromMoteSerial(self,sender,signal,data):
+    def _receiveDataFromMoteSerial(self,data):
         
         # handle data
         if chr(data[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA):

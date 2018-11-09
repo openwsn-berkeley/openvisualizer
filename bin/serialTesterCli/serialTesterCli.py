@@ -131,7 +131,7 @@ def main():
     moteProbe_handler = moteProbe.moteProbe(serialport)
     
     # create a SerialTester to attached to the moteProbe
-    moteConnector_handler = SerialTester(serialportname)
+    moteConnector_handler = SerialTester(moteProbe_handler)
     
     # create an open CLI
     cli = serialTesterCli(moteProbe_handler,moteConnector_handler)

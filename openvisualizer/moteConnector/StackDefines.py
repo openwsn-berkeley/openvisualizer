@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Mon, 12 Mar 2018 10:55:53
+# on Fri, 09 Nov 2018 11:00:08
 #
 
 components = {
@@ -61,7 +61,7 @@ errorDescriptions = {
   10: "unexpected DAO (code location {0}). A change maybe happened on dagroot node.",
   11: "unsupported ICMPv6 type {0} (code location {1})",
   12: "unsupported 6LoWPAN parameter {1} at location {0}",
-  13: "no next hop",
+  13: "no next hop for layer 3 destination {0:x}{1:x}",
   14: "invalid parameter",
   15: "invalid forward mode",
   16: "large DAGrank {0}, set to {1}",
@@ -105,7 +105,7 @@ errorDescriptions = {
   54: "invalid serial frame",
   55: "invalid packet frome radio, length {1} (code location {0})",
   56: "busy receiving when stop of serial activity, buffer input length {1} (code location {0})",
-  57: "wrong CRC in input Buffer (input length {0})",
+  57: "wrong CRC in input Buffer",
   58: "synchronized when received a packet",
   59: "security error on frameType {0}, code location {1}",
   60: "sixtop return code {0} at sixtop state {1}",

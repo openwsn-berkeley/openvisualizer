@@ -85,7 +85,7 @@ def findSerialPorts(isIotMotes=False):
             probe = moteProbe(serialport=(port[0],BAUDRATE_LOCAL_BOARD))
             while hasattr(probe, 'serial')==False:
                 pass
-            tester = SerialTester(probe.portname)
+            tester = SerialTester(probe)
             tester.setNumTestPkt(1)
             tester.setTimeout(2)
             tester.test(blocking=True)

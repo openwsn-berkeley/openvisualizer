@@ -26,8 +26,7 @@ import os
 class JRC():
     def __init__(self):
         coapResource = joinResource()
-        #self.coapServer = coapServer(coapResource, contextHandler(coapResource).securityContextLookup)
-        self.coapServer = coapServer(coapResource)
+        self.coapServer = coapServer(coapResource, contextHandler(coapResource).securityContextLookup)
 
     def close(self):
         self.coapServer.close()
@@ -83,7 +82,7 @@ class coapServer(eventBusClient.eventBusClient):
         # We interface this mode with OpenVisualizer to run JRC co-located with the DAG root
         self.coapServer = coap.coap(udpPort=d.DEFAULT_UDP_PORT, testing=True)
         self.coapServer.addResource(coapResource)
-        #self.coapServer.addSecurityContextHandler(contextHandler)
+        self.coapServer.addSecurityContextHandler(contextHandler)
         self.coapServer.maxRetransmit = 1
 
         self.coapClient = None

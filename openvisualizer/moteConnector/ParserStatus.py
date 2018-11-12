@@ -127,13 +127,14 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     6,
                                     'ScheduleRow',
-                                    '<BHBBBBQQBBBBHH',
+                                    '<BHBBBBBQQBBBBHH',
                                     [
                                         'row',                       # B
                                         'slotOffset',                # H 
                                         'type',                      # B
                                         'shared',                    # B
                                         'channelOffset',             # B
+                                        'radioType',                 # B
                                         'neighbor_type',             # B
                                         'neighbor_bodyH',            # Q
                                         'neighbor_bodyL',            # Q
@@ -188,7 +189,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     9,
                                     'NeighborsRow',
-                                    '<BBBBBBBQQHbBBBBBHHBBBBBB',
+                                    '<BBBBBBBQQHbBBBBBHHBBBBBBB',
                                     [
                                         'row',                       # B
                                         'used',                      # B
@@ -214,6 +215,7 @@ class ParserStatus(Parser.Parser):
                                         'sixtopSeqNum',              # B
                                         'backoffExponent',           # B
                                         'backoff',                   # B
+                                        'radioType',                 # B
                                     ],
                                 )
         self._addFieldsParser   (   

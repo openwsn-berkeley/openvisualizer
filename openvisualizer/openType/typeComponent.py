@@ -54,16 +54,16 @@ class typeComponent(openType.openType):
     COMPONENT_CSENSORS                  = 0x1d
     COMPONENT_CSTORM                    = 0x1e
     COMPONENT_CWELLKNOWN                = 0x1f
-    COMPONENT_TOHLONE                   = 0x20
-    COMPONENT_UECHO                     = 0x21
-    COMPONENT_UINJECT                   = 0x22
-    COMPONENT_RRT                       = 0x23
-    COMPONENT_SECURITY                  = 0x24
-    COMPONENT_USERIALBRIDGE             = 0x25
-    COMPONENT_UEXPIRATION               = 0x26
-    COMPONENT_UMONITOR                  = 0x27
-    COMPONENT_CJOIN                     = 0x28
-    COMPONENT_OPENOSCOAP                = 0x29
+    COMPONENT_UECHO                     = 0x20
+    COMPONENT_UINJECT                   = 0x21
+    COMPONENT_RRT                       = 0x22
+    COMPONENT_SECURITY                  = 0x23
+    COMPONENT_USERIALBRIDGE             = 0x24
+    COMPONENT_UEXPIRATION               = 0x25
+    COMPONENT_UMONITOR                  = 0x26
+    COMPONENT_CJOIN                     = 0x27
+    COMPONENT_OPENOSCOAP                = 0x28
+    COMPONENT_CINFRARED                 = 0x29
     
     def __init__(self):
         # log

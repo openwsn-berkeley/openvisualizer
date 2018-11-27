@@ -203,8 +203,8 @@ class coapServer(eventBusClient.eventBusClient):
         # UDP
         udplen = len(data) + 8
 
-        udp = u.int2buf(self.coapClient.udpPort,2)  # src port
-        udp += u.int2buf(sender[1],2) # dest port
+        udp = u.int2buf(sender[1], 2)  # src port
+        udp += u.int2buf(self.coapClient.udpPort, 2)  # dest port
         udp += [udplen >> 8, udplen & 0xff]  # length
         udp += [0x00, 0x00]  # checksum
         udp += data
@@ -225,7 +225,7 @@ class coapServer(eventBusClient.eventBusClient):
             dst=dstIpv6Address,
             length=[0x00, 0x00] + udp[4:6],
             nh=[0x00, 0x00, 0x00, 17], # UDP as next header
-            payload=data,
+            payload=udp,
         )
 
         # IPv6
@@ -249,8 +249,7 @@ class joinResource(coapResource.coapResource):
     def __init__(self):
         self.joinedNodes = []
 
-        #self.networkKey = u.str2buf(os.urandom(16)) # random key every time OpenVisualizer is initialized
-        self.networkKey = u.str2buf(binascii.unhexlify('11111111111111111111111111111111')) # value of K1/K2 from 6TiSCH TD
+        self.networkKey = u.str2buf(os.urandom(16)) # random key every time OpenVisualizer is initialized
         self.networkKeyIndex = 0x01 # L2 key index
 
         # initialize parent class
@@ -262,8 +261,6 @@ class joinResource(coapResource.coapResource):
         self.addSecurityBinding((None, [d.METHOD_POST]))  # security context should be returned by the callback
 
     def POST(self,options=[], payload=[]):
-        respCode        = d.COAP_RC_2_04_CHANGED
-        respOptions     = []
 
         link_layer_keyset = [self.networkKeyIndex, u.buf2str(self.networkKey)]
 
@@ -272,18 +269,30 @@ class joinResource(coapResource.coapResource):
         configuration[cojpDefines.COJP_PARAMETERS_LABELS_LLKEYSET]   = link_layer_keyset
         configuration_serialized = cbor.dumps(configuration)
 
-        contentFormat = o.ContentFormat(cformat=[d.FORMAT_CBOR])
-        respOptions += [contentFormat]
-
         respPayload     = [ord(b) for b in configuration_serialized]
 
-        #objectSecurity = oscoap.objectSecurityOptionLookUp(options)
-        #assert objectSecurity
+        objectSecurity = oscoap.objectSecurityOptionLookUp(options)
 
-        #self.joinedNodes += [{'eui64' : u.buf2str(objectSecurity.kid[:8]), # remove last prepended byte
-        #                'context' : objectSecurity.context}]
+        if objectSecurity:
+            # we need to add the pledge to a list of joined nodes, if not present already
+            eui64 = u.buf2str(objectSecurity.kid[:-1])
+            found = False
+            for node in self.joinedNodes:
+                if node['eui64'] == eui64:
+                    found = True
+                    break
 
-        return (respCode,respOptions,respPayload)
+            if not found:
+                self.joinedNodes += [
+                                        { 'eui64'   : eui64, # remove last prepended byte
+                                          'context' : objectSecurity.context
+                                        }
+                                    ]
+
+            # return the Join Response regardless of whether it is a first or Nth join attempt
+            return (d.COAP_RC_2_04_CHANGED, [], respPayload)
+        else:
+            return (d.COAP_RC_4_01_UNAUTHORIZED, [], [])
 
 if __name__ == "__main__":
 

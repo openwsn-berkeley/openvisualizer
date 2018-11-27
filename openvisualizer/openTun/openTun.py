@@ -118,7 +118,7 @@ class OpenTun(eventBusClient.eventBusClient):
                     # Give thread some time to exit
                     time.sleep(0.05)
                 except Exception as err:
-                    log.error('Unable to send UDP to close tunReadThread: {0}'.join(err))
+                    log.error('Unable to send UDP to close tunReadThread: {0}'.join(str(err)))
     
     #======================== private =========================================
     

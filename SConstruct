@@ -246,10 +246,10 @@ def makeTreeSdist(env, target):
     for the openvisualizer package. Then creates the source dist archive.
     Cleans up the temporary package data file.
     '''
-    datadir = os.path.join('openvisualizer', 'data')
+    datadir = os.path.join('data')
     appdir  = os.path.join('bin')
     distdir = os.path.join('build', 'dist')
-    topdir  = os.path.join('..', '..')
+    topdir  = os.path.join('.')
     cmdlist = []
     
     cmdlist.append(Delete(distdir))

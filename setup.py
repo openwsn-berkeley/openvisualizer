@@ -23,7 +23,7 @@ VERSION   = '.'.join([str(v) for v in ovVersion.VERSION])
 webstatic = 'data/web_files/static'
 webtmpl   = 'data/web_files/templates'
 simdata   = 'data/sim_files'
-with open('README.txt') as f:
+with open('README.md') as f:
     LONG_DESCRIPTION = f.read()
     
 # Create list of required modules for 'install_requires' parameter. Cannot create
@@ -31,13 +31,13 @@ with open('README.txt') as f:
 # which is Unix only.
 # Assumes requirements file contains only module lines and comments.
 deplist = []
-with open(os.path.join('openvisualizer', 'data', 'requirements.txt')) as f:
+with open(os.path.join('requirements.txt')) as f:
     for line in f:
         if not line.startswith('#'):
             deplist.append(line)
 
 def appdirGlob(globstr, subdir=''):
-    appdir = 'bin/openVisualizerApp'
+    appdir = 'bin'
     if subdir == '':
         return glob.glob('/'.join([appdir, globstr]))
     else:

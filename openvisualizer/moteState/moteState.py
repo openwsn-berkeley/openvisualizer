@@ -13,10 +13,6 @@ log = logging.getLogger('moteState')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
-# a special logger that writes to a separate file: each log line is a JSON string corresponding to network events
-# with information sufficient to calculate network-wide KPIs
-networkEventLogger = logging.getLogger('networkEventLogger')
-networkEventLogger.setLevel(logging.INFO)
 
 import copy
 import time

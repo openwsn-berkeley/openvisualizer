@@ -113,7 +113,6 @@ class OpenVisualizerApp(object):
         else:
             self.testEnvironment = 'local'
             # in "hardware" mode, motes are connected to the serial port
-
             self.moteProbes       = [
                 moteProbe.moteProbe(mqtt_broker_address, serialport=p) for p in moteProbe.findSerialPorts()
             ]
@@ -198,7 +197,7 @@ class OpenVisualizerApp(object):
                 mqttBroker=self.mqtt_broker_address,
                 firmware='openwsn',
                 testbed=self.testEnvironment,
-                nodes=[],
+                portNames=[mote.getPortName() for mote in self.moteProbes],
                 scenario=self.benchmark
             )
         

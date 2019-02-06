@@ -103,9 +103,10 @@ class OpentestbedMoteFinder (object):
 
     OPENTESTBED_RESP_STATUS_TIMEOUT     = 10
 
-    def __init__(self, mqtt_broker_address):
-        self.opentestbed_motelist = set()
+    def __init__(self, testbed, mqtt_broker_address):
+        self.testbed = testbed
         self.mqtt_broker_address = mqtt_broker_address
+        self.opentestbed_motelist = set()
         
     def get_opentestbed_motelist(self):
         
@@ -130,14 +131,14 @@ class OpentestbedMoteFinder (object):
         
         print "connected to : {0}".format(self.mqtt_broker_address)
         
-        client.subscribe('opentestbed/deviceType/box/deviceId/+/resp/status')
+        client.subscribe('{0}/deviceType/box/deviceId/+/resp/status'.format(self.testbed))
         
         payload_status = {
             'token':       123,
         }
         # publish the cmd message
         client.publish(
-            topic   = 'opentestbed/deviceType/box/deviceId/all/cmd/status',
+            topic   = '{0}/deviceType/box/deviceId/all/cmd/status'.format(self.testbed),
             payload = json.dumps(payload_status),
         )
 
@@ -157,7 +158,7 @@ class OpentestbedMoteFinder (object):
         for mote in payload_status['returnVal']['motes']:
             if 'EUI64' in mote:
                 self.opentestbed_motelist.add(
-                    (host, mote['EUI64'])
+                    (host, mote['EUI64'], self.testbed, self.mqtt_broker_address)
                 )
 
 class moteProbe(threading.Thread):
@@ -219,8 +220,8 @@ class moteProbe(threading.Thread):
             self.iotlabmote         = iotlabmote
             self.portname           = 'IoT-LAB{0}'.format(iotlabmote)
         elif self.mode==self.MODE_TESTBED:
-            (self.testbed_host, self.testbedmote_eui64) = testbedmote
-            self.portname           = 'opentestbed_{0}_{1}'.format(self.testbed_host, self.testbedmote_eui64)
+            (self.testbed_host, self.testbedmote_eui64, self.testbed, self.mqtt_broker_address) = testbedmote
+            self.portname           = 'testbed_{0}_{1}_{2}'.format(self.testbed, self.testbed_host, self.testbedmote_eui64)
         else:
             raise SystemError()
         # at this moment, MQTT broker is used even if the mode is not
@@ -418,7 +419,7 @@ class moteProbe(threading.Thread):
             payload_buffer['serialbytes'] = [ord(i) for i in hdlcData]
             # publish the cmd message
             self.mqttclient.publish(
-                topic   = 'opentestbed/deviceType/mote/deviceId/{0}/cmd/tomoteserialbytes'.format(self.testbedmote_eui64),
+                topic   = '{0}/deviceType/mote/deviceId/{1}/cmd/tomoteserialbytes'.format(self.testbed, self.testbedmote_eui64),
                 payload = json.dumps(payload_buffer),
             )
         else:
@@ -429,7 +430,7 @@ class moteProbe(threading.Thread):
     
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         
-        client.subscribe('opentestbed/deviceType/mote/deviceId/{0}/notif/frommoteserialbytes'.format(self.testbedmote_eui64))
+        client.subscribe('{0}/deviceType/mote/deviceId/{1}/notif/frommoteserialbytes'.format(self.testbed, self.testbedmote_eui64))
         
     def _on_mqtt_message(self, client, userdata, message):
     

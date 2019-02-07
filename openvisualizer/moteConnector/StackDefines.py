@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Fri, 09 Nov 2018 11:00:08
+# on Thu, 07 Feb 2019 15:13:44
 #
 
 components = {
@@ -112,16 +112,16 @@ errorDescriptions = {
   61: "there are {0} cells to request mote",
   62: "the cells reserved to request mote contains slot {0} and slot {1}",
   63: "the slot {0} to be added is already in schedule",
-  64: "the received packet format is not supported {code location {0}}",
+  64: "the received packet format is not supported (code location {0})",
   65: "the metadata type is not suppored",
   66: "the received packet has expired",
   67: "packet expiry time reached, dropped",
   68: "node joined",
   69: "OSCOAP sequence number reached maximum value",
-  70: "OSCOAP buffer overflow detected {code location {0}}",
+  70: "OSCOAP buffer overflow detected (code location {0})",
   71: "OSCOAP replay protection failed",
   72: "OSCOAP decryption and tag verification failed",
-  73: "Aborted join process {code location {0}}",
+  73: "Aborted join process (code location {0})",
 }
 
 sixtop_returncode = {

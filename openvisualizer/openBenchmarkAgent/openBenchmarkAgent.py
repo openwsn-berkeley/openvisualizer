@@ -11,8 +11,13 @@ OpenBenchmark APIs are specified at https://benchmark.6tis.ch/docs
 import logging
 import json
 import re
+import time
+import os
+import binascii
 import paho.mqtt.client as mqtt
 from time import gmtime, strftime
+
+import threading
 
 log = logging.getLogger('openBenchmarkAgent')
 log.setLevel(logging.INFO)
@@ -25,9 +30,16 @@ from openvisualizer.eventBus      import eventBusClient
 networkEventLogger = logging.getLogger('networkEventLogger')
 networkEventLogger.setLevel(logging.INFO)
 
-OPENBENCHMARK_API_VERSION = "0.0.1"
-
 class OpenBenchmarkAgent(eventBusClient.eventBusClient):
+
+    OPENBENCHMARK_API_VERSION            = '0.0.1'
+
+    # MQTT topics
+    OPENBENCHMARK_STARTBENCHMARK_REQUEST_TOPIC = 'openbenchmark/command/startBenchmark'
+    OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC = 'openbenchmark/response/startBenchmark'
+
+    OPENBENCHMARK_RESP_STATUS_TIMEOUT    = 10
+    OPENBENCHMARK_MAX_RETRIES            = 3
 
     def __init__(self, mqttBroker, firmware, testbed, portNames, scenario):
         '''
@@ -52,8 +64,15 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         self.testbed = testbed
         self.portNames = portNames
         self.scenario = scenario
+
+        # state
         self.experimentId = None
 
+        # sync primitive for mutual exclusion
+        self.resourceLockEvent = threading.Event()
+
+        self.mqttClient = None
+        self.experimentRequestResponse = None
         self.nodes = []
 
         # OV is running in simulation mode
@@ -74,61 +93,121 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                     self.nodes += (m.group(2), m.group(3))
 
         log.info('Initializing OpenBenchmark with options:\n\t{0}'.format(
-            '\n    '.join(['mqttBroker         = {0}'.format(self.mqttBroker),
+            '\n    '.join(['mqttBroker          = {0}'.format(self.mqttBroker),
                            'firmware            = {0}'.format(self.firmware),
-                           'testbed       = {0}'.format(self.testbed),
-                           'portNames          = {0}'.format(self.portNames),
-                           'scenario          = {0}'.format(self.scenario),
-                           'nodes           = {0}'.format(self.nodes)]
+                           'testbed             = {0}'.format(self.testbed),
+                           'portNames           = {0}'.format(self.portNames),
+                           'scenario            = {0}'.format(self.scenario),
+                           'nodes               = {0}'.format(self.nodes)]
                           )))
 
         # mqtt client
-        self.mqttclient = mqtt.Client('openBenchmarkAgent')
-        self.mqttclient.on_connect = self._on_mqtt_connect
-        self.mqttclient.on_message = self._on_mqtt_message
-        self.mqttclient.connect(self.mqttBroker)
-        self.mqttclient.loop_start()
+        self.mqttClient = mqtt.Client('openBenchmarkAgent')
+        self.mqttClient.on_connect = self._on_mqtt_connect
+        self.mqttClient.on_message = self._on_mqtt_message
+        self.mqttClient.connect(self.mqttBroker)
+        self.mqttClient.loop_start()
 
-        # initialize parent class
-        eventBusClient.eventBusClient.__init__(
-            self,
-            name='openBenchmarkAgent',
-            registrations=[
-            ]
-        )
+        # block until client is connected, or give up after 60 seconds
+        self.resourceLockEvent.wait(60)
+
+        self.experimentId = self._openbenchmark_start_benchmark(self.mqttClient)
+
+        # subscribe to eventBus events only if startBenchmark was successful
+        if self.experimentId:
+
+            log.info("Experiment #{0} successfuly started".format(self.experimentId))
+
+            # subscribe to eventBus events
+            eventBusClient.eventBusClient.__init__(
+                self,
+                name='openBenchmarkAgent',
+                registrations=[
+                ]
+            )
+        else:
+            log.info("Experiment start failed, giving up.")
+            self.close()
 
     # ======================== public ==========================================
 
+    def close(self):
+        self.mqttClient.loop_stop()
+
     # ======================== private =========================================
+
+    def _openbenchmark_start_benchmark(self, mqttClient):
+        '''
+        :param mqttClient:
+            paho MQTT client object to use to issue startBenchmark request
+        :returns: Experiment identifier assigned by OpenBenchmark on success, None on failure.
+        '''
+
+        # count the number of attempts
+        attempt = 0
+        experimentId = None
+
+        # generate a random token
+        tokenGenerated = binascii.b2a_hex(os.urandom(8))
+
+        payload = {
+            'api_version': self.OPENBENCHMARK_API_VERSION,
+            'token': tokenGenerated,
+            'date': strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()),
+            'firmware': self.firmware,
+            'testbed': self.testbed,
+            'nodes': self.nodes,
+            'scenario': self.scenario
+        }
+
+        mqttClient.subscribe(self.OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC)
+
+        while attempt < self.OPENBENCHMARK_MAX_RETRIES:
+
+            try:
+
+                mqttClient.publish(
+                    topic=self.OPENBENCHMARK_STARTBENCHMARK_REQUEST_TOPIC,
+                    payload=json.dumps(payload),
+                )
+
+                # wait for a while to gather the response
+                time.sleep(self.OPENBENCHMARK_RESP_STATUS_TIMEOUT)
+
+                # assume response is received
+                assert self.experimentRequestResponse, "No response from OpenBenchmark"
+
+                # parse it
+                payload = json.loads(self.experimentRequestResponse)
+                tokenReceived = payload['token']
+                success = payload['success']
+
+                # assume tokens match
+                assert tokenGenerated is tokenReceived, "Token does not match"
+                # assume success
+                assert success is True, "Fail indicated"
+
+                experimentId = payload['experimentId']
+
+            # Retry for all exceptions, including assertions
+            except Exception as e:
+                log.info(str(e) + ", retrying...")
+                attempt += 1
+                self.experimentRequestResponse = None
+                continue
+
+        mqttClient.unsubscribe(self.OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC)
+
+        return experimentId
 
     # ==== mqtt callback functions
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
-
-        # TODO send startBenchmark command
-
-        payload = {
-            'api_version'        :      OPENBENCHMARK_API_VERSION,
-            'token'              :      123,
-            'date'               :      strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()),
-            'firmware'           :      self.firmware,
-            'testbed'            :      self.testbed,
-            'nodes'              :      self.nodes,
-            'scenario'           :      self.scenario
-        }
-
-        client.publish(
-            topic   = 'openbenchmark/command/startBenchmark'.format(self.testbed),
-            payload = json.dumps(payload),
-        )
-
-        # TODO add timeout and parse response in on_message
-        # TODO start the network
-        # FIXME what to do with DAg root
-
-        # TODO subscribe to all topics with a given experimentId
-        client.subscribe(
-            'openbenchmark/experimentId/{0}/#'.format(self.experimentId))
+        # signal to the other thread that we are connected
+        self.resourceLockEvent.set()
 
     def _on_mqtt_message(self, client, userdata, message):
-        pass
+        if message.topic is self.OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC:
+            self.experimentRequestResponse = message.payload
+        else:
+            pass

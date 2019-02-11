@@ -220,6 +220,8 @@ class OpenVisualizerApp(object):
         self.jrc.close()
         for probe in self.moteProbes:
             probe.close()
+        if self.openBenchmarkAgent:
+            self.openBenchmarkAgent.close()
                 
     def getMoteState(self, moteid):
         '''

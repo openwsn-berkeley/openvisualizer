@@ -18,6 +18,7 @@ import paho.mqtt.client as mqtt
 from time import gmtime, strftime
 
 import threading
+import traceback
 
 log = logging.getLogger('openBenchmarkAgent')
 log.setLevel(logging.INFO)
@@ -40,6 +41,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
     OPENBENCHMARK_RESP_STATUS_TIMEOUT    = 10
     OPENBENCHMARK_MAX_RETRIES            = 3
+    OPENBENCHMARK_PREFIX_CMD_HANDLER_NAME = '_mqtt_handler_'
 
     def __init__(self, mqttBroker, firmware, testbed, portNames, scenario):
         '''
@@ -69,7 +71,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         self.experimentId = None
 
         # sync primitive for mutual exclusion
-        self.resourceLockEvent = threading.Event()
+        self.mqttConnectedEvent = threading.Event()
+        self.experimentRequestResponseEvent = threading.Event()
 
         self.mqttClient = None
         self.experimentRequestResponse = None
@@ -109,14 +112,14 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             self.mqttClient.loop_start()
 
             # block until client is connected, or give up after 60 seconds
-            self.resourceLockEvent.wait(60)
+            self.mqttConnectedEvent.wait(60)
 
             self.experimentId = self._openbenchmark_start_benchmark(self.mqttClient)
 
             assert self.experimentId
 
-            # assuming startBenchmark was successful, subscribe to event bus events
-            log.info("Experiment #{0} successfuly started".format(self.experimentId))
+            # subscribe to all topics on a given experiment ID
+            self._openbenchmark_subscribe(self.mqttClient, self.experimentId)
 
             # subscribe to eventBus events
             eventBusClient.eventBusClient.__init__(
@@ -126,8 +129,10 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 ]
             )
 
+            log.info("Experiment #{0} successfuly started".format(self.experimentId))
+
         except Exception as e:
-            log.info(str(e))
+            log.exception(e)
             log.info("Experiment start failed, giving up.")
             self.close()
 
@@ -172,8 +177,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                     payload=json.dumps(payload),
                 )
 
-                # wait for a while to gather the response
-                time.sleep(self.OPENBENCHMARK_RESP_STATUS_TIMEOUT)
+                # block until response is received, or give up after the timeout
+                self.experimentRequestResponseEvent.wait(self.OPENBENCHMARK_RESP_STATUS_TIMEOUT)
 
                 # assume response is received
                 assert self.experimentRequestResponse, "No response from OpenBenchmark"
@@ -192,8 +197,9 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
             # Retry for all exceptions, including assertions
             except Exception as e:
-                log.info(str(e) + ", retrying...")
+                log.exception(str(e) + ", retrying...")
                 attempt += 1
+                self.experimentRequestResponseEvent.clear()
                 self.experimentRequestResponse = None
                 continue
 
@@ -201,14 +207,77 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
         return experimentId
 
+    def _openbenchmark_subscribe(self, mqttClient, experimentId):
+            mqttClient.subscribe("openbenchmark/experimentId/{0}/command/#".format(experimentId))
+
+    # command handling adapted from github.com/openwsn-berkeley/opentestbed
+    def _execute_command_safely(self, topic, payload):
+        # parse the topic to extract deviceType, deviceId and cmd ([0-9\-]+)
+        try:
+            m = re.search("openbenchmark/experimentId/{0}/command/([a-z]+)".format(self.experimentId), topic)
+            assert m, "Invalid topic, could not parse: '{0}'".format(topic)
+
+            cmd  = m.group(1)
+
+            log.debug("Executing command %s", cmd)
+            returnVal = {}
+
+            payload = payload.decode('utf8')
+            assert payload, "Could not decode payload"
+
+            tokenReceived = json.loads(payload)['token']
+
+            # Executes the handler of a command in a try/except environment so exception doesn't crash server.
+            try:
+                # find the handler
+                cmd_handler = getattr(self, '{0}{1}'.format(self.OPENBENCHMARK_PREFIX_CMD_HANDLER_NAME, cmd), None)
+
+                assert cmd_handler, "Unhandled command, ignoring: {0}".format(cmd)
+
+                # call the handler to return dictionary with handler-specific fields in the response
+                dict = cmd_handler(payload)
+
+            except Exception as err:
+                log.exception("Exception while executing {0}".format(cmd))
+                log.exception(err)
+                log.exception(traceback.format_exc())
+
+                returnVal = {
+                    'success': False,
+                }
+
+            else:
+                returnVal['success'] = True
+
+                # update the returnVal dict with handler-specific fields
+                # handler can set success to False if it wasn't able to fullfill the request
+                returnVal.update(dict)
+
+            finally:
+                # echo the token
+                returnVal['token'] = tokenReceived
+
+                self.mqttClient.publish(
+                    topic='openbenchmark/experimentId/{0}/response/{1}'.format(self.experimentId, cmd),
+                    payload=json.dumps(returnVal),
+                )
+
+        except Exception as e:
+            log.exception(e)
+
     # ==== mqtt callback functions
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         # signal to the other thread that we are connected
-        self.resourceLockEvent.set()
+        self.mqttConnectedEvent.set()
 
     def _on_mqtt_message(self, client, userdata, message):
+        # check if this is the startBenchmark response
         if message.topic is self.OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC:
             self.experimentRequestResponse = message.payload
+            self.experimentRequestResponseEvent.set()
+        # if not, assume this is a command
         else:
-            pass
+            self._execute_command_safely(message.topic, message.payload)
+
+

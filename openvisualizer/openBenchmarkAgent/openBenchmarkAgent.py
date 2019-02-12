@@ -235,7 +235,10 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 assert cmd_handler, "Unhandled command, ignoring: {0}".format(cmd)
 
                 # call the handler to return dictionary with handler-specific fields in the response
-                dict = cmd_handler(payload)
+                # handler return is in format (success, dict), with:
+                #   - success, as a boolean
+                #   - dict, dictionary containing fields to include in the response or None on failure
+                (success, dict) = cmd_handler(payload)
 
             except Exception as err:
                 log.exception("Exception while executing {0}".format(cmd))
@@ -247,11 +250,10 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 }
 
             else:
-                returnVal['success'] = True
-
                 # update the returnVal dict with handler-specific fields
-                # handler can set success to False if it wasn't able to fullfill the request
-                returnVal.update(dict)
+                if success:
+                    returnVal.update(dict)
+                returnVal['success'] = success
 
             finally:
                 # echo the token
@@ -280,4 +282,39 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         else:
             self._execute_command_safely(message.topic, message.payload)
 
+    # ==== mqtt command handlers
 
+    def _mqtt_handler_echo(self, payload):
+        returnVal = {}
+        return (True, returnVal)
+
+    def _mqtt_handler_sendPacket(self, payload):
+        returnVal = {}
+
+        # parse the payload
+        payloadDecoded = json.loads(payload)
+
+        source        = payloadDecoded['source']
+        destination   = payloadDecoded['destination']
+        packetToken   = payloadDecoded['packetToken']
+        packetPayload = payloadDecoded['packetPayload']
+        confirmable   = payloadDecoded['confirmable']
+
+        # TODO lookup corresponding mote probe
+        # TODO generate an eventbus signal to send a command over serial
+
+        return (True, returnVal)
+
+    def _mqtt_handler_configureTransmitPower(self, payload):
+        returnVal = {}
+
+        # parse the payload
+        payloadDecoded = json.loads(payload)
+
+        source        = payloadDecoded['source']
+        power         = payload.Decoded['power']
+
+        # TODO lookup corresponding mote probe
+        # TODO generate an eventbus signal to send a command over serial
+
+        return (True, returnVal)

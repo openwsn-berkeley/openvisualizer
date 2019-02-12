@@ -100,22 +100,22 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                            'scenario            = {0}'.format(self.scenario),
                            'nodes               = {0}'.format(self.nodes)]
                           )))
+        try:
+            # mqtt client
+            self.mqttClient = mqtt.Client('openBenchmarkAgent')
+            self.mqttClient.on_connect = self._on_mqtt_connect
+            self.mqttClient.on_message = self._on_mqtt_message
+            self.mqttClient.connect(self.mqttBroker)
+            self.mqttClient.loop_start()
 
-        # mqtt client
-        self.mqttClient = mqtt.Client('openBenchmarkAgent')
-        self.mqttClient.on_connect = self._on_mqtt_connect
-        self.mqttClient.on_message = self._on_mqtt_message
-        self.mqttClient.connect(self.mqttBroker)
-        self.mqttClient.loop_start()
+            # block until client is connected, or give up after 60 seconds
+            self.resourceLockEvent.wait(60)
 
-        # block until client is connected, or give up after 60 seconds
-        self.resourceLockEvent.wait(60)
+            self.experimentId = self._openbenchmark_start_benchmark(self.mqttClient)
 
-        self.experimentId = self._openbenchmark_start_benchmark(self.mqttClient)
+            assert self.experimentId
 
-        # subscribe to eventBus events only if startBenchmark was successful
-        if self.experimentId:
-
+            # assuming startBenchmark was successful, subscribe to event bus events
             log.info("Experiment #{0} successfuly started".format(self.experimentId))
 
             # subscribe to eventBus events
@@ -125,7 +125,9 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 registrations=[
                 ]
             )
-        else:
+
+        except Exception as e:
+            log.info(str(e))
             log.info("Experiment start failed, giving up.")
             self.close()
 
@@ -138,8 +140,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
     def _openbenchmark_start_benchmark(self, mqttClient):
         '''
-        :param mqttClient:
-            paho MQTT client object to use to issue startBenchmark request
+        :param mqttClient: paho MQTT client object to use to issue startBenchmark request
         :returns: Experiment identifier assigned by OpenBenchmark on success, None on failure.
         '''
 

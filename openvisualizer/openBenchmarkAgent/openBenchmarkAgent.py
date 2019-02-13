@@ -71,12 +71,13 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         # state
         self.experimentId = None
 
-        # sync primitive for mutual exclusion
+        # primitive for mutual exclusion
         self.mqttConnectedEvent = threading.Event()
         self.experimentRequestResponseEvent = threading.Event()
 
         self.mqttClient = None
         self.experimentRequestResponse = None
+
         # dict with keys being eui64, and value corresponding testbed host identifier
         self.nodes = {}
 
@@ -118,7 +119,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
             self.experimentId = self._openbenchmark_start_benchmark(self.mqttClient)
 
-            assert self.experimentId
+            if not self.experimentId:
+                raise ValueError("Unable to start an experiment with OpenBenchmark")
 
             # subscribe to all topics on a given experiment ID
             self._openbenchmark_subscribe(self.mqttClient, self.experimentId)
@@ -139,8 +141,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             log.info("Experiment #{0} successfuly started".format(self.experimentId))
 
         except Exception as e:
-            log.exception(e)
-            log.info("Experiment start failed, giving up.")
+            log.warning(e)
             self.close()
 
     # ======================== public ==========================================
@@ -190,26 +191,33 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 self.experimentRequestResponseEvent.wait(self.OPENBENCHMARK_RESP_STATUS_TIMEOUT)
 
                 # assume response is received
-                assert self.experimentRequestResponse, "No response from OpenBenchmark"
+                if not self.experimentRequestResponse:
+                    raise ValueError("No response from OpenBenchmark")
 
                 # parse it
                 payload = json.loads(self.experimentRequestResponse)
                 tokenReceived = payload['token']
                 success = payload['success']
 
-                # assume tokens match
-                assert tokenGenerated is tokenReceived, "Token does not match"
-                # assume success
-                assert success is True, "Fail indicated"
+                # check token match
+                if tokenGenerated is not tokenReceived:
+                    raise ValueError("Token does not match the one sent in the request")
+                # success?
+                if success is not True:
+                    raise ValueError("Fail indicated")
 
                 experimentId = payload['experimentId']
 
-            # Retry for all exceptions, including assertions
-            except Exception as e:
-                log.exception(str(e) + ", retrying...")
+            # Retry for all ValueErrors
+            except ValueError as valErr:
+                log.info(str(valErr) + ", retrying...")
                 attempt += 1
                 self.experimentRequestResponseEvent.clear()
                 continue
+            # give up
+            except Exception as e:
+                log.warning(e)
+                break
 
         mqttClient.unsubscribe(self.OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC)
 

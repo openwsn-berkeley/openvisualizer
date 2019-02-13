@@ -657,7 +657,7 @@ class moteState(eventBusClient.eventBusClient):
     COMMAND_SET_ECHO_REPLY_STATUS = ['echoReply',     18, 1]
     COMMAND_SET_JOIN_KEY          = ['joinKey',       19,16]
     COMMAND_SET_TX_POWER          = ['txPower',       20, 1]
-    COMMAND_SEND_PACKET           = ['sendPacket',    21, 15] # TODO exact format to be determined
+    COMMAND_SEND_PACKET           = ['sendPacket',    21, 5] # length is in the number of params in the tuple
     COMMAND_ALL                   = [
         COMMAND_SET_EBPERIOD ,
         COMMAND_SET_CHANNEL,

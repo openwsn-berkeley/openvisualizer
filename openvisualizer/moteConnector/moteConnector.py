@@ -294,6 +294,39 @@ class moteConnector(eventBusClient.eventBusClient):
             except:
                 print "============================================="
                 print "Wrong joinKey format. Input 16-byte long hex string. e.g. cafebeefcafebeefcafebeefcafebeef"
+        elif data[0] == 'sendPacket':
+            try:
+                if len(data[1]) != commandLen:
+                    raise ValueError
+                (destination, con, packetsInBurst, packetToken, packetPayloadLen) = data[1]
+
+                # construct command payload as byte-list:
+                # dest_eui64 (8B) || con (1B) || packetsInBurst (1B) || packetToken (5B) || packetPayloadLen (1B)
+                payload = []
+                payload += u.hex2buf(destination, separator='-')
+                payload += [int(con)]
+                payload += [int(packetsInBurst)]
+                payload += packetToken
+                payload += [int(packetPayloadLen)]
+
+                if len(payload) != 16:
+                    raise ValueError("Invalid sendPacket payload, expecting 16 bytes")
+
+                dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,
+                    commandId,
+                    commandLen,
+                ]
+                dataToSend += payload
+            except:
+                debug = "=============================================\n"
+                debug += "Wrong sendPacket command format.\n"
+                debug += "Supported: ( destination, confirmable, packetsInBurst, packetToken, packetPayloadLen )\n"
+                debug += "destination: dash-separated EUI-64 string, e.g. AA-BB-CC-DD-EE-FF-00-11\n"
+                debug += "confirmable: boolean\n"
+                debug += "packetsInBurst: integer\n"
+                debug += "packetToken: integer array\n"
+                debug += "packetPayloadLen: integer\n"
+                log.warning(debug)
         else:
             parameter = int(data[1])
             if parameter <= 0xffff:
@@ -314,7 +347,6 @@ class moteConnector(eventBusClient.eventBusClient):
         dataToSend[2] = len(dataToSend)-3
         outcome       = True
         return [outcome,dataToSend]
-
 
     def _bytesToMesh_handler(self,sender,signal,data):
         assert type(data)==tuple

@@ -83,11 +83,11 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         # OV is running in simulation mode
         if self.testbed is 'simulation':
             for port in portNames:
-                self.nodes += ('simulation', port)
+                self.nodes[port] = 'simulation'
         # Motes are attached locally on the physical port
         elif self.testbed is 'local':
             for port in portNames:
-                self.nodes += ('local', port)
+                self.nodes[port] = 'local'
         # General case, motes are in testbed connected over OpenTestbed software
         else:
             for port in portNames:
@@ -179,6 +179,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
             try:
 
+                self.experimentRequestResponse = None
+
                 mqttClient.publish(
                     topic=self.OPENBENCHMARK_STARTBENCHMARK_REQUEST_TOPIC,
                     payload=json.dumps(payload),
@@ -207,7 +209,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 log.exception(str(e) + ", retrying...")
                 attempt += 1
                 self.experimentRequestResponseEvent.clear()
-                self.experimentRequestResponse = None
                 continue
 
         mqttClient.unsubscribe(self.OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC)
@@ -312,7 +313,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         confirmable    = payloadDecoded['confirmable']
 
         # lookup corresponding mote port
-        destPort = self.nodes[destination]
+        destPort = self.nodes[source]
         params = (destination, confirmable, packetsInBurst, packetToken, len(packetPayload))
         action = [moteState.moteState.SET_COMMAND, moteState.moteState.COMMAND_SEND_PACKET, params]
         # generate an eventbus signal to send a command over serial

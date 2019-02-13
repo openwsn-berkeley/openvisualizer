@@ -656,6 +656,8 @@ class moteState(eventBusClient.eventBusClient):
     COMMAND_SET_UINJECTPERIOD     = ['uinjectPeriod', 17, 1]
     COMMAND_SET_ECHO_REPLY_STATUS = ['echoReply',     18, 1]
     COMMAND_SET_JOIN_KEY          = ['joinKey',       19,16]
+    COMMAND_SET_TX_POWER          = ['txPower',       20, 1]
+    COMMAND_SEND_PACKET           = ['sendPacket',    21, 15] # TODO exact format to be determined
     COMMAND_ALL                   = [
         COMMAND_SET_EBPERIOD ,
         COMMAND_SET_CHANNEL,
@@ -677,6 +679,8 @@ class moteState(eventBusClient.eventBusClient):
         COMMAND_SET_UINJECTPERIOD,
         COMMAND_SET_ECHO_REPLY_STATUS,
         COMMAND_SET_JOIN_KEY,
+        COMMAND_SET_TX_POWER,
+        COMMAND_SEND_PACKET,
     ]
 
     TRIGGER_ALL         = [

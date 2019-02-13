@@ -25,6 +25,7 @@ log.setLevel(logging.INFO)
 log.addHandler(logging.NullHandler())
 
 from openvisualizer.eventBus      import eventBusClient
+from openvisualizer.moteState     import moteState
 
 # a special logger that writes to a separate file: each log line is a JSON string corresponding to network events
 # with information sufficient to calculate network-wide KPIs
@@ -76,7 +77,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
         self.mqttClient = None
         self.experimentRequestResponse = None
-        self.nodes = []
+        # dict with keys being eui64, and value corresponding testbed host identifier
+        self.nodes = {}
 
         # OV is running in simulation mode
         if self.testbed is 'simulation':
@@ -93,7 +95,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 if m:
                     # (testbed_host, eui64)
                     assert m.group(1) == self.testbed
-                    self.nodes += (m.group(2), m.group(3))
+                    self.nodes[m.group(3)] = m.group(2)
 
         log.info('Initializing OpenBenchmark with options:\n\t{0}'.format(
             '\n    '.join(['mqttBroker          = {0}'.format(self.mqttBroker),
@@ -121,11 +123,16 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             # subscribe to all topics on a given experiment ID
             self._openbenchmark_subscribe(self.mqttClient, self.experimentId)
 
-            # subscribe to eventBus events
+            # subscribe to eventBus performance-related events
             eventBusClient.eventBusClient.__init__(
                 self,
                 name='openBenchmarkAgent',
                 registrations=[
+                    {
+                        'sender': self.WILDCARD,
+                        'signal': 'performanceData',
+                        'callback': self._performance_data_handler,
+                    },
                 ]
             )
 
@@ -267,7 +274,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         except Exception as e:
             log.exception(e)
 
-    # ==== mqtt callback functions
+    # ==== mqtt and event bus callback functions
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         # signal to the other thread that we are connected
@@ -282,6 +289,9 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         else:
             self._execute_command_safely(message.topic, message.payload)
 
+    def _performance_data_handler(self):
+        pass
+
     # ==== mqtt command handlers
 
     def _mqtt_handler_echo(self, payload):
@@ -294,14 +304,27 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         # parse the payload
         payloadDecoded = json.loads(payload)
 
-        source        = payloadDecoded['source']
-        destination   = payloadDecoded['destination']
-        packetToken   = payloadDecoded['packetToken']
-        packetPayload = payloadDecoded['packetPayload']
-        confirmable   = payloadDecoded['confirmable']
+        source         = payloadDecoded['source']
+        destination    = payloadDecoded['destination']
+        packetsInBurst = payloadDecoded['packetsInBurst']
+        packetToken    = payloadDecoded['packetToken']
+        packetPayload  = payloadDecoded['packetPayload']
+        confirmable    = payloadDecoded['confirmable']
 
-        # TODO lookup corresponding mote probe
-        # TODO generate an eventbus signal to send a command over serial
+        # lookup corresponding mote port
+        destPort = self.nodes[destination]
+        params = (destination, confirmable, packetsInBurst, packetToken, len(packetPayload))
+        action = [moteState.moteState.SET_COMMAND, moteState.moteState.COMMAND_SEND_PACKET, params]
+        # generate an eventbus signal to send a command over serial
+
+        # dispatch
+        self.dispatch(
+            signal        = 'cmdToMote',
+            data          = {
+                                'serialPort':    destPort,
+                                'action':        action,
+                            },
+        )
 
         return (True, returnVal)
 
@@ -314,7 +337,41 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         source        = payloadDecoded['source']
         power         = payload.Decoded['power']
 
-        # TODO lookup corresponding mote probe
-        # TODO generate an eventbus signal to send a command over serial
+        # lookup corresponding mote port
+        destPort = self.nodes[source]
+        action = [moteState.moteState.SET_COMMAND, moteState.moteState.COMMAND_SET_TX_POWER, power]
+
+        # generate an eventbus signal to send a command over serial
+
+        # dispatch
+        self.dispatch(
+            signal        = 'cmdToMote',
+            data          = {
+                                'serialPort':    destPort,
+                                'action':        action,
+                            },
+        )
+
+        return (True, returnVal)
+
+    def _mqtt_handler_triggerNetworkFormation(self, payload):
+        returnVal = {}
+
+        # parse the payload
+        payloadDecoded = json.loads(payload)
+
+        source        = payloadDecoded['source']
+
+        # lookup corresponding mote port
+        destPort = self.nodes[source]
+
+        # generate an eventbus signal to send a command over serial
+        self.dispatch(
+            signal='cmdToMote',
+            data={
+                'serialPort': destPort,
+                'action': moteState.moteState.TRIGGER_DAGROOT,
+            },
+        )
 
         return (True, returnVal)

@@ -296,8 +296,7 @@ class moteConnector(eventBusClient.eventBusClient):
                 print "Wrong joinKey format. Input 16-byte long hex string. e.g. cafebeefcafebeefcafebeefcafebeef"
         elif data[0] == 'sendPacket':
             try:
-                if len(data[1]) != commandLen:
-                    raise ValueError
+
                 (destination, con, packetsInBurst, packetToken, packetPayloadLen) = data[1]
 
                 # construct command payload as byte-list:
@@ -309,7 +308,7 @@ class moteConnector(eventBusClient.eventBusClient):
                 payload += packetToken
                 payload += [int(packetPayloadLen)]
 
-                if len(payload) != 16:
+                if len(payload) != commandLen:
                     raise ValueError("Invalid sendPacket payload, expecting 16 bytes")
 
                 dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,

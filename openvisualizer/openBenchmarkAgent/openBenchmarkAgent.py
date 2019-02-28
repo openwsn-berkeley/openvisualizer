@@ -314,16 +314,28 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         # parse the payload
         payloadDecoded = json.loads(payload)
 
-        source         = payloadDecoded['source']
-        destination    = payloadDecoded['destination']
-        packetsInBurst = payloadDecoded['packetsInBurst']
-        packetToken    = payloadDecoded['packetToken']
-        packetPayload  = payloadDecoded['packetPayload']
-        confirmable    = payloadDecoded['confirmable']
+        source            = payloadDecoded['source']
+        destination       = payloadDecoded['destination']
+        packetsInBurst    = payloadDecoded['packetsInBurst']
+        packetToken       = payloadDecoded['packetToken']
+        packetPayloadLen  = payloadDecoded['packetPayloadLen']
+        confirmable       = payloadDecoded['confirmable']
 
         # lookup corresponding mote port
         destPort = self.nodes[source]
-        params = (destination, confirmable, packetsInBurst, packetToken, len(packetPayload))
+
+        # construct command payload as byte-list:
+        # dest_eui64 (8B) || con (1B) || packetsInBurst (1B) || packetToken (5B) || packetPayloadLen (1B)
+        params = []
+        params += u.hex2buf(destination, separator='-')
+        params += [int(confirmable)]
+        params += [int(packetsInBurst)]
+        params += packetToken
+        params += [packetPayloadLen]
+
+        if len(params) != 16:
+            return False, returnVal
+
         action = [moteState.moteState.SET_COMMAND, moteState.moteState.COMMAND_SEND_PACKET, params]
         # generate an eventbus signal to send a command over serial
 
@@ -336,7 +348,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                             },
         )
 
-        return (True, returnVal)
+        return True, returnVal
 
     def _mqtt_handler_configureTransmitPower(self, payload):
         returnVal = {}

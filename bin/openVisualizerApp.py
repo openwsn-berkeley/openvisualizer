@@ -18,6 +18,7 @@ from openvisualizer.OVtracer import OVtracer
 log = logging.getLogger('openVisualizerApp')
 
 from openvisualizer.eventBus        import eventBusMonitor
+from openvisualizer.eventLogger     import eventLogger
 from openvisualizer.moteProbe       import moteProbe
 from openvisualizer.moteConnector   import moteConnector
 from openvisualizer.moteState       import moteState
@@ -118,6 +119,10 @@ class OpenVisualizerApp(object):
         # create a moteState for each moteConnector
         self.moteStates           = [
             moteState.moteState(mc) for mc in self.moteConnectors
+        ]
+        
+        self.eventLoggers         = [
+            eventLogger.eventLogger(ms) for ms in self.moteStates
         ]
 
         self.remoteConnectorServer = remoteConnectorServer.remoteConnectorServer()

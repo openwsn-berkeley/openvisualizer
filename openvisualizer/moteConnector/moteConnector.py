@@ -300,17 +300,6 @@ class moteConnector(eventBusClient.eventBusClient):
         elif commandName == 'sendPacket':
             try:
 
-                (destination, con, packetsInBurst, packetToken, packetPayloadLen) = data[1]
-
-                # construct command payload as byte-list:
-                # dest_eui64 (8B) || con (1B) || packetsInBurst (1B) || packetToken (5B) || packetPayloadLen (1B)
-                payload = []
-                payload += u.hex2buf(destination, separator='-')
-                payload += [int(con)]
-                payload += [int(packetsInBurst)]
-                payload += packetToken
-                payload += [int(packetPayloadLen)]
-
                 if len(parameter) != commandLen:
                     raise ValueError("Invalid sendPacket payload, expecting {0} bytes".format(commandLen))
 
@@ -318,7 +307,7 @@ class moteConnector(eventBusClient.eventBusClient):
                     commandId,
                     commandLen,
                 ]
-                dataToSend += payload
+                dataToSend += parameter
             except:
                 debug = "=============================================\n"
                 debug += "Wrong sendPacket command format.\n"

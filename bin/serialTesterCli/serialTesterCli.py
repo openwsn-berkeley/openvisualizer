@@ -123,13 +123,20 @@ def main():
     if len(sys.argv)>1:
         serialportname = sys.argv[1]
     else:
-        serialportname = raw_input('Serial port to connect to: ')
-    
-    serialport = (serialportname, moteProbe.BAUDRATE_LOCAL_BOARD)
-    
-    # create a moteProbe
-    moteProbe_handler = moteProbe.moteProbe(serialport)
-    
+        test_mode = raw_input('Serialport or OpenTestbed? (0: serialport, 1: opentestbed)')
+        if test_mode == '0':
+            serialportname = raw_input('Serial port to connect to (e.g. COM3, /dev/ttyUSB1): ')
+            serialport = (serialportname, moteProbe.BAUDRATE_LOCAL_BOARD)
+            # create a moteProbe from serial port
+            moteProbe_handler = moteProbe.moteProbe(serialport)
+        elif test_mode == '1':
+            testbedmote = raw_input('testbed mote to connect to (e.g. 00-12-4b-00-14-b5-b6-0b): ')
+            # create a moteProbe from opentestbed
+            moteProbe_handler = moteProbe.moteProbe(testbedmote_eui64=testbedmote)
+        else:
+            raw_input("wrong input! Press Enter to quit..")
+            return
+        
     # create a SerialTester to attached to the moteProbe
     moteConnector_handler = SerialTester(moteProbe_handler)
     

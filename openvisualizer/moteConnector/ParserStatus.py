@@ -254,6 +254,72 @@ class ParserStatus(Parser.Parser):
                                         'joinedAsn_0_1',                   # H
                                     ],
                                 )
+        self._addFieldsParser   (
+                                    3,
+                                    12,
+                                    'BenchmarkPacketSent',
+                                    '<BBBBBBBBBBBBBBBBBBB',
+                                    [
+                                        'timestamp_4',                     # B
+                                        'timestamp_3',                     # B
+                                        'timestamp_2',                     # B
+                                        'timestamp_1',                     # B
+                                        'timestamp_0',                     # B
+                                        'token_4',                         # B
+                                        'token_3',                         # B
+                                        'token_2',                         # B
+                                        'token_1',                         # B
+                                        'token_0',                         # B
+                                        'dest_7',                          # B
+                                        'dest_6',                          # B
+                                        'dest_5',                          # B
+                                        'dest_4',                          # B
+                                        'dest_3',                          # B
+                                        'dest_2',                          # B
+                                        'dest_1',                          # B
+                                        'dest_0',                          # B
+                                        'hopLimit',                        # B
+                                    ],
+                                )
+        self._addFieldsParser   (
+                                    3,
+                                    13,
+                                    'BenchmarkPacketReceived',
+                                    '<BBBBBBBBBBBBBBBBBBB',
+                                    [
+                                        'timestamp_4',                     # B
+                                        'timestamp_3',                     # B
+                                        'timestamp_2',                     # B
+                                        'timestamp_1',                     # B
+                                        'timestamp_0',                     # B
+                                        'token_4',                         # B
+                                        'token_3',                         # B
+                                        'token_2',                         # B
+                                        'token_1',                         # B
+                                        'token_0',                         # B
+                                        'src_7',                          # B
+                                        'src_6',                          # B
+                                        'src_5',                          # B
+                                        'src_4',                          # B
+                                        'src_3',                          # B
+                                        'src_2',                          # B
+                                        'src_1',                          # B
+                                        'src_0',                          # B
+                                        'hopLimit',                        # B
+                                    ],
+                                )
+
+        self._addFieldsParser   (
+                                    3,
+                                    14,
+                                    'BandwidthAssigned',
+                                    '<BHH',
+                                    [
+                                        'joinedAsn_4',                     # B
+                                        'joinedAsn_2_3',                   # H
+                                        'joinedAsn_0_1',                   # H
+                                    ],
+                                )
     #======================== public ==========================================
     
     def parseInput(self,input):

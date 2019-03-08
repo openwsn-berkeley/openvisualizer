@@ -22,6 +22,7 @@ from openvisualizer.eventLogger     import eventLogger
 from openvisualizer.moteProbe       import moteProbe
 from openvisualizer.moteConnector   import moteConnector
 from openvisualizer.moteState       import moteState
+from openvisualizer.coapServer      import coapServer
 from openvisualizer.RPL             import RPL
 from openvisualizer.JRC             import JRC
 from openvisualizer.openBenchmarkAgent import openBenchmarkAgent
@@ -58,8 +59,9 @@ class OpenVisualizerApp(object):
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
         self.openLbr              = openLbr.OpenLbr(usePageZero)
+        self.coapServer           = coapServer.coapServer()
         self.rpl                  = RPL.RPL()
-        self.jrc                  = JRC.JRC()
+        self.jrc                  = JRC.JRC(self.coapServer)
         self.topology             = topology.topology()
         self.openBenchmarkAgent   = None
         self.DAGrootList          = []
@@ -195,6 +197,7 @@ class OpenVisualizerApp(object):
         if self.benchmark:
             self.openBenchmarkAgent = openBenchmarkAgent.OpenBenchmarkAgent(
                 mqttBroker=self.mqtt_broker_address,
+                coapServer=self.coapServer,
                 firmware='openwsn',
                 testbed=self.testEnvironment,
                 portNames=[mote.getPortName() for mote in self.moteProbes],

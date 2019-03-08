@@ -53,7 +53,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
     OPENBENCHMARK_MAX_RETRIES            = 3
     OPENBENCHMARK_PREFIX_CMD_HANDLER_NAME = '_mqtt_handler_'
 
-    def __init__(self, mqttBroker, firmware, testbed, portNames, scenario):
+    def __init__(self, coapServer, mqttBroker, firmware, testbed, portNames, scenario):
         '''
         :param mqttBroker:
             Address of the MQTT broker where to connect with OpenBenchmark
@@ -71,6 +71,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         '''
 
         # store params
+        self.coapServer = coapServer
         self.mqttBroker = mqttBroker
         self.firmware = firmware
         self.testbed = testbed
@@ -86,8 +87,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
         self.mqttClient = None
         self.experimentRequestResponse = None
-
-        self.coapServer = None
 
         # dict with keys being eui64, and value corresponding testbed host identifier
         self.nodes = {}
@@ -135,7 +134,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
             # everything is ok, start a coap server
             coapResource = openbenchmarkResource()
-            self.coapServer = coapServer(coapResource)
+            self.coapServer.coapServer.addResource(coapResource)
 
             # subscribe to all topics on a given experiment ID
             self._openbenchmark_subscribe(self.mqttClient, self.experimentId)
@@ -166,6 +165,44 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             self.mqttClient.loop_stop()
         if self.coapServer:
             self.coapServer.close()
+
+    def triggerSendPacket(self, destination, acknowledged, packetsInBurst, packetToken, packetPayloadLen):
+
+        destinationIPv6 = openvisualizer.openvisualizer_utils.formatIPv6Addr((self.networkPrefix + destination))
+        options = []
+
+        if not acknowledged:
+           options += [o.NoResponse([d.DFLT_OPTION_NORESPONSE_SUPRESS_ALL])]
+
+        with self.clientLock:
+            for packetCounter in range (0, packetsInBurst):
+                try:
+                    # construct the payload of the POST request
+                    payload = []
+                    payload += [packetCounter]
+                    payload += [packetToken[1:]]
+                    payload += [0] * packetPayloadLen
+
+                    # the call to POST() is blocking unless no response is expected
+                    p = self.coapServer.POST('coap://[{0}:{1}]/b'.format(destinationIPv6, d.DEFAULT_UDP_PORT),
+                               confirmable=False,
+                               options=options,
+                               payload = payload)
+
+                    # TODO log if a response is received
+                except e.coapNoResponseExpected:
+                    pass
+
+    def encodeSendPacketPayload(self, destination, confirmable, packetsInBurst, packetToken, packetPayloadLen):
+        # construct command payload as byte-list:
+        # dest_eui64 (8B) || con (1B) || packetsInBurst (1B) || packetToken (5B) || packetPayloadLen (1B)
+        buf = []
+        buf += u.hex2buf(destination, separator='-')
+        buf += [int(confirmable)]
+        buf += [int(packetsInBurst)]
+        buf += packetToken
+        buf += [packetPayloadLen]
+        return buf
 
     # ======================== private =========================================
 
@@ -341,7 +378,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         acknowledged         = payloadDecoded['confirmable']
 
         if self.coapServer.getDagRootEui64() == source: # check if command is for the DAG root whose APP code is implemented here
-            self.coapServer.triggerSendPacket(destination, acknowledged, packetsInBurst, packetToken, packetPayloadLen)
+            self.triggerSendPacket(destination, acknowledged, packetsInBurst, packetToken, packetPayloadLen)
 
         else: # command is for one of the motes in the mesh, send it over the serial
 
@@ -421,196 +458,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         )
 
         return (True, returnVal)
-
-
-# ======================== CoAP server ======================================
-class coapServer(eventBusClient.eventBusClient):
-
-    OPENBENCHMARK_COAP_PORT = 5684
-
-    def __init__(self, coapResource):
-        # log
-        log.info("create instance")
-
-        self.coapResource = coapResource
-
-        # run CoAP server in testing mode
-        # this mode does not open a real socket, rather uses PyDispatcher for sending/receiving messages
-        # We interface this mode with OpenVisualizer to run JRC co-located with the DAG root
-        self.coapServer = coap.coap(udpPort=self.OPENBENCHMARK_COAP_PORT, testing=True)
-        self.coapServer.addResource(coapResource)
-
-        self.coapEphemeralClient = None
-
-        self.dagRootEui64 = None
-
-        # store params
-
-        # initialize parent class
-        eventBusClient.eventBusClient.__init__(
-            self,
-            name='OpenBenchmark-coapServer',
-            registrations=[
-                {
-                    'sender': self.WILDCARD,
-                    'signal': 'registerDagRoot',
-                    'callback': self._registerDagRoot_notif
-                },
-                {
-                    'sender': self.WILDCARD,
-                    'signal': 'unregisterDagRoot',
-                    'callback': self._unregisterDagRoot_notif
-                },
-            ]
-        )
-
-    # ======================== public ==========================================
-
-    def close(self):
-        # nothing to do
-        pass
-
-    def getDagRootEui64(self):
-        return self.dagRootEui64
-
-    def getDagRootIPv6(self):
-        ipv6buf = self.networkPrefix + self.dagRootEui64
-        return openvisualizer.openvisualizer_utils.formatIPv6Addr(ipv6buf)
-
-    def triggerSendPacket(self, destination, acknowledged, packetsInBurst, packetToken, packetPayloadLen):
-
-        destinationIPv6 = openvisualizer.openvisualizer_utils.formatIPv6Addr((self.networkPrefix + destination))
-        options = []
-
-        if not acknowledged:
-           options += [o.NoResponse([d.DFLT_OPTION_NORESPONSE_SUPRESS_ALL])]
-
-        with self.clientLock:
-            for packetCounter in range (0, packetsInBurst):
-                try:
-                    # construct the payload of the POST request
-                    payload = []
-                    payload += [packetCounter]
-                    payload += [packetToken[1:]]
-                    payload += [0] * packetPayloadLen
-
-                    # the call to POST() is blocking unless no response is expected
-                    p = self.coapServer.POST('coap://[{0}:{1}]/b'.format(destinationIPv6, d.DEFAULT_UDP_PORT),
-                               confirmable=False,
-                               options=options,
-                               payload = payload)
-
-                    # TODO log if a response is received
-                except e.coapNoResponseExpected:
-                    pass
-
-    def encodeSendPacketPayload(self, destination, confirmable, packetsInBurst, packetToken, packetPayloadLen):
-        # construct command payload as byte-list:
-        # dest_eui64 (8B) || con (1B) || packetsInBurst (1B) || packetToken (5B) || packetPayloadLen (1B)
-        buf = []
-        buf += u.hex2buf(destination, separator='-')
-        buf += [int(confirmable)]
-        buf += [int(packetsInBurst)]
-        buf += packetToken
-        buf += [packetPayloadLen]
-        return buf
-
-    # ======================== private =========================================
-
-    # ==== handle EventBus notifications
-
-    def _registerDagRoot_notif(self, sender, signal, data):
-        # register for the global address of the DAG root
-        self.register(
-            sender=self.WILDCARD,
-            signal=(
-                tuple(data['prefix'] + data['host']),
-                self.PROTO_UDP,
-                self.OPENBENCHMARK_COAP_PORT
-            ),
-            callback=self._receiveFromMesh,
-        )
-
-        self.networkPrefix = data['prefix']
-        self.dagRootEui64 = data['host']
-
-    def _unregisterDagRoot_notif(self, sender, signal, data):
-        # unregister global address
-        self.unregister(
-            sender=self.WILDCARD,
-            signal=(
-                tuple(data['prefix'] + data['host']),
-                self.PROTO_UDP,
-                self.OPENBENCHMARK_COAP_PORT
-            ),
-            callback=self._receiveFromMesh,
-        )
-        self.networkPrefix = None
-        self.dagRootEui64 = None
-
-    def _receiveFromMesh(self, sender, signal, data):
-        '''
-        Receive packet from the mesh destined for the CoAP server.
-        Forwards the packet to the virtual CoAP server running in test mode (PyDispatcher).
-        '''
-        sender = openvisualizer.openvisualizer_utils.formatIPv6Addr(data[0])
-        # FIXME pass source port within the signal and open coap client at this port
-        self.coapEphemeralClient = coap.coap(ipAddress=sender, udpPort=d.DEFAULT_UDP_PORT, testing=True, receiveCallback=self._receiveFromCoAP)
-        self.coapEphemeralClient.socketUdp.sendUdp(destIp='', destPort=self.OPENBENCHMARK_COAP_PORT, msg=data[1]) # low level forward of the CoAP message
-        return True
-
-    def _receiveFromCoAP(self, timestamp, sender, data):
-        '''
-        Receive CoAP response and forward it to the mesh network.
-        Appends UDP and IPv6 headers to the CoAP message and forwards it on the Eventbus towards the mesh.
-        '''
-
-        # FIXME potential memory leak when there the request contains a No Response option
-        self.coapEphemeralClient.close()
-
-        # UDP
-        udplen = len(data) + 8
-
-        udp = u.int2buf(sender[1], 2)  # src port
-        udp += u.int2buf(self.coapEphemeralClient.udpPort, 2) # dest port
-        udp += [udplen >> 8, udplen & 0xff]  # length
-        udp += [0x00, 0x00]  # checksum
-        udp += data
-
-        # destination address of the packet is CoAP client's IPv6 address (address of the mote)
-        dstIpv6Address = u.ipv6AddrString2Bytes(self.coapEphemeralClient.ipAddress)
-        assert len(dstIpv6Address)==16
-        # source address of the packet is DAG root's IPV6 address
-        # use the same prefix (link-local or global) as in the destination address
-        srcIpv6Address = dstIpv6Address[:8]
-        srcIpv6Address += self.dagRootEui64
-        assert len(srcIpv6Address)==16
-
-        # CRC See https://tools.ietf.org/html/rfc2460.
-
-        udp[6:8] = openvisualizer.openvisualizer_utils.calculatePseudoHeaderCRC(
-            src=srcIpv6Address,
-            dst=dstIpv6Address,
-            length=[0x00, 0x00] + udp[4:6],
-            nh=[0x00, 0x00, 0x00, 17], # UDP as next header
-            payload=udp,
-        )
-
-        # IPv6
-        ip = [6 << 4]  # v6 + traffic class (upper nybble)
-        ip += [0x00, 0x00, 0x00]  # traffic class (lower nibble) + flow label
-        ip += udp[4:6]  # payload length
-        ip += [17]  # next header (protocol); UDP=17
-        ip += [64]  # hop limit (pick a safe value)
-        ip += srcIpv6Address  # source
-        ip += dstIpv6Address  # destination
-        ip += udp
-
-        # announce network prefix
-        self.dispatch(
-            signal        = 'v6ToMesh',
-            data          = ip
-        )
 
 # ==================== Implementation of CoAP openbenchmark resource =====================
 class openbenchmarkResource(coapResource.coapResource):

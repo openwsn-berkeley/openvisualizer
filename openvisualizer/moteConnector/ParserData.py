@@ -18,7 +18,7 @@ import Parser
 class ParserData(Parser.Parser):
     
     HEADER_LENGTH  = 2
-    MSPERSLOT      = 15 #ms per slot.
+    MSPERSLOT      = 20 #ms per slot.
     
     IPHC_SAM       = 4
     IPHC_DAM       = 0
@@ -86,15 +86,9 @@ class ParserData(Parser.Parser):
                 diff     = self._asndiference(aux,asnbytes)   # calculate difference 
                 timeinus = diff*self.MSPERSLOT                # compute time in ms
                 SN       = input[len(input)-9:len(input)-7]   # SN sent by mote
-                if timeinus<0xFFFF:
-                    # print "source {0}, dest {1}, timeinus {2}ms, SN {3}".format(source, dest,timeinus,SN)
-                    pass
-                else:
-                    # this usually happens when the serial port framing is not correct and more than one message is parsed at the same time. this will be solved with HDLC framing.
-                    print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
-                    print ",".join(hex(c) for c in input)
-                    log.warning("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
-                    pass
+                l3_source= "{0:x}{1:x}".format(input[len(input)-16], input[len(input)-15]) # mote id
+
+                pass
                 # in case we want to send the computed time to internet..
                 # computed=struct.pack('<H', timeinus)#to be appended to the pkt
                 # for x in computed:

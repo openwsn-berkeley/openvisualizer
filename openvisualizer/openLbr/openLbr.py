@@ -424,7 +424,16 @@ class OpenLbr(eventBusClient.eventBusClient):
             # assemble the packet and dispatch it again as nobody answer
             ipv6pkt = self.reassemble_ipv6_packet(ipv6dic)
 
-            if self.networkPrefix == ipv6dic['dst_addr'][:8]:
+            # check if the destination is reachable or not
+
+            route = self._getSourceRoute(ipv6dic['dst_addr'][8:])
+
+            isReachable = True
+            if len(route)<2:
+                # no route to the destination
+                isReachable = False
+
+            if self.networkPrefix == ipv6dic['dst_addr'][:8] and isReachable:
                 # dispatch to mesh
                 self.dispatch('v6ToMesh', ipv6pkt)
             else:

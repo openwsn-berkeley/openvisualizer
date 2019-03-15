@@ -33,12 +33,18 @@ class eventLogger(threading.Thread):
     def run(self):
         
         while True:
+            # by default, don't write to local files
+            pass
+            
+            # to record mote status to file, uncomment the following code
+            '''
             with open(self.logfile,'a') as f:
                 for key, value in self.moteState.state.items():
                     self.output[key] = value._toDict()["data"]
                     for item in self.output[key]:
                         f.write(str(item)+'\n')
                     # json_output = json.dumps(self.output)
+            '''
                 
             time.sleep(2)
         

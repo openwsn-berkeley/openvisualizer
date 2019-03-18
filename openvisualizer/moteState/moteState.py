@@ -159,25 +159,11 @@ class StateJoined(StateElem):
                                    notif.joinedAsn_2_3,
                                    notif.joinedAsn_4)
 
-        try:
-            if self.data[0]['joinedAsn'] != receivedJoinAsn and receivedJoinAsn.asn != [0x00, 0x00, 0x00, 0x00, 0x00]:
+        if self.data[0]['joinedAsn'] != receivedJoinAsn and receivedJoinAsn.asn != [0x00, 0x00, 0x00, 0x00, 0x00]:
 
-                self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1,
-                                       notif.joinedAsn_2_3,
-                                       notif.joinedAsn_4)
-
-                networkEventLogger.info(
-                    json.dumps(
-                        {
-                            "asn" : str(self.data[0]['joinedAsn']),
-                            "_type": "secjoin.joined",
-                            "_mote_info": moteInfo,
-                            "_timestamp": self.meta[0]['lastUpdated'],
-                        }
-                    )
-                )
-        except:
-            pass
+            self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1,
+                                   notif.joinedAsn_2_3,
+                                   notif.joinedAsn_4)
 
 class StateMacStats(StateElem):
     
@@ -196,20 +182,6 @@ class StateMacStats(StateElem):
             self.data[0]['dutyCycle']       = '{0:.02f}%'.format(dutyCycle)
         else:
             self.data[0]['dutyCycle']       = '?'
-
-        try:
-            networkEventLogger.info(
-                json.dumps(
-                    {
-                        "dutycycle": str(self.data[0]['dutyCycle']),
-                        "_type": "tsch.dutycycle",
-                        "_mote_info": moteInfo,
-                        "_timestamp": self.meta[0]['lastUpdated'],
-                    }
-                )
-            )
-        except:
-            pass
 
 class StateScheduleRow(StateElem):
 
@@ -237,54 +209,6 @@ class StateScheduleRow(StateElem):
         self.data[0]['lastUsedAsn'].update(notif.lastUsedAsn_0_1,
                                            notif.lastUsedAsn_2_3,
                                            notif.lastUsedAsn_4)
-
-        try:
-            networkEventLogger.info(
-                json.dumps(
-                    {
-                        "numTx": str(self.data[0]['numTx']),
-                        "_type": "tsch.numTx",
-                        "_mote_info": moteInfo,
-                        "_timestamp": self.meta[0]['lastUpdated'],
-                    }
-                )
-            )
-
-            networkEventLogger.info(
-                json.dumps(
-                    {
-                        "numRx": str(self.data[0]['numRx']),
-                        "_type": "tsch.numRx",
-                        "_mote_info": moteInfo,
-                        "_timestamp": self.meta[0]['lastUpdated'],
-                    }
-                )
-            )
-
-            networkEventLogger.info(
-                json.dumps(
-                    {
-                        "numTxAck": str(self.data[0]['numTxAck']),
-                        "_type": "tsch.numTxAck",
-                        "_mote_info": moteInfo,
-                        "_timestamp": self.meta[0]['lastUpdated'],
-                    }
-                )
-            )
-
-            networkEventLogger.info(
-                json.dumps(
-                    {
-                        "numTxAck": str(self.data[0]['numTxAck']),
-                        "_type": "tsch.numTxAck",
-                        "_mote_info": moteInfo,
-                        "_timestamp": self.meta[0]['lastUpdated'],
-                    }
-                )
-            )
-
-        except:
-            pass
 
     def getType(self):
         return self.data[0]['type']
@@ -539,59 +463,15 @@ class StateSchedule(StateTable):
         super(StateSchedule, self).__init__(*args, **kwargs)
 
     def log(self, moteInfo):
-
         try:
             numCellsTx = sum(row.getType().getCellType() == "TX" for row in self.data)
             numCellsRx = sum(row.getType().getCellType() == "RX" for row in self.data)
             numCellsTxRx = sum(row.getType().getCellType() == "TXRX" for row in self.data)
             numCells = numCellsTx + numCellsRx + numCellsTxRx
 
-            networkEventLogger.info(
-                json.dumps(
-                    {
-                        "numCellsTx": str(numCellsTx),
-                        "_type": "tsch.numCellsTx",
-                        "_mote_info": moteInfo,
-                        "_timestamp": self.meta[0]['lastUpdated'],
-                    }
-                )
-            )
-
-            networkEventLogger.info(
-                json.dumps(
-                    {
-                        "numCellsRx": str(numCellsRx),
-                        "_type": "tsch.numCellsRx",
-                        "_mote_info": moteInfo,
-                        "_timestamp": self.meta[0]['lastUpdated'],
-                    }
-                )
-            )
-
-            networkEventLogger.info(
-                json.dumps(
-                    {
-                        "numCellsTxRx": str(numCellsTxRx),
-                        "_type": "tsch.numCellsTxRx",
-                        "_mote_info": moteInfo,
-                        "_timestamp": self.meta[0]['lastUpdated'],
-                    }
-                )
-            )
-
-            networkEventLogger.info(
-                json.dumps(
-                    {
-                        "numCells": str(numCells),
-                        "_type": "tsch.numCells",
-                        "_mote_info": moteInfo,
-                        "_timestamp": self.meta[0]['lastUpdated'],
-                    }
-                )
-            )
+            # TODO publish
         except:
             pass
-
 
 class StateNeighbors(StateTable):
     def __init__(self, *args, **kwargs):

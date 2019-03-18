@@ -222,7 +222,7 @@ class StateQueue(StateElem):
     def __init__(self):
         StateElem.__init__(self)
         
-        for i in range(20):
+        for i in range(10):
             self.data.append(StateQueueRow())
     
     def update(self,notif):
@@ -237,16 +237,6 @@ class StateQueue(StateElem):
         self.data[7].update(notif.creator_7,notif.owner_7)
         self.data[8].update(notif.creator_8,notif.owner_8)
         self.data[9].update(notif.creator_9,notif.owner_9)
-        self.data[10].update(notif.creator_10,notif.owner_10)
-        self.data[11].update(notif.creator_11,notif.owner_11)
-        self.data[12].update(notif.creator_12,notif.owner_12)
-        self.data[13].update(notif.creator_13,notif.owner_13)
-        self.data[14].update(notif.creator_14,notif.owner_14)
-        self.data[15].update(notif.creator_15,notif.owner_15)
-        self.data[16].update(notif.creator_16,notif.owner_16)
-        self.data[17].update(notif.creator_17,notif.owner_17)
-        self.data[18].update(notif.creator_18,notif.owner_18)
-        self.data[19].update(notif.creator_19,notif.owner_19)
 
 class StateNeighborsRow(StateElem):
     

@@ -15,10 +15,16 @@ from pydispatch import dispatcher
 from ParserException import ParserException
 import Parser
 
+import paho.mqtt.client as mqtt
+import threading
+import json
+
+OPENTESTBED_BROKER_ADDRESS          = "argus.paris.inria.fr"
+
 class ParserData(Parser.Parser):
     
     HEADER_LENGTH  = 2
-    MSPERSLOT      = 20 #ms per slot.
+    MSPERSLOT      = 0.02 #second per slot.
     
     IPHC_SAM       = 4
     IPHC_DAM       = 0
@@ -37,8 +43,31 @@ class ParserData(Parser.Parser):
           'asn_2_3',                   # H
           'asn_0_1',                   # H
          ]
+
+        self.broker                    = OPENTESTBED_BROKER_ADDRESS
+        self.mqttconnected             = False
+
+         # connect to MQTT
+        self.mqttclient                = mqtt.Client(self.UINJECT_MASK)
+        self.mqttclient.on_connect     = self._on_mqtt_connect
+        self.mqttclient.connect(self.broker)
     
-    
+        # start mqtt client
+        self.mqttthread                = threading.Thread(
+            name                       = 'mqtt_loop_thread',
+            target                     = self.mqttclient.loop_forever
+        )
+        self.mqttthread.start()
+
+     #======================== private =========================================
+
+    def _on_mqtt_connect(self, client, userdata, flags, rc):
+
+        log.info("Connected to MQTT")
+
+        self.mqttconnected = True
+
+
     #======================== public ==========================================
     
     def parseInput(self,input):
@@ -82,13 +111,30 @@ class ParserData(Parser.Parser):
         # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
         if len(input) >37:
             if self.UINJECT_MASK == ''.join(chr(i) for i in input[-7:]):
-                aux      = input[len(input)-14:len(input)-9]  # last 5 bytes of the packet are the ASN in the UDP latency packet
-                diff     = self._asndiference(aux,asnbytes)   # calculate difference 
-                timeinus = diff*self.MSPERSLOT                # compute time in ms
-                SN       = input[len(input)-9:len(input)-7]   # SN sent by mote
-                l3_source= "{0:x}{1:x}".format(input[len(input)-16], input[len(input)-15]) # mote id
+                numCellsUsed = input[-15]
+                aux          = input[-14:-9]                               # last 5 bytes of the packet are the ASN in the UDP latency packet
+                diff         = self._asndiference(aux,asnbytes)            # calculate difference 
+                latency      = diff*self.MSPERSLOT                         # compute time in ms
+                counter      = input[-9] + 256*input[-8]                   # counter sent by mote
+                l3_source    = "{0:x}{1:x}".format(input[-16], input[-17]) # mote id
 
-                pass
+                payload = {
+                    'token':       123,
+                }
+
+                payload['l3_source']      = l3_source
+                payload['numCellsUsed']   = numCellsUsed
+                payload['latency']        = latency
+                payload['counter']        = counter
+
+                print payload
+
+                # publish the cmd message
+                self.mqttclient.publish(
+                    topic   = 'opentestbed/uinject/arrived',
+                    payload = json.dumps(payload),
+                    qos=2
+                )
                 # in case we want to send the computed time to internet..
                 # computed=struct.pack('<H', timeinus)#to be appended to the pkt
                 # for x in computed:
@@ -115,14 +161,4 @@ class ParserData(Parser.Parser):
        else:
            pass
        
-       diff = 0
-       if asnend[1] == asninit[1]:#'bytes2and3'
-          return asnend[0]-asninit[0]#'bytes0and1'
-       else:
-          if asnend[1]-asninit[1]==1:##'bytes2and3'              diff  = asnend[0]#'bytes0and1'
-              diff += 0xffff-asninit[0]#'bytes0and1'
-              diff += 1
-          else:   
-              diff = 0xFFFFFFFF
-       
-       return diff
+       return (0x10000*(asnend[1]-asninit[1])+(asnend[0]-asninit[0]))

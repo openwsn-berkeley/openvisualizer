@@ -146,7 +146,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 registrations=[
                     {
                         'sender': self.WILDCARD,
-                        'signal': 'performanceData',
+                        'signal': 'fromMote.performanceData',
                         'callback': self._performance_data_handler,
                     },
                 ]

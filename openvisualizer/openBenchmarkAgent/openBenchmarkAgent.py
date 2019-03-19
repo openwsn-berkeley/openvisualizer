@@ -49,6 +49,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
     OPENBENCHMARK_STARTBENCHMARK_REQUEST_TOPIC = 'openbenchmark/command/startBenchmark'
     OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC = 'openbenchmark/response/startBenchmark'
 
+    OPENBENCHMARK_MEASUREMENT_PERIOD     = 3
     OPENBENCHMARK_RESP_STATUS_TIMEOUT    = 10
     OPENBENCHMARK_MAX_RETRIES            = 3
     OPENBENCHMARK_PREFIX_CMD_HANDLER_NAME = '_mqtt_handler_'
@@ -143,6 +144,9 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             # instantiate performance event handlers from firmware
             self.performanceEvent = PerformanceEvent(self.experimentId, self.mqttClient)
 
+            # instantiate performance poller thread to gather duty cycle measurements periodically
+            self.performanceUpdatePoller = PerformanceUpdatePoller(self.OPENBENCHMARK_MEASUREMENT_PERIOD)
+
             # subscribe to eventBus performance-related events
             eventBusClient.eventBusClient.__init__(
                 self,
@@ -169,6 +173,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             self.mqttClient.loop_stop()
         if self.coapServer:
             self.coapServer.close()
+        if self.performanceUpdatePoller:
+            self.performanceUpdatePoller.close()
 
     def triggerSendPacket(self, destination, acknowledged, packetsInBurst, packetToken, packetPayloadLen):
 
@@ -612,4 +618,80 @@ class PerformanceEvent(object):
         returnVal = {}
         # TODO
         return (True, returnVal)
+
+class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
+
+    def __init__(self, period):
+        # log
+        log.info("creating a thread for periodic polling of performance metrics")
+
+        # local variables
+        self.period = period
+        self.dutyCycleMeasurementList = set()
+        self.dataLock = threading.Lock()
+        # flag to permit exit from read loop
+        self.goOn = True
+
+        # initialize the parent class
+        threading.Thread.__init__(self)
+
+        # give this thread a name
+        self.name = 'performanceUpdatePollerThread'
+
+        # subscribe to eventBus performance-related events
+        eventBusClient.eventBusClient.__init__(
+            self,
+            name='performanceUpdatePoller',
+            registrations=[
+                {
+                    'sender': self.WILDCARD,
+                    'signal': 'dutyCycleMeasurement',
+                    'callback': self.handle_dutyCycleMeasurement,
+                },
+            ]
+        )
+        # start myself
+        self.start()
+
+    def run(self):
+        try:
+            # log
+            log.info("start running")
+
+            while self.goOn:
+
+                log.debug("poller is polling")
+
+                # poll moteState for latest measurements
+                self.dispatch('getDutyCycleMeasurement', [])
+
+                # wait for a while to gather the response from motes
+                time.sleep(1)
+
+                with self.dataLock:
+                    log.debug("collected responses:")
+                    log.debug(self.dutyCycleMeasurementList)
+
+                    self.dutyCycleMeasurementList = set()
+
+                time.sleep(self.period)
+
+        except Exception as err:
+            errMsg = u.formatCrashMessage(self.name, err)
+            print errMsg
+            log.critical(errMsg)
+            self.close()
+        finally:
+            pass
+
+    def close(self):
+        self.goOn = False
+
+    def handle_dutyCycleMeasurement(self, sender, signal, data):
+        log.debug(
+            "handle_update sender: {0}\n signal: {1}\n data: {2}".format(sender, signal, data))
+        with self.dataLock:
+            self.dutyCycleMeasurementList.add(
+                ( data['source'], data['timestamp'], data['dutyCycle'] )
+            )
 

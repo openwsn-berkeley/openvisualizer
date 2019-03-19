@@ -145,6 +145,11 @@ class StateAsn(StateElem):
                                    notif.asn_2_3,
                                    notif.asn_4)
 
+    def getAsn(self):
+        if len(self.data) != 0:
+            return self.data[0]['asn']
+        return None
+
 class StateMacStats(StateElem):
     
     def update(self,data):
@@ -162,6 +167,11 @@ class StateMacStats(StateElem):
             self.data[0]['dutyCycle']       = '{0:.02f}%'.format(dutyCycle)
         else:
             self.data[0]['dutyCycle']       = '?'
+
+    def getDutyCycle(self):
+        if len(self.data) != 0:
+            return self.data[0]['dutyCycle']
+        return '?'
 
 class StateScheduleRow(StateElem):
 
@@ -647,6 +657,11 @@ class moteState(eventBusClient.eventBusClient):
                     'signal'      : 'fromMote.status',
                     'callback'    : self._receivedStatus_notif,
                 },
+                {
+                    'sender':  self.WILDCARD,
+                    'signal': 'getDutyCycleMeasurement',
+                    'callback': self._getDutyCycle,
+                },
             ]
         )
 
@@ -715,3 +730,22 @@ class moteState(eventBusClient.eventBusClient):
     
     def _isnamedtupleinstance(self,var,tupleInstance):
         return var._fields==tupleInstance._fields
+
+    def _getDutyCycle(self, sender, signal, data):
+        try:
+            # data = {
+            #     'source' : self.moteConnector.name,
+            #     'timestamp' : str(self.state[self.ST_ASN].getAsn()),
+            #     'dutyCycle' : self.state[self.ST_MACSTATS].getDutyCycle(),
+            # }
+
+            data = {
+                'source' : self.moteConnector.name,
+                'timestamp' : 0,
+                'dutyCycle' : 0,
+            }
+
+            # dispatch
+            self.dispatch('dutyCycleMeasurement', data)
+        except:
+            pass

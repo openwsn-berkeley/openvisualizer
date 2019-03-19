@@ -43,15 +43,15 @@ class ParserBenchmark(Parser.Parser):
         # ensure input not short longer than header
         self._checkLength(input)
 
-        source = input[:2]
-        event = input[2]
+        source = input[:8]
+        event = input[8]
 
-        asnParsed = struct.unpack('<HHB', ''.join([chr(c) for c in input[3:8]]))
+        asnParsed = struct.unpack('<HHB', ''.join([chr(c) for c in input[9:14]]))
         timestamp = typeAsn.typeAsn()
         timestamp.update(asnParsed[0], asnParsed[1], asnParsed[2])
 
         # generic fields are parsed, omit them
-        input = input[8:]
+        input = input[14:]
 
         eventType = 'performanceData'
 

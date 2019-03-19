@@ -479,9 +479,9 @@ class PerformanceEvent(object):
     # event                            #name                      # id
     EV_PACKET_SENT                  = ['packetSent',                  0   ]
     EV_PACKET_RECEIVED              = ['packetReceived',              1   ]
-    EV_SECURE_JOIN_COMPLETED        = ['secureJoinCompleted',         2   ]
-    EV_BANDWIDTH_ASSIGNED           = ['bandwidthAssigned',           3   ]
-    EV_SYNCHRONIZATION_COMPLETED    = ['synchronizationCompleted',    256 ]
+    EV_SYNCHRONIZATION_COMPLETED    = ['synchronizationCompleted',    2   ]
+    EV_SECURE_JOIN_COMPLETED        = ['secureJoinCompleted',         3   ]
+    EV_BANDWIDTH_ASSIGNED           = ['bandwidthAssigned',           4   ]
     EV_NETWORK_FORMATION_COMPLETED  = ['networkFormationCompleted',   257 ]
     EV_RADIO_DUTY_CYCLE_MEASUREMENT = ['radioDutyCycleMeasurement',   258 ]
     EV_CLOCK_DRIFT_MEASUREMENT      = ['clockDriftMeasurement',       259 ]

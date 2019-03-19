@@ -294,7 +294,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                 ms.ST_SCHEDULE    : ms.getStateElem(ms.ST_SCHEDULE).toJson('data'),
                 ms.ST_QUEUE       : ms.getStateElem(ms.ST_QUEUE).toJson('data'),
                 ms.ST_NEIGHBORS   : ms.getStateElem(ms.ST_NEIGHBORS).toJson('data'),
-                ms.ST_JOINED      : ms.getStateElem(ms.ST_JOINED).toJson('data'),
             }
         else:
             if log.isEnabledFor(logging.DEBUG):

@@ -144,26 +144,6 @@ class StateAsn(StateElem):
         self.data[0]['asn'].update(notif.asn_0_1,
                                    notif.asn_2_3,
                                    notif.asn_4)
-class StateJoined(StateElem):
-    
-    def update(self,data):
-        (moteInfo, notif) = data
-        StateElem.update(self)
-        if len(self.data)==0:
-            self.data.append({})
-        if 'joinedAsn' not in self.data[0]:
-            self.data[0]['joinedAsn']             = typeAsn.typeAsn()
-
-        receivedJoinAsn = typeAsn.typeAsn()
-        receivedJoinAsn.update(notif.joinedAsn_0_1,
-                                   notif.joinedAsn_2_3,
-                                   notif.joinedAsn_4)
-
-        if self.data[0]['joinedAsn'] != receivedJoinAsn and receivedJoinAsn.asn != [0x00, 0x00, 0x00, 0x00, 0x00]:
-
-            self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1,
-                                   notif.joinedAsn_2_3,
-                                   notif.joinedAsn_4)
 
 class StateMacStats(StateElem):
     
@@ -480,91 +460,6 @@ class StateNeighbors(StateTable):
     def log(self,moteInfo):
         pass
 
-
-class StateBenchmarkPacketSent(StateElem):
-
-    def update(self, data):
-        (moteInfo, notif) = data
-
-        timestampBuf = [
-            notif.timestamp_0,
-            notif.timestamp_1,
-            notif.timestamp_2,
-            notif.timestamp_3,
-            notif.timestamp_4
-        ]
-        timestamp = u.buf2int(timestampBuf)
-
-        token = [
-            notif.token_4,
-            notif.token_3,
-            notif.token_2,
-            notif.token_1,
-            notif.token_0
-        ]
-        destination = [
-            notif.dest_7,
-            notif.dest_6,
-            notif.dest_5,
-            notif.dest_4,
-            notif.dest_3,
-            notif.dest_2,
-            notif.dest_1,
-            notif.dest_0
-        ]
-        hopLimit = notif.hopLimit
-
-        log.debug("Packet sent event")
-        log.debug(timestamp)
-        log.debug(token)
-        log.debug(destination)
-        log.debug(hopLimit)
-
-class StateBenchmarkPacketReceived(StateElem):
-
-    def update(self, data):
-        (moteInfo, notif) = data
-
-        timestampBuf = [
-            notif.timestamp_0,
-            notif.timestamp_1,
-            notif.timestamp_2,
-            notif.timestamp_3,
-            notif.timestamp_4
-        ]
-        timestamp = u.buf2int(timestampBuf)
-
-        token = [
-            notif.token_4,
-            notif.token_3,
-            notif.token_2,
-            notif.token_1,
-            notif.token_0
-        ]
-        source = [
-            notif.src_7,
-            notif.src_6,
-            notif.src_5,
-            notif.src_4,
-            notif.src_3,
-            notif.src_2,
-            notif.src_1,
-            notif.src_0
-        ]
-        hopLimit = notif.hopLimit
-
-        log.debug("Packet received event")
-        log.debug(timestamp)
-        log.debug(token)
-        log.debug(source)
-        log.debug(hopLimit)
-
-class StateBandwidthAssigned(StateElem):
-
-    def update(self, data):
-        (moteInfo, notif) = data
-        # FIXME
-
 class moteState(eventBusClient.eventBusClient):
     
     ST_OUPUTBUFFER                 = 'OutputBuffer'
@@ -581,10 +476,6 @@ class moteState(eventBusClient.eventBusClient):
     ST_IDMANAGER                   = 'IdManager'
     ST_MYDAGRANK                   = 'MyDagRank'
     ST_KAPERIOD                    = 'kaPeriod'
-    ST_JOINED                      = 'Joined'
-    ST_BENCHMARK_PACKETSENT        = 'BenchmarkPacketSent'
-    ST_BENCHMARK_PACKETRECEIVED    = 'BenchmarkPacketReceived'
-    ST_BENCHMARK_BANDWIDTHASSIGNED = 'BandwidthAssigned'
     ST_ALL              = [
         ST_OUPUTBUFFER,
         ST_ASN,
@@ -597,10 +488,6 @@ class moteState(eventBusClient.eventBusClient):
         ST_IDMANAGER, 
         ST_MYDAGRANK,
         ST_KAPERIOD,
-        ST_JOINED,
-        ST_BENCHMARK_PACKETSENT,
-        ST_BENCHMARK_PACKETRECEIVED,
-        ST_BENCHMARK_BANDWIDTHASSIGNED,
     ]
     
     TRIGGER_DAGROOT     = 'DAGroot'
@@ -674,7 +561,6 @@ class moteState(eventBusClient.eventBusClient):
         
         self.state[self.ST_OUPUTBUFFER]     = StateOutputBuffer()
         self.state[self.ST_ASN]             = StateAsn()
-        self.state[self.ST_JOINED]          = StateJoined()
         self.state[self.ST_MACSTATS]        = StateMacStats()
         self.state[self.ST_SCHEDULE]        = StateSchedule(
                                                 StateScheduleRow,
@@ -725,10 +611,6 @@ class moteState(eventBusClient.eventBusClient):
                                               )
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
         self.state[self.ST_KAPERIOD]        = StatekaPeriod()
-
-        self.state[self.ST_BENCHMARK_PACKETSENT] = StateBenchmarkPacketSent()
-        self.state[self.ST_BENCHMARK_PACKETRECEIVED] = StateBenchmarkPacketReceived()
-        self.state[self.ST_BENCHMARK_BANDWIDTHASSIGNED] = StateBandwidthAssigned()
         
         self.notifHandlers = {
             self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
@@ -753,14 +635,6 @@ class moteState(eventBusClient.eventBusClient):
                 self.state[self.ST_MYDAGRANK].update,
             self.parserStatus.named_tuple[self.ST_KAPERIOD]:
                 self.state[self.ST_KAPERIOD].update,
-            self.parserStatus.named_tuple[self.ST_JOINED]:
-                self.state[self.ST_JOINED].update,
-            self.parserStatus.named_tuple[self.ST_BENCHMARK_PACKETSENT]:
-                self.state[self.ST_BENCHMARK_PACKETSENT].update,
-            self.parserStatus.named_tuple[self.ST_BENCHMARK_PACKETRECEIVED]:
-                self.state[self.ST_BENCHMARK_PACKETRECEIVED].update,
-            self.parserStatus.named_tuple[self.ST_BENCHMARK_BANDWIDTHASSIGNED]:
-                self.state[self.ST_BENCHMARK_BANDWIDTHASSIGNED].update,
         }
         
         # initialize parent class

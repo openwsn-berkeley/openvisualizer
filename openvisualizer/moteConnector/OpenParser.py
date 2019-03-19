@@ -15,6 +15,7 @@ import ParserInfoErrorCritical as ParserIEC
 import ParserData
 import ParserPacket
 import ParserPrintf
+import ParserBenchmark
 
 class OpenParser(Parser.Parser):
     
@@ -27,6 +28,7 @@ class OpenParser(Parser.Parser):
     SERFRAME_MOTE2PC_CRITICAL          = ParserIEC.ParserInfoErrorCritical.SEVERITY_CRITICAL
     SERFRAME_MOTE2PC_SNIFFED_PACKET    = ord('P')
     SERFRAME_MOTE2PC_PRINTF            = ord('F')
+    SERFRAME_MOTE2PC_BENCHMARK         = ord('B')
 
     SERFRAME_PC2MOTE_SETDAGROOT        = ord('R')
     SERFRAME_PC2MOTE_DATA              = ord('D')
@@ -53,6 +55,7 @@ class OpenParser(Parser.Parser):
         self.parserData      = ParserData.ParserData(mqtt_broker_address)
         self.parserPacket    = ParserPacket.ParserPacket()
         self.parserPrintf    = ParserPrintf.ParserPrintf()
+        self.parserBenchmark = ParserBenchmark.ParserBenchmark()
 
         # register subparsers
         self._addSubParser(
@@ -89,6 +92,11 @@ class OpenParser(Parser.Parser):
             index  = 0,
             val    = self.SERFRAME_MOTE2PC_PRINTF,
             parser = self.parserPrintf.parseInput,
+        )
+        self._addSubParser(
+            index  = 0,
+            val    = self.SERFRAME_MOTE2PC_BENCHMARK,
+            parser = self.parserBenchmark.parseInput,
         )
 
     #======================== public ==========================================

@@ -286,7 +286,6 @@
 									            queueJson    = $.parseJSON(json.Queue);
 									            nbrsJson     = $.parseJSON(json.Neighbors);
                                                                                     kaPeriodJson = $.parseJSON(json.kaPeriod)[0];
-                                                                                    joinedJson   = $.parseJSON(json.Joined)[0];
 									        }
 									        
 									        // Exclude tailing description from server
@@ -298,7 +297,6 @@
 									        $("#sync_fld").text(         hasJson && syncJson.isSync > 0 ? 'Synchronized!' : 'Not synchronized');
 									        $("#pan_fld").text(          hasJson ? idJson.myPANID                  : '');
 									        $("#asn_fld").text(          hasJson ? asnJson.asn                     : '');
-									        $("#join_fld").text(         hasJson ? joinedJson.joinedAsn                     : '');
 									        $("#dagrank_fld").text(      hasJson ? dagrankJson.myDAGrank           : '');
 									        $("#outread_fld").text(      hasJson ? outbufJson.index_read           : '');
 									        $("#outwrite_fld").text(     hasJson ? outbufJson.index_write          : '');

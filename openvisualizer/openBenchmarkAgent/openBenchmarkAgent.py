@@ -133,7 +133,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 raise ValueError("Unable to start an experiment with OpenBenchmark")
 
             # everything is ok, start a coap server
-            coapResource = openbenchmarkResource()
+            coapResource = OpenbenchmarkResource()
             self.coapServer.coapServer.addResource(coapResource)
 
             # subscribe to all topics on a given experiment ID
@@ -460,7 +460,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         return (True, returnVal)
 
 # ==================== Implementation of CoAP openbenchmark resource =====================
-class openbenchmarkResource(coapResource.coapResource):
+class OpenbenchmarkResource(coapResource.coapResource):
     def __init__(self):
 
         # initialize parent class

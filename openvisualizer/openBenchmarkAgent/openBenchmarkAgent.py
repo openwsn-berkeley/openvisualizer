@@ -87,6 +87,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
         self.mqttClient = None
         self.experimentRequestResponse = None
+        self.performanceEvent = None
 
         # dict with keys being eui64, and value corresponding testbed host identifier
         self.nodes = {}
@@ -139,6 +140,9 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             # subscribe to all topics on a given experiment ID
             self._openbenchmark_subscribe(self.mqttClient, self.experimentId)
 
+            # instantiate performance event handlers from firmware
+            self.performanceEvent = PerformanceEvent(self.experimentId, self.mqttClient)
+
             # subscribe to eventBus performance-related events
             eventBusClient.eventBusClient.__init__(
                 self,
@@ -147,7 +151,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                     {
                         'sender': self.WILDCARD,
                         'signal': 'fromMote.performanceData',
-                        'callback': self._performance_data_handler,
+                        'callback': self.performanceEvent.handler,
                     },
                 ]
             )
@@ -353,10 +357,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         else:
             self._execute_command_safely(message.topic, message.payload)
 
-    def _performance_data_handler(self):
-        # TODO
-        pass
-
     # ==== mqtt command handlers
 
     def _mqtt_handler_echo(self, payload):
@@ -460,6 +460,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         return (True, returnVal)
 
 # ==================== Implementation of CoAP openbenchmark resource =====================
+
 class OpenbenchmarkResource(coapResource.coapResource):
     def __init__(self):
 
@@ -472,3 +473,143 @@ class OpenbenchmarkResource(coapResource.coapResource):
     def POST(self,options=[], payload=[]):
         # TODO parse the packet token and log the event
         return (d.COAP_RC_2_04_CHANGED, [], [])
+
+class PerformanceEvent(object):
+
+    # event                            #name                      # id
+    EV_PACKET_SENT                  = ['packetSent',                  0   ]
+    EV_PACKET_RECEIVED              = ['packetReceived',              1   ]
+    EV_SECURE_JOIN_COMPLETED        = ['secureJoinCompleted',         2   ]
+    EV_BANDWIDTH_ASSIGNED           = ['bandwidthAssigned',           3   ]
+    EV_SYNCHRONIZATION_COMPLETED    = ['synchronizationCompleted',    256 ]
+    EV_NETWORK_FORMATION_COMPLETED  = ['networkFormationCompleted',   257 ]
+    EV_RADIO_DUTY_CYCLE_MEASUREMENT = ['radioDutyCycleMeasurement',   258 ]
+    EV_CLOCK_DRIFT_MEASUREMENT      = ['clockDriftMeasurement',       259 ]
+
+    EV_ALL = [
+        EV_PACKET_SENT,
+        EV_PACKET_RECEIVED,
+        EV_SECURE_JOIN_COMPLETED,
+        EV_BANDWIDTH_ASSIGNED,
+        EV_SYNCHRONIZATION_COMPLETED,
+        EV_NETWORK_FORMATION_COMPLETED,
+        EV_RADIO_DUTY_CYCLE_MEASUREMENT,
+        EV_CLOCK_DRIFT_MEASUREMENT,
+    ]
+
+    PERFORMANCE_EVENT_HANDLER_NAME = "_handler_event_"
+
+    def __init__(self, experimentId, mqttClient):
+
+        #assert experimentId
+        #assert mqttClient
+
+        self.experimentId = experimentId
+        self.mqttClient = mqttClient
+
+    # ======================== public =========================================
+
+    def handler(self, sender, signal, data):
+        (source, event, timestamp, buf) = data
+
+        returnVal = {}
+
+
+        log.debug(
+            "sender: {0}\n signal: {1}\n source: {2}\n event: {3}\n timestamp: {4}\n data: {5}".format(sender, signal,
+                                                                                                       source, event,
+                                                                                                       timestamp, data))
+        try:
+
+            # find the event
+            event_name = None
+            for ev in self.EV_ALL:
+                if ev[1] == event:
+                    event_name = ev[0]
+                    break
+
+            assert event_name, "Unhandled event, ignoring: {0}".format(event)
+
+            # find the handler
+            event_handler = getattr(self, '{0}{1}'.format(self.PERFORMANCE_EVENT_HANDLER_NAME, event_name, None))
+
+            assert event_handler, "Event recognized but cannot find handler, event: {0}".format(event)
+
+            # call the handler to return dictionary with handler-specific fields in the response
+            # handler return is in format (success, dict), with:
+            #   - success, as a boolean
+            #   - dict, dictionary containing fields to include in the response or None on failure
+            (success, dict) = event_handler(buf)
+
+            if success:
+                # common fields
+                returnVal['event']     = event_name
+                returnVal['timestamp'] = str(timestamp)
+                returnVal['source']    = openvisualizer.openvisualizer_utils.formatAddr(source)
+
+                # handler-specific fields
+                returnVal.update(dict)
+
+                log.debug(returnVal)
+
+                #self.mqttClient.publish(
+                #    topic='openbenchmark/experimentId/{0}/nodeId/{0}/performanceData'.format(self.experimentId, source),
+                #    payload=json.dumps(returnVal),
+                #)
+
+        except Exception as err:
+            log.exception("Exception while executing {0}".format(event))
+            log.exception(err)
+            log.exception(traceback.format_exc())
+
+
+    # ======================== private =========================================
+
+    # packetSent
+    def _handler_event_packetSent(self, buf):
+        returnVal = {}
+
+        packetToken = buf[:5]
+        destBuf = buf[5:13]
+        dest = openvisualizer.openvisualizer_utils.formatAddr(destBuf)
+        hopLimit = buf[13]
+
+        returnVal['packetToken'] = packetToken
+        returnVal['destination'] = dest
+        returnVal['hopLimit']    = hopLimit
+
+        return (True, returnVal)
+
+    # packetReceived, same syntax as packetSent
+    def _handler_event_packetReceived(self, buf):
+        return self._handler_event_packetSent(buf)
+
+    # synchronizationCompleted
+    def _handler_event_synchronizationCompleted(self, buf):
+        return (True, {})
+
+    # secureJoinCompleted
+    def _handler_event_secureJoinCompleted(self, buf):
+        return (True, {})
+
+    # bandwidthAssigned
+    def _handler_event_bandwidthAssigned(self, buf):
+        return (True, {})
+
+    # networkFormationCompleted
+    def _handler_event_networkFormationCompleted(self, buf):
+        # TODO
+        return (True, {})
+
+    # radioDutyCycleMeasurement
+    def _handler_event_radioDutyCycleMeasurement(self, buf):
+        returnVal = {}
+        # TODO
+        return (True, returnVal)
+
+    # clockDriftMeasurement
+    def _handler_event_clockDriftMeasurement(self, buf):
+        returnVal = {}
+        # TODO
+        return (True, returnVal)
+

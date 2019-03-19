@@ -151,7 +151,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                     {
                         'sender': self.WILDCARD,
                         'signal': 'fromMote.performanceData',
-                        'callback': self.performanceEvent.handler,
+                        'callback': self.performanceEvent.handle_event,
                     },
                 ]
             )
@@ -509,7 +509,7 @@ class PerformanceEvent(object):
 
     # ======================== public =========================================
 
-    def handler(self, sender, signal, data):
+    def handle_event(self, sender, signal, data):
         (source, event, timestamp, buf) = data
 
         returnVal = {}

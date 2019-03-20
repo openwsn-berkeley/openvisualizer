@@ -133,15 +133,15 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             if not self.experimentId:
                 raise ValueError("Unable to start an experiment with OpenBenchmark")
 
-            # everything is ok, start a coap server
-            coapResource = OpenbenchmarkResource()
-            self.coapServer.coapServer.addResource(coapResource)
-
             # subscribe to all topics on a given experiment ID
             self._openbenchmark_subscribe(self.mqttClient, self.experimentId)
 
             # instantiate performance event handlers from firmware
             self.performanceEvent = PerformanceEvent(self.experimentId, self.mqttClient)
+
+            # everything is ok, start a coap server
+            coapResource = OpenbenchmarkResource(self.performanceEvent)
+            self.coapServer.coapServer.addResource(coapResource)
 
             # subscribe to eventBus performance-related events
             eventBusClient.eventBusClient.__init__(
@@ -752,7 +752,11 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
 
 class OpenbenchmarkResource(coapResource.coapResource):
 
-    def __init__(self):
+    def __init__(self, performanceEvent):
+
+        # params
+        self.performanceEvent = performanceEvent
+
         # initialize parent class
         coapResource.coapResource.__init__(
             self,

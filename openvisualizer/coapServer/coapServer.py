@@ -138,9 +138,13 @@ class coapServer(eventBusClient.eventBusClient):
         Forwards the packet to the virtual CoAP server running in test mode (PyDispatcher).
         '''
         sender = openvisualizer.openvisualizer_utils.formatIPv6Addr(data[0])
+
+        hopLimit = data[2] # IPv6 metadata
+        timestamp = str(data[3]) # timestamp of the received packet
+
         # FIXME pass source port within the signal and open coap client at this port
         self.ephemeralCoapClient = coap.coap(ipAddress=sender, udpPort=d.DEFAULT_UDP_PORT, testing=True, receiveCallback=self._receiveFromCoAP)
-        self.ephemeralCoapClient.socketUdp.sendUdp(destIp='', destPort=d.DEFAULT_UDP_PORT, msg=data[1]) # low level forward of the CoAP message
+        self.ephemeralCoapClient.socketUdp.sendUdp(destIp='', destPort=d.DEFAULT_UDP_PORT, msg=data[1],metaData=(hopLimit, timestamp)) # low level forward of the CoAP message
         return True
 
     def _receiveFromCoAP(self, timestamp, sender, data):

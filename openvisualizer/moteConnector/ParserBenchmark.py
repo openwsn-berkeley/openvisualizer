@@ -17,6 +17,7 @@ from ParserException import ParserException
 import Parser
 
 from openvisualizer.openType      import typeAsn
+from openvisualizer import openvisualizer_utils as u
 
 class ParserBenchmark(Parser.Parser):
     HEADER_LENGTH = 2
@@ -44,6 +45,8 @@ class ParserBenchmark(Parser.Parser):
         self._checkLength(input)
 
         source = input[:8]
+        source = u.formatAddr(source)
+
         event = input[8]
 
         asnParsed = struct.unpack('<HHB', ''.join([chr(c) for c in input[9:14]]))

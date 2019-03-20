@@ -78,16 +78,16 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         self.portNames = portNames
         self.scenario = scenario
 
-        # state
-        self.experimentId = None
-
         # primitive for mutual exclusion
         self.mqttConnectedEvent = threading.Event()
         self.experimentRequestResponseEvent = threading.Event()
 
+        # local vars
+        self.experimentId = None
         self.mqttClient = None
         self.experimentRequestResponse = None
         self.performanceEvent = None
+        self.dagRootEui64 = None
 
         # dict with keys being eui64, and value corresponding testbed host identifier
         self.nodes = {}
@@ -443,9 +443,11 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         returnVal = {}
 
         # parse the payload
-        payloadDecoded = json.loads(payload)
+        payloadDecoded      = json.loads(payload)
+        source              = payloadDecoded['source']
 
-        source        = payloadDecoded['source']
+        # remember DAG root's EUI64
+        self.dagRootEui64 = source
 
         # lookup corresponding mote port
         destPort = self.nodes[source]
@@ -466,15 +468,16 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 class PerformanceEvent(object):
 
     # period for measurement polling
-    PERFORMANCE_EVENT_MEASUREMENT_PERIOD              = 10
+    PERFORMANCE_EVENT_MEASUREMENT_PERIOD              = 3
 
-    # asynchronous event                            #name                      # id
-    EV_PACKET_SENT                  = ['packetSent',                  0   ]
-    EV_PACKET_RECEIVED              = ['packetReceived',              1   ]
-    EV_SYNCHRONIZATION_COMPLETED    = ['synchronizationCompleted',    2   ]
-    EV_SECURE_JOIN_COMPLETED        = ['secureJoinCompleted',         3   ]
-    EV_BANDWIDTH_ASSIGNED           = ['bandwidthAssigned',           4   ]
-    EV_NETWORK_FORMATION_COMPLETED  = ['networkFormationCompleted',   257 ]
+    # asynchronous event               #name                         #id    #openbenchmark ID
+    EV_PACKET_SENT                  = ['packetSent',                  0,    'packetSent'                ]
+    EV_PACKET_RECEIVED              = ['packetReceived',              1,    'packetReceived'            ]
+    EV_SYNCHRONIZATION_COMPLETED    = ['synchronizationCompleted',    2,    'synchronizationCompleted'  ]
+    EV_SECURE_JOIN_COMPLETED        = ['secureJoinCompleted',         3,    'secureJoinCompleted'       ]
+    EV_BANDWIDTH_ASSIGNED           = ['bandwidthAssigned',           4,   'bandwidthAssigned'          ]
+    EV_PACKET_SENT_DAGROOT          = ['packetSentDagRoot',           5,    'packetSent'                ] # special event to precisely get the ASN when dag root sent a packet
+    EV_NETWORK_FORMATION_COMPLETED  = ['networkFormationCompleted',   257,  'networkFormationCompleted' ]
 
     EV_ASYNC_ALL = [
         EV_PACKET_SENT,
@@ -482,6 +485,7 @@ class PerformanceEvent(object):
         EV_SECURE_JOIN_COMPLETED,
         EV_BANDWIDTH_ASSIGNED,
         EV_SYNCHRONIZATION_COMPLETED,
+        EV_PACKET_SENT_DAGROOT,
         EV_NETWORK_FORMATION_COMPLETED,
     ]
 
@@ -495,6 +499,7 @@ class PerformanceEvent(object):
         # params
         self.experimentId = experimentId
         self.mqttClient = mqttClient
+        self.outstandingPacketsFromDagRoot = []
 
         # start poller thread for periodic measurements
         self.performanceUpdatePoller = PerformanceUpdatePoller(self.experimentId, self.mqttClient,
@@ -515,16 +520,17 @@ class PerformanceEvent(object):
         try:
 
             # find the event
-            event_name = None
+            handler_name = None
             for ev in self.EV_ASYNC_ALL:
                 if ev[1] == event:
-                    event_name = ev[0]
+                    handler_name = ev[0]
+                    event_name   = ev[2]
                     break
 
-            assert event_name, "Unhandled event, ignoring: {0}".format(event)
+            assert handler_name, "Unhandled event, ignoring: {0}".format(event)
 
             # find the handler
-            event_handler = getattr(self, '{0}{1}'.format(self.PERFORMANCE_EVENT_HANDLER_NAME, event_name, None))
+            event_handler = getattr(self, '{0}{1}'.format(self.PERFORMANCE_EVENT_HANDLER_NAME, handler_name, None))
 
             assert event_handler, "Event recognized but cannot find handler, event: {0}".format(event)
 
@@ -565,6 +571,11 @@ class PerformanceEvent(object):
          payload=json.dumps(returnVal),
         )
 
+    def add_outstanding_packet(self, packet):
+        if len(self.outstandingPacketsFromDagRoot) > 10:
+            self.outstandingPacketsFromDagRoot.pop(0)
+        self.outstandingPacketsFromDagRoot.append(packet)
+
     # ======================== private =========================================
 
     # packetSent
@@ -581,6 +592,26 @@ class PerformanceEvent(object):
         returnVal['hopLimit']    = hopLimit
 
         return (True, returnVal)
+
+    def _handler_event_packetSentDagRoot(self, buf):
+        receivedToken = buf
+        newBuf = []
+
+        for packet in self.outstandingPacketsFromDagRoot:
+            (token, destination, hopLimit) = packet
+            if receivedToken == token:
+                # we have a hit, remove it from outstanding packets
+                log.debug("packetSentDagRoot event: hit for packet {0}".format(packet))
+                self.outstandingPacketsFromDagRoot.remove(packet)
+
+                # construct the missing fields from the saved values
+                newBuf += token
+                newBuf += destination
+                newBuf += [hopLimit]
+                return self._handler_event_packetSent(newBuf)
+        # not found, not all packets sent by dag root are originated by openbenchmark: ignore it
+        log.debug("packetSentDagRoot event: miss for token {0}".format(receivedToken))
+        return (False, {})
 
     # packetReceived, same syntax as packetSent
     def _handler_event_packetReceived(self, buf):

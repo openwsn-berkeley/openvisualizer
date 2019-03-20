@@ -740,7 +740,7 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
                 time.sleep(self.period)
 
         except Exception as err:
-            errMsg = u.formatCrashMessage(self.name, err)
+            errMsg = openvisualizer.openvisualizer_utils.formatCrashMessage(self.name, err)
             print errMsg
             log.critical(errMsg)
             self.close()

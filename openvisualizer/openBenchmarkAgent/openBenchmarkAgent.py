@@ -552,17 +552,18 @@ class PerformanceEvent(object):
                 # common fields
                 returnVal['event']     = event_name
                 returnVal['timestamp'] = str(timestamp)
-                returnVal['source']    = openvisualizer.openvisualizer_utils.formatAddr(source)
+                returnVal['source']    = source
 
                 # handler-specific fields
                 returnVal.update(dict)
+                topic = 'openbenchmark/experimentId/{0}/nodeId/{1}/performanceData'.format(self.experimentId, source)
 
-                log.debug(returnVal)
+                log.debug("Publishing on topic: {0} Payload: {1}".format(topic, returnVal))
 
-                #self.mqttClient.publish(
-                #    topic='openbenchmark/experimentId/{0}/nodeId/{0}/performanceData'.format(self.experimentId, source),
-                #    payload=json.dumps(returnVal),
-                #)
+                self.mqttClient.publish(
+                   topic=topic,
+                   payload=json.dumps(returnVal),
+                )
 
         except Exception as err:
             log.exception("Exception while executing {0}".format(event))
@@ -674,11 +675,32 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
                 # wait for a while to gather the response from motes
                 time.sleep(1)
 
-                with self.dataLock:
-                    log.debug("collected responses:")
-                    log.debug(self.dutyCycleMeasurementList)
+                log.debug("Performance Event Poller, received measurements:")
+                log.debug(self.dutyCycleMeasurements)
 
-                    self.dutyCycleMeasurementList = set()
+                for measurement in self.dutyCycleMeasurements:
+
+                    # dispatch each as an individual message
+                    (source, timestamp, dutyCycle) = measurement
+
+                    topic = 'openbenchmark/experimentId/{0}/nodeId/{1}/performanceData'.format(self.experimentId, source)
+                    payload = {
+                        'event'     : 'radioDutyCycleMeasurement',
+                        'timestamp' : timestamp,
+                        'source'    : source,
+                        'dutyCycle' : dutyCycle,
+                    }
+
+                    log.debug("Publishing on topic: {0} Payload: {1}".format(topic, payload))
+
+                    self.mqttClient.publish(
+                      topic='openbenchmark/experimentId/{0}/nodeId/{0}/performanceData'.format(self.experimentId, source),
+                      payload=json.dumps(payload),
+                    )
+
+                with self.dataLock:
+                    # reset for the next measurement
+                    self.dutyCycleMeasurements = set()
 
                 time.sleep(self.period)
 
@@ -694,10 +716,8 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
         self.goOn = False
 
     def handle_dutyCycleMeasurement(self, sender, signal, data):
-        log.debug(
-            "handle_update sender: {0}\n signal: {1}\n data: {2}".format(sender, signal, data))
         with self.dataLock:
-            self.dutyCycleMeasurementList.add(
+            self.dutyCycleMeasurements.add(
                 ( data['source'], data['timestamp'], data['dutyCycle'] )
             )
 

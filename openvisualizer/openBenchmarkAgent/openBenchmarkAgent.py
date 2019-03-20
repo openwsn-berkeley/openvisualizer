@@ -535,21 +535,7 @@ class PerformanceEvent(object):
             (success, dict) = event_handler(buf)
 
             if success:
-                # common fields
-                returnVal['event']     = event_name
-                returnVal['timestamp'] = str(timestamp)
-                returnVal['source']    = source
-
-                # handler-specific fields
-                returnVal.update(dict)
-                topic = 'openbenchmark/experimentId/{0}/nodeId/{1}/performanceData'.format(self.experimentId, source)
-
-                log.debug("Publishing on topic: {0} Payload: {1}".format(topic, returnVal))
-
-                self.mqttClient.publish(
-                   topic=topic,
-                   payload=json.dumps(returnVal),
-                )
+                self.publish_event(event=event_name, timestamp=str(timestamp), source=source, eventSpecificFields=dict)
 
         except Exception as err:
             log.exception("Exception while executing {0}".format(event))
@@ -559,6 +545,25 @@ class PerformanceEvent(object):
     def close(self):
         if self.performanceUpdatePoller:
             self.performanceUpdatePoller.close()
+
+    def publish_event(self, event, timestamp, source, eventSpecificFields):
+        payload = {}
+
+        payload['event']        = event
+        payload['timestamp']    = timestamp
+        payload['source']       = source
+
+        # update the payload with event specific fields
+        payload.update(eventSpecificFields)
+
+        topic = 'openbenchmark/experimentId/{0}/nodeId/{1}/performanceData'.format(self.experimentId, source)
+
+        log.debug("Publishing on topic: {0} Payload: {1}".format(topic, payload))
+
+        self.mqttClient.publish(
+         topic=topic,
+         payload=json.dumps(returnVal),
+        )
 
     # ======================== private =========================================
 

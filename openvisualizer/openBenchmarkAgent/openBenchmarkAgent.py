@@ -185,9 +185,9 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 try:
                     # construct the payload of the POST request
                     payload = []
+                    payload += [0] * packetPayloadLen
                     payload += [packetCounter]
                     payload += [packetToken[1:]]
-                    payload += [0] * packetPayloadLen
 
                     # the call to POST() is blocking unless no response is expected
                     p = self.coapServer.POST('coap://[{0}:{1}]/b'.format(destinationIPv6, d.DEFAULT_UDP_PORT),

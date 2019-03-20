@@ -145,7 +145,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             self.performanceEvent = PerformanceEvent(self.experimentId, self.mqttClient)
 
             # instantiate performance poller thread to gather duty cycle measurements periodically
-            self.performanceUpdatePoller = PerformanceUpdatePoller(self.OPENBENCHMARK_MEASUREMENT_PERIOD)
+            self.performanceUpdatePoller = PerformanceUpdatePoller(self.experimentId, self.mqttClient,
+                                                                   self.OPENBENCHMARK_MEASUREMENT_PERIOD)
 
             # subscribe to eventBus performance-related events
             eventBusClient.eventBusClient.__init__(
@@ -621,15 +622,20 @@ class PerformanceEvent(object):
 
 class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
 
-    def __init__(self, period):
+    def __init__(self, experimentId, mqttClient, period):
         # log
         log.info("creating a thread for periodic polling of performance metrics")
 
-        # local variables
+        # params
+        self.experimentId = experimentId
+        self.mqttClient = mqttClient
         self.period = period
-        self.dutyCycleMeasurementList = set()
+
+        # local vars
+        self.dutyCycleMeasurements = set()
         self.dataLock = threading.Lock()
-        # flag to permit exit from read loop
+
+        # flag to permit exit from infinite loop
         self.goOn = True
 
         # initialize the parent class

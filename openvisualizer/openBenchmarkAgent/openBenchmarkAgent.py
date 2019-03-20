@@ -702,15 +702,12 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
 
             while self.goOn:
 
-                log.debug("poller is polling")
-
                 # poll moteState for latest measurements
                 self.dispatch('getDutyCycleMeasurement', [])
 
                 # wait for a while to gather the response from motes
                 time.sleep(1)
 
-                log.debug("Performance Event Poller, received measurements:")
                 log.debug(self.dutyCycleMeasurements)
 
                 for measurement in self.dutyCycleMeasurements:

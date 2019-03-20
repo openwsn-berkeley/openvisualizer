@@ -132,7 +132,7 @@ class eventBusMonitor(object):
                 if signal=='fromMote.data':
                     # Forwards a copy of the data received from a mode
                     # to the Internet interface for debugging.
-                    (previousHop,lowpan) = data
+                    (previousHop,lowpan,timestamp) = data
                     
                     zep = self._wrapMacAndZep(
                         previousHop  = previousHop,

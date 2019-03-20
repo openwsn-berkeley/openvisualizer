@@ -283,7 +283,11 @@ class OpenLbr(eventBusClient.eventBusClient):
         try:
             ipv6dic={}
             #build lowpan dictionary from the data
-            ipv6dic = self.lowpan_to_ipv6(data)
+
+            source = data[0]
+            buf = data[1]
+            timestamp = data[2]
+            ipv6dic = self.lowpan_to_ipv6(source, buf)
             success = True
             dispatchSignal = None
 
@@ -302,7 +306,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 #ipv6 header (inner)
                 ipv6dic_inner = {}
                 # parsing the iphc inner header and get the next_header
-                ipv6dic_inner = self.lowpan_to_ipv6([ipv6dic['pre_hop'],ipv6dic['payload']])
+                ipv6dic_inner = self.lowpan_to_ipv6(ipv6dic['pre_hop'],ipv6dic['payload'])
                 ipv6dic['next_header'] = ipv6dic_inner['next_header']
                 ipv6dic['payload'] = ipv6dic_inner['payload']
                 ipv6dic['payload_length'] = ipv6dic_inner['payload_length']
@@ -416,7 +420,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             #as source address is being retrieved from the IPHC header, the signal includes it in case
             #receiver such as RPL DAO processing needs to know the source.
 
-            success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))
+            success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload'],ipv6dic['hop_limit'],timestamp))
 
             if success:
                 return
@@ -754,11 +758,9 @@ class OpenLbr(eventBusClient.eventBusClient):
 
     #===== 6LoWPAN -> IPv6
 
-    def lowpan_to_ipv6(self,data):
+    def lowpan_to_ipv6(self, mac_prev_hop, pkt_lowpan):
 
         pkt_ipv6 = {}
-        mac_prev_hop=data[0]
-        pkt_lowpan=data[1]
 
         if pkt_lowpan[0]==self.PAGE_ONE_DISPATCH:
             ptr = 1

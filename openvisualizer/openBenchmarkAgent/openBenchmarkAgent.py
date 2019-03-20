@@ -190,6 +190,10 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                     payload += [packetToken[1:]]
 
                     # the call to POST() is blocking unless no response is expected
+                    token = [packetCounter] + packetToken[1:]
+                    self.performanceEvent.add_outstanding_packet((token, destination, self.coapServer.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT))
+
+                    log.debug("Publishing on topic: {0} Payload: {1}".format(topic, returnVal))
                     p = self.coapServer.POST('coap://[{0}:{1}]/b'.format(destinationIPv6, d.DEFAULT_UDP_PORT),
                                confirmable=False,
                                options=options,

@@ -732,20 +732,20 @@ class moteState(eventBusClient.eventBusClient):
         return var._fields==tupleInstance._fields
 
     def _getDutyCycle(self, sender, signal, data):
-        try:
-            # data = {
-            #     'source' : self.moteConnector.name,
-            #     'timestamp' : str(self.state[self.ST_ASN].getAsn()),
-            #     'dutyCycle' : self.state[self.ST_MACSTATS].getDutyCycle(),
-            # }
 
+        # source
+        source = self.state[self.ST_IDMANAGER].get_info()
+        # get last duty cycle measurement
+        dutyCycle = self.state[self.ST_MACSTATS].getDutyCycle()
+        # asn of the dutyCycle measurement is an approximation as the exact timestamp is not available
+        timestamp = str(self.state[self.ST_ASN].getAsn())
+
+        if source and dutyCycle and timestamp:
             data = {
-                'source' : self.moteConnector.name,
-                'timestamp' : 0,
-                'dutyCycle' : 0,
+                'source'    : source['64bAddr'],
+                'timestamp' : timestamp,
+                'dutyCycle' : dutyCycle,
             }
 
             # dispatch
             self.dispatch('dutyCycleMeasurement', data)
-        except:
-            pass

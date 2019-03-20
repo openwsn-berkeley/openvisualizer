@@ -140,7 +140,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             self.performanceEvent = PerformanceEvent(self.experimentId, self.mqttClient)
 
             # everything is ok, start a coap server
-            coapResource = OpenbenchmarkResource(self.performanceEvent)
+            self.openbenchmarkResource = OpenbenchmarkResource(self.performanceEvent, self.dagRootEui64)
             self.coapServer.coapServer.addResource(coapResource)
 
             # subscribe to eventBus performance-related events
@@ -209,6 +209,10 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         buf += packetToken
         buf += [packetPayloadLen]
         return buf
+
+    def updateDagRootEui64(self, address):
+        self.dagRootEui64 = address
+        self.openbenchmarkResource.dagRootEui64 = self.dagRootEui64
 
     # ======================== private =========================================
 
@@ -447,7 +451,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         source              = payloadDecoded['source']
 
         # remember DAG root's EUI64
-        self.dagRootEui64 = source
+        self.updateDagRootEui64(source)
 
         # lookup corresponding mote port
         destPort = self.nodes[source]
@@ -752,10 +756,11 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
 
 class OpenbenchmarkResource(coapResource.coapResource):
 
-    def __init__(self, performanceEvent):
+    def __init__(self, performanceEvent, dagRootEui64):
 
         # params
         self.performanceEvent = performanceEvent
+        self.dagRootEui64 = dagRootEui64
 
         # initialize parent class
         coapResource.coapResource.__init__(
@@ -763,6 +768,22 @@ class OpenbenchmarkResource(coapResource.coapResource):
             path='b',
         )
 
-    def POST(self, options=[], payload=[]):
-        # TODO parse the packet token and log the event
+    def POST(self, options=[], payload=[], metaData={}):
+        # token is in the last 5 bytes of payload
+        token = payload[-5:]
+        timestamp = metaData['generic_1']
+        source = self.dagRootEui64
+
+        destination = u.ipv6AddrString2Bytes(metaData['srcIP'])
+        destinationEui64String = openvisualizer.openvisualizer_utils.formatAddr(destination[8:])
+
+        log.debug("OpenbenchmarkResource: POST handler received metadata: {0}".format(metaData))
+
+        dict = {
+            'packetToken'   : token,
+            'destination'   : destinationEui64String,
+            'hopLimit'      : metaData['generic_0'],
+        }
+
+        self.performanceEvent.publish_event(PerformanceEvent.EV_PACKET_RECEIVED[0], timestamp, source, dict)
         return (d.COAP_RC_2_04_CHANGED, [], [])

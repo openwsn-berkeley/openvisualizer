@@ -12,6 +12,8 @@ import struct
 
 from pydispatch import dispatcher
 
+from openvisualizer.openType      import typeAsn
+
 from ParserException import ParserException
 import Parser
 
@@ -95,7 +97,9 @@ class ParserData(Parser.Parser):
         #asn comes in the next 5bytes.  
         
         asnbytes=input[2:7]
-        (self._asn) = struct.unpack('<BHH',''.join([chr(c) for c in asnbytes]))
+        self._asn = struct.unpack('<BHH',''.join([chr(c) for c in asnbytes]))
+        timestamp = typeAsn.typeAsn()
+        timestamp.update(self._asn[0], self._asn[1], self._asn[2])
         
         #source and destination of the message
         dest = input[7:15]
@@ -177,7 +181,7 @@ class ParserData(Parser.Parser):
        
         eventType='data'
         # notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer header
-        return eventType, (source, input)
+        return eventType, (source, input, timestamp)
 
  #======================== private =========================================
  

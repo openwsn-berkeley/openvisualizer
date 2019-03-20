@@ -111,7 +111,7 @@ class joinResource(coapResource.coapResource):
 
         self.addSecurityBinding((None, [d.METHOD_POST]))  # security context should be returned by the callback
 
-    def POST(self,options=[], payload=[]):
+    def POST(self,options=[], payload=[], metaData={}):
 
         link_layer_keyset = [self.networkKeyIndex, u.buf2str(self.networkKey)]
 

@@ -169,9 +169,9 @@ class StateMacStats(StateElem):
             self.data[0]['dutyCycle']       = '?'
 
     def getDutyCycle(self):
-        if len(self.data) != 0:
+        if len(self.data)!=0:
             return self.data[0]['dutyCycle']
-        return '?'
+        return None
 
 class StateScheduleRow(StateElem):
 

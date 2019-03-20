@@ -20,10 +20,12 @@ import binascii
 import os
 import threading
 
-
 class coapServer(eventBusClient.eventBusClient):
     # link-local prefix
     LINK_LOCAL_PREFIX = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+
+    # default IPv6 hop limit
+    COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT = 65
 
     def __init__(self):
         # log
@@ -181,7 +183,7 @@ class coapServer(eventBusClient.eventBusClient):
         ip += [0x00, 0x00, 0x00]  # traffic class (lower nibble) + flow label
         ip += udp[4:6]  # payload length
         ip += [17]  # next header (protocol); UDP=17
-        ip += [64]  # hop limit (pick a safe value)
+        ip += [self.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT]  # hop limit (pick a safe value)
         ip += srcIpv6Address  # source
         ip += dstIpv6Address  # destination
         ip += udp

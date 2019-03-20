@@ -49,7 +49,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
     OPENBENCHMARK_STARTBENCHMARK_REQUEST_TOPIC = 'openbenchmark/command/startBenchmark'
     OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC = 'openbenchmark/response/startBenchmark'
 
-    OPENBENCHMARK_MEASUREMENT_PERIOD     = 3
     OPENBENCHMARK_RESP_STATUS_TIMEOUT    = 10
     OPENBENCHMARK_MAX_RETRIES            = 3
     OPENBENCHMARK_PREFIX_CMD_HANDLER_NAME = '_mqtt_handler_'
@@ -144,10 +143,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             # instantiate performance event handlers from firmware
             self.performanceEvent = PerformanceEvent(self.experimentId, self.mqttClient)
 
-            # instantiate performance poller thread to gather duty cycle measurements periodically
-            self.performanceUpdatePoller = PerformanceUpdatePoller(self.experimentId, self.mqttClient,
-                                                                   self.OPENBENCHMARK_MEASUREMENT_PERIOD)
-
             # subscribe to eventBus performance-related events
             eventBusClient.eventBusClient.__init__(
                 self,
@@ -174,8 +169,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             self.mqttClient.loop_stop()
         if self.coapServer:
             self.coapServer.close()
-        if self.performanceUpdatePoller:
-            self.performanceUpdatePoller.close()
+        if self.performanceEvent:
+            self.performanceEvent.close()
 
     def triggerSendPacket(self, destination, acknowledged, packetsInBurst, packetToken, packetPayloadLen):
 
@@ -466,42 +461,28 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
         return (True, returnVal)
 
-# ==================== Implementation of CoAP openbenchmark resource =====================
-
-class OpenbenchmarkResource(coapResource.coapResource):
-    def __init__(self):
-
-        # initialize parent class
-        coapResource.coapResource.__init__(
-            self,
-            path = 'b',
-        )
-
-    def POST(self,options=[], payload=[]):
-        # TODO parse the packet token and log the event
-        return (d.COAP_RC_2_04_CHANGED, [], [])
+# ================= Implementation of Experiments Performance Events API =====================
 
 class PerformanceEvent(object):
 
-    # event                            #name                      # id
+    # period for measurement polling
+    PERFORMANCE_EVENT_MEASUREMENT_PERIOD              = 10
+
+    # asynchronous event                            #name                      # id
     EV_PACKET_SENT                  = ['packetSent',                  0   ]
     EV_PACKET_RECEIVED              = ['packetReceived',              1   ]
     EV_SYNCHRONIZATION_COMPLETED    = ['synchronizationCompleted',    2   ]
     EV_SECURE_JOIN_COMPLETED        = ['secureJoinCompleted',         3   ]
     EV_BANDWIDTH_ASSIGNED           = ['bandwidthAssigned',           4   ]
     EV_NETWORK_FORMATION_COMPLETED  = ['networkFormationCompleted',   257 ]
-    EV_RADIO_DUTY_CYCLE_MEASUREMENT = ['radioDutyCycleMeasurement',   258 ]
-    EV_CLOCK_DRIFT_MEASUREMENT      = ['clockDriftMeasurement',       259 ]
 
-    EV_ALL = [
+    EV_ASYNC_ALL = [
         EV_PACKET_SENT,
         EV_PACKET_RECEIVED,
         EV_SECURE_JOIN_COMPLETED,
         EV_BANDWIDTH_ASSIGNED,
         EV_SYNCHRONIZATION_COMPLETED,
         EV_NETWORK_FORMATION_COMPLETED,
-        EV_RADIO_DUTY_CYCLE_MEASUREMENT,
-        EV_CLOCK_DRIFT_MEASUREMENT,
     ]
 
     PERFORMANCE_EVENT_HANDLER_NAME = "_handler_event_"
@@ -511,8 +492,13 @@ class PerformanceEvent(object):
         #assert experimentId
         #assert mqttClient
 
+        # params
         self.experimentId = experimentId
         self.mqttClient = mqttClient
+
+        # start poller thread for periodic measurements
+        self.performanceUpdatePoller = PerformanceUpdatePoller(self.experimentId, self.mqttClient,
+                                                               self.PERFORMANCE_EVENT_MEASUREMENT_PERIOD)
 
     # ======================== public =========================================
 
@@ -530,7 +516,7 @@ class PerformanceEvent(object):
 
             # find the event
             event_name = None
-            for ev in self.EV_ALL:
+            for ev in self.EV_ASYNC_ALL:
                 if ev[1] == event:
                     event_name = ev[0]
                     break
@@ -570,6 +556,9 @@ class PerformanceEvent(object):
             log.exception(err)
             log.exception(traceback.format_exc())
 
+    def close(self):
+        if self.performanceUpdatePoller:
+            self.performanceUpdatePoller.close()
 
     # ======================== private =========================================
 
@@ -609,19 +598,18 @@ class PerformanceEvent(object):
         # TODO
         return (True, {})
 
-    # radioDutyCycleMeasurement
-    def _handler_event_radioDutyCycleMeasurement(self, buf):
-        returnVal = {}
-        # TODO
-        return (True, returnVal)
-
-    # clockDriftMeasurement
-    def _handler_event_clockDriftMeasurement(self, buf):
-        returnVal = {}
-        # TODO
-        return (True, returnVal)
+# ================= helper class that polls for periodic measurements =====================
 
 class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
+
+    # periodic event names
+    EV_RADIO_DUTY_CYCLE_MEASUREMENT = ['radioDutyCycleMeasurement',    258 ]
+    EV_CLOCK_DRIFT_MEASUREMENT =      ['clockDriftMeasurement',        259 ]
+
+    EV_SYNC_ALL = [
+        EV_RADIO_DUTY_CYCLE_MEASUREMENT,
+        EV_CLOCK_DRIFT_MEASUREMENT,
+    ]
 
     def __init__(self, experimentId, mqttClient, period):
         # log
@@ -655,10 +643,13 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
                     'signal': 'dutyCycleMeasurement',
                     'callback': self.handle_dutyCycleMeasurement,
                 },
+                # TODO clock drift measurements
             ]
         )
         # start myself
         self.start()
+
+    # ======================== public =========================================
 
     def run(self):
         try:
@@ -685,7 +676,7 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
 
                     topic = 'openbenchmark/experimentId/{0}/nodeId/{1}/performanceData'.format(self.experimentId, source)
                     payload = {
-                        'event'     : 'radioDutyCycleMeasurement',
+                        'event'     : self.EV_RADIO_DUTY_CYCLE_MEASUREMENT[0],
                         'timestamp' : timestamp,
                         'source'    : source,
                         'dutyCycle' : dutyCycle,
@@ -721,3 +712,17 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
                 ( data['source'], data['timestamp'], data['dutyCycle'] )
             )
 
+# ==================== Implementation of CoAP openbenchmark resource =====================
+
+class OpenbenchmarkResource(coapResource.coapResource):
+
+    def __init__(self):
+        # initialize parent class
+        coapResource.coapResource.__init__(
+            self,
+            path='b',
+        )
+
+    def POST(self, options=[], payload=[]):
+        # TODO parse the packet token and log the event
+        return (d.COAP_RC_2_04_CHANGED, [], [])

@@ -130,17 +130,39 @@ class ParserData(Parser.Parser):
                     self.avg_pdr_latency_cellUsage[l3_source]['numCellsUsed'].append(numCellsUsed)
                 else:
                     self.avg_pdr_latency_cellUsage[l3_source] = {
-                        'counter' : [counter],
-                        'latency': [latency],
-                        'numCellsUsed': [numCellsUsed]
+                        'counter'        : [counter],
+                        'latency'        : [latency],
+                        'numCellsUsed'   : [numCellsUsed],
+                        'avg_cellsUsage' : 0.0,
+                        'avg_latency'    : 0.0,
+                        'avg_pdr'        : 0.0
                     }
 
-                payload['l3_source']      = l3_source
                 mote_data = self.avg_pdr_latency_cellUsage[l3_source]
 
-                payload['avg_cellsUsage'] = float(sum(mote_data['numCellsUsed'])/len(mote_data['numCellsUsed']))/float(64)
-                payload['avg_latency']    = sum(self.avg_pdr_latency_cellUsage[l3_source]['latency'])/len(self.avg_pdr_latency_cellUsage[l3_source]['latency'])
-                payload['avg_pdr']        = float(len(set(mote_data['counter'])))/float(1+mote_data['counter'][-1]-mote_data['counter'][0])
+                self.avg_pdr_latency_cellUsage[l3_source]['avg_cellsUsage'] = float(sum(mote_data['numCellsUsed'])/len(mote_data['numCellsUsed']))/float(64)
+                self.avg_pdr_latency_cellUsage[l3_source]['avg_latency']    = sum(self.avg_pdr_latency_cellUsage[l3_source]['latency'])/len(self.avg_pdr_latency_cellUsage[l3_source]['latency'])
+                mote_data['counter'].sort() # sort the counter before calculating
+                self.avg_pdr_latency_cellUsage[l3_source]['avg_pdr']        = float(len(set(mote_data['counter'])))/float(1+mote_data['counter'][-1]-mote_data['counter'][0])
+
+                avg_pdr_all           = 0.0
+                avg_latency_all       = 0.0
+                avg_numCellsUsage_all = 0.0
+
+                for mote, data in self.avg_pdr_latency_cellUsage.items():
+                    avg_pdr_all           += data['avg_pdr']
+                    avg_latency_all       += data['avg_latency']
+                    avg_numCellsUsage_all += data['avg_cellsUsage']
+
+                numMotes = len(self.avg_pdr_latency_cellUsage)
+                avg_pdr_all                = avg_pdr_all/float(numMotes)
+                avg_latency_all            = avg_latency_all/float(numMotes)
+                avg_numCellsUsage_all      = avg_numCellsUsage_all/float(numMotes)
+
+                payload['avg_cellsUsage'] = avg_numCellsUsage_all
+                payload['avg_latency']    = avg_latency_all
+                payload['avg_pdr']        = avg_pdr_all
+
 
                 print payload
 

@@ -44,6 +44,8 @@ class ParserData(Parser.Parser):
           'asn_0_1',                   # H
          ]
 
+        self.avg_pdr_latency_cellUsage = {}
+
         self.broker                    = OPENTESTBED_BROKER_ADDRESS
         self.mqttconnected             = False
 
@@ -121,11 +123,24 @@ class ParserData(Parser.Parser):
                 payload = {
                     'token':       123,
                 }
+                
+                if l3_source in self.avg_pdr_latency_cellUsage:
+                    self.avg_pdr_latency_cellUsage[l3_source]['counter'].append(counter)
+                    self.avg_pdr_latency_cellUsage[l3_source]['latency'].append(latency)
+                    self.avg_pdr_latency_cellUsage[l3_source]['numCellsUsed'].append(numCellsUsed)
+                else:
+                    self.avg_pdr_latency_cellUsage[l3_source] = {
+                        'counter' : [counter],
+                        'latency': [latency],
+                        'numCellsUsed': [numCellsUsed]
+                    }
 
                 payload['l3_source']      = l3_source
-                payload['numCellsUsed']   = numCellsUsed
-                payload['latency']        = latency
-                payload['counter']        = counter
+                mote_data = self.avg_pdr_latency_cellUsage[l3_source]
+
+                payload['avg_cellsUsage'] = float(sum(mote_data['numCellsUsed'])/len(mote_data['numCellsUsed']))/float(64)
+                payload['avg_latency']    = sum(self.avg_pdr_latency_cellUsage[l3_source]['latency'])/len(self.avg_pdr_latency_cellUsage[l3_source]['latency'])
+                payload['avg_pdr']        = float(len(set(mote_data['counter'])))/float(1+mote_data['counter'][-1]-mote_data['counter'][0])
 
                 print payload
 

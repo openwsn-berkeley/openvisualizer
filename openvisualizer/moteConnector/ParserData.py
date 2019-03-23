@@ -159,9 +159,10 @@ class ParserData(Parser.Parser):
                 avg_latency_all            = avg_latency_all/float(numMotes)
                 avg_numCellsUsage_all      = avg_numCellsUsage_all/float(numMotes)
 
-                payload['avg_cellsUsage'] = avg_numCellsUsage_all
-                payload['avg_latency']    = avg_latency_all
-                payload['avg_pdr']        = avg_pdr_all
+                payload['avg_cellsUsage']  = avg_numCellsUsage_all
+                payload['avg_latency']     = avg_latency_all
+                payload['avg_pdr']         = avg_pdr_all
+                payload['l3_source']       = l3_source
 
 
                 print payload

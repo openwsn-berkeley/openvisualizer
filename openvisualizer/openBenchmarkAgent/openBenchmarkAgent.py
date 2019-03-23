@@ -293,7 +293,10 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         return experimentId
 
     def _openbenchmark_subscribe(self, mqttClient, experimentId):
-            mqttClient.subscribe("openbenchmark/experimentId/{0}/command/#".format(experimentId))
+            topic = "openbenchmark/experimentId/{0}/command/#".format(experimentId)
+            mqttClient.subscribe(topic)
+
+            log.debug("Subscribed to MQTT topic: {0}".format(topic))
 
     # command handling adapted from github.com/openwsn-berkeley/opentestbed
     def _execute_command_safely(self, topic, payload):

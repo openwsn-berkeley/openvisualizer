@@ -276,6 +276,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                     raise ValueError("Fail indicated")
 
                 experimentId = payload['experimentId']
+                break
 
             # Retry for all ValueErrors
             except ValueError as valErr:

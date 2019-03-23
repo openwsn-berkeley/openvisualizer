@@ -359,6 +359,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         self.mqttConnectedEvent.set()
 
     def _on_mqtt_message(self, client, userdata, message):
+        log.debug("MQTT message received: topic={0} payload={1}".format(message.topic,message.payload))
         # check if this is the startBenchmark response
         if message.topic == self.OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC:
             self.experimentRequestResponse = message.payload

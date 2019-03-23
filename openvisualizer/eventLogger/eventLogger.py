@@ -46,7 +46,7 @@ class eventLogger(threading.Thread):
                         f.write(str(item)+'\n')
                     # json_output = json.dumps(self.output)
 
-            with open(self.numPktDroppedFile, 'a') as f:
+            with open(self.num_pkt_dropped_file, 'a') as f:
                 f.write(str(self.moteState.moteConnector.parser.parserError.numPacketDropped)+'\n')
 
             time.sleep(2)

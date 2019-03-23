@@ -58,7 +58,7 @@ class ParserInfoErrorCritical(Parser.Parser):
         except struct.error:
             raise ParserException(ParserException.DESERIALIZE,"could not extract data from {0}".format(input))
 
-        if error_code == 29:
+        if error_code == 27:
             # this is large time correction info, 
             (arg1, arg2) = struct.unpack('>hH',''.join([chr(c) for c in input[-4:]]))
 
@@ -92,7 +92,7 @@ class ParserInfoErrorCritical(Parser.Parser):
     
     def _translateErrorDescription(self,error_code,arg1,arg2):
         try:
-            if error_code == 61:
+            if error_code == 59:
                 arg1 = StackDefines.sixtop_returncode[arg1]
                 arg2 = StackDefines.sixtop_statemachine[arg2]
             return StackDefines.errorDescriptions[error_code].format(arg1,arg2)

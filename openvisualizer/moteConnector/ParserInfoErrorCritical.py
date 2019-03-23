@@ -42,7 +42,6 @@ class ParserInfoErrorCritical(Parser.Parser):
             'maxmium_retries_reached': 0,
             'uinject_packet':          0,
         }
-        self.numPacketDropped['queue_overflow'] = 0
         
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)

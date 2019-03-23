@@ -20,6 +20,7 @@ class eventLogger(threading.Thread):
         self.moteState                 = moteState
         self.serialport                = self.moteState.moteConnector.serialport
         self.logfile                   = 'eventLog_{0}.log'.format(self.serialport)
+        self.num_pkt_dropped_file      = 'pktDropLog_{0}.log'.format(self.serialport)
         self.output                    = {}
         
         # initialize the parent class
@@ -44,9 +45,12 @@ class eventLogger(threading.Thread):
                     for item in self.output[key]:
                         f.write(str(item)+'\n')
                     # json_output = json.dumps(self.output)
-            '''
-                
+
+            with open(self.numPktDroppedFile, 'a') as f:
+                f.write(str(self.moteState.moteConnector.parser.parserError.numPacketDropped)+'\n')
+
             time.sleep(2)
+            '''
         
     #======================== public ==========================================
     

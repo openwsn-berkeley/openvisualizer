@@ -281,7 +281,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             except ValueError as valErr:
                 log.info(str(valErr) + ", retrying...")
                 attempt += 1
-                self.experimentRequestResponseEvent.clear()
                 continue
             # give up
             except Exception as e:

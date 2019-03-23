@@ -93,11 +93,11 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         self.nodes = {}
 
         # OV is running in simulation mode
-        if self.testbed is 'simulation':
+        if self.testbed == 'simulation':
             for port in portNames:
                 self.nodes[port] = 'simulation'
         # Motes are attached locally on the physical port
-        elif self.testbed is 'local':
+        elif self.testbed == 'local':
             for port in portNames:
                 self.nodes[port] = 'local'
         # General case, motes are in testbed connected over OpenTestbed software
@@ -269,10 +269,10 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 success = payload['success']
 
                 # check token match
-                if tokenGenerated is not tokenReceived:
+                if tokenGenerated != tokenReceived:
                     raise ValueError("Token does not match the one sent in the request")
                 # success?
-                if success is not True:
+                if success != True:
                     raise ValueError("Fail indicated")
 
                 experimentId = payload['experimentId']
@@ -360,7 +360,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
     def _on_mqtt_message(self, client, userdata, message):
         # check if this is the startBenchmark response
-        if message.topic is self.OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC:
+        if message.topic == self.OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC:
             self.experimentRequestResponse = message.payload
             self.experimentRequestResponseEvent.set()
         # if not, assume this is a command

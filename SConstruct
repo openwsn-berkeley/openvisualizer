@@ -170,7 +170,7 @@ runnerEnv['TESTBED'] = GetOption('testbed')
 AddOption('--benchmark',
     dest      = 'benchmark',
     default   = False,
-    choices   = ['building-automation', 'home-automation', 'industrial-monitoring'],
+    choices   = ['building-automation', 'home-automation', 'industrial-monitoring', 'demo-scenario'],
     action    = 'store')
 runnerEnv['BENCHMARK'] = GetOption('benchmark')
 

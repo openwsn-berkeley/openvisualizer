@@ -455,7 +455,7 @@ def _addParserArgs(parser):
     parser.add_argument('-b', '--benchmark',
         dest       = 'benchmark',
         default    = False,
-        choices    = ['building-automation', 'home-automation', 'industrial-monitoring'],
+        choices    = ['building-automation', 'home-automation', 'industrial-monitoring', 'demo-scenario'],
         action     = 'store',
         help       = 'trigger --benchmark scenario using OpenBenchmark cloud service. see benchmark.6tis.ch'
     )

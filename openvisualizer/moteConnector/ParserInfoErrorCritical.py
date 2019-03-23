@@ -36,6 +36,13 @@ class ParserInfoErrorCritical(Parser.Parser):
         
         # store params
         self.severity   = severity
+
+        self.numPacketDropped = {
+            'queue_overflow':          0,
+            'maxmium_retries_reached': 0,
+            'uinject_packet':          0,
+        }
+        self.numPacketDropped['queue_overflow'] = 0
         
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)
@@ -95,6 +102,18 @@ class ParserInfoErrorCritical(Parser.Parser):
             if error_code == 59:
                 arg1 = StackDefines.sixtop_returncode[arg1]
                 arg2 = StackDefines.sixtop_statemachine[arg2]
+
+            if error_code == 18:
+                # forwarding packet is dropped
+                if arg1 == 0:
+                    self.numPacketDropped['queue_overflow'] += 1
+                elif arg1 == 1:
+                    self.numPacketDropped['maxmium_retries_reached'] += 1
+
+            if error_code == 73:
+                # uinject packet is dropped
+                self.numPacketDropped['uinject_packet'] += 1
+
             return StackDefines.errorDescriptions[error_code].format(arg1,arg2)
         except KeyError:
             return "unknown error {0} arg1={1} arg2={2}".format(error_code,arg1,arg2)

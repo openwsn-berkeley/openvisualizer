@@ -431,7 +431,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         payloadDecoded = json.loads(payload)
 
         source        = payloadDecoded['source']
-        power         = payload.Decoded['power']
+        power         = payloadDecoded['power']
 
         # lookup corresponding mote port
         destPort = self.nodes[source]

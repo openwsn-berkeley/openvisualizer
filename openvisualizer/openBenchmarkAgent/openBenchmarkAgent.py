@@ -586,7 +586,7 @@ class PerformanceEvent(object):
 
         self.mqttClient.publish(
          topic=topic,
-         payload=json.dumps(returnVal),
+         payload=json.dumps(payload),
         )
 
     def add_outstanding_packet(self, packet):

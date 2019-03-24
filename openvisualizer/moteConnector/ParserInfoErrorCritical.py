@@ -43,6 +43,9 @@ class ParserInfoErrorCritical(Parser.Parser):
             'uinject_packet':          0,
         }
         
+        self.numDesync = 0
+        self.numBooted = 0
+        
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)
     
@@ -67,8 +70,31 @@ class ParserInfoErrorCritical(Parser.Parser):
         if error_code == 27:
             # this is large time correction info, 
             (arg1, arg2) = struct.unpack('>hH',''.join([chr(c) for c in input[-4:]]))
+            
+        if error_code == 18:
+            # forwarding packet is dropped
+            if arg1 == 0:
+                self.numPacketDropped['queue_overflow'] += 1
+            elif arg1 == 1:
+                self.numPacketDropped['maxmium_retries_reached'] += 1
 
-        
+        if error_code == 73:
+            # uinject packet is dropped
+            self.numPacketDropped['uinject_packet'] += 1
+            
+        if error_code == 25:
+            # desynchronized
+            self.numDesync += 1
+            
+        if error_code == 52:
+            # mote booted
+            self.numBooted += 1
+            
+        if error_code == 59:
+            # replace args of sixtop command/return code id by string
+            arg1 = StackDefines.sixtop_returncode[arg1]
+            arg2 = StackDefines.sixtop_statemachine[arg2]
+
         # turn into string
         output = "{MOTEID:x} [{COMPONENT}] {ERROR_DESC}".format(
             COMPONENT  = self._translateCallingComponent(callingComponent),
@@ -98,21 +124,6 @@ class ParserInfoErrorCritical(Parser.Parser):
     
     def _translateErrorDescription(self,error_code,arg1,arg2):
         try:
-            if error_code == 59:
-                arg1 = StackDefines.sixtop_returncode[arg1]
-                arg2 = StackDefines.sixtop_statemachine[arg2]
-
-            if error_code == 18:
-                # forwarding packet is dropped
-                if arg1 == 0:
-                    self.numPacketDropped['queue_overflow'] += 1
-                elif arg1 == 1:
-                    self.numPacketDropped['maxmium_retries_reached'] += 1
-
-            if error_code == 73:
-                # uinject packet is dropped
-                self.numPacketDropped['uinject_packet'] += 1
-
             return StackDefines.errorDescriptions[error_code].format(arg1,arg2)
         except KeyError:
             return "unknown error {0} arg1={1} arg2={2}".format(error_code,arg1,arg2)

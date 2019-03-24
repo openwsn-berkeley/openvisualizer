@@ -141,7 +141,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
             # everything is ok, start a coap server
             self.openbenchmarkResource = OpenbenchmarkResource(self.performanceEvent, self.dagRootEui64)
-            self.coapServer.coapServer.addResource(coapResource)
+            self.coapServer.coapServer.addResource(self.openbenchmarkResource)
 
             # subscribe to eventBus performance-related events
             eventBusClient.eventBusClient.__init__(
@@ -165,11 +165,9 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
     # ======================== public ==========================================
 
     def close(self):
-        log.debug("close called")
+        log.debug("shutting down")
         if self.mqttClient:
             self.mqttClient.loop_stop()
-        if self.coapServer:
-            self.coapServer.close()
         if self.performanceEvent:
             self.performanceEvent.close()
 

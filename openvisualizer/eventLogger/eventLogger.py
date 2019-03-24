@@ -21,6 +21,8 @@ class eventLogger(threading.Thread):
         self.serialport                = self.moteState.moteConnector.serialport
         self.logfile                   = 'eventLog_{0}.log'.format(self.serialport)
         self.num_pkt_dropped_file      = 'pktDropLog_{0}.log'.format(self.serialport)
+        self.num_desync_file           = 'numDesyncLog_{0}.log'.format(self.serialport)
+        self.num_booted_file           = 'numBootedLog_{0}.log'.format(self.serialport)
         self.output                    = {}
         
         # initialize the parent class

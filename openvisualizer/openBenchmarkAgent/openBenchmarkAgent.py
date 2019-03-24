@@ -87,7 +87,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         self.mqttClient = None
         self.experimentRequestResponse = None
         self.performanceEvent = None
-        self.dagRootEui64 = None
+        self.dagRootEui64Buf = None
+        self.networkPrefixBuf = None
 
         # dict with keys being eui64, and value a tuple (localPort, testbedHost)
         self.nodes = {}
@@ -142,7 +143,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             self.performanceEvent = PerformanceEvent(self.experimentId, self.mqttClient)
 
             # everything is ok, start a coap server
-            self.openbenchmarkResource = OpenbenchmarkResource(self.performanceEvent, self.dagRootEui64)
+            self.openbenchmarkResource = OpenbenchmarkResource(self.performanceEvent, self.dagRootEui64Buf)
             self.coapServer.coapServer.addResource(self.openbenchmarkResource)
 
             # subscribe to eventBus performance-related events
@@ -154,6 +155,16 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                         'sender': self.WILDCARD,
                         'signal': 'fromMote.performanceData',
                         'callback': self.performanceEvent.handle_event,
+                    },
+                    {
+                        'sender': self.WILDCARD,
+                        'signal': 'registerDagRoot',
+                        'callback': self._registerDagRoot_notif
+                    },
+                    {
+                        'sender': self.WILDCARD,
+                        'signal': 'unregisterDagRoot',
+                        'callback': self._unregisterDagRoot_notif
                     },
                 ]
             )
@@ -175,7 +186,9 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
     def triggerSendPacket(self, destination, acknowledged, packetsInBurst, packetToken, packetPayloadLen):
 
-        destinationIPv6 = openvisualizer.openvisualizer_utils.formatIPv6Addr((self.networkPrefix + destination))
+        assert self.networkPrefixBuf
+
+        destinationIPv6 = openvisualizer.openvisualizer_utils.formatIPv6Addr((self.networkPrefixBuf + destination))
         options = []
 
         if not acknowledged:
@@ -214,10 +227,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         buf += packetToken
         buf += [packetPayloadLen]
         return buf
-
-    def updateDagRootEui64(self, address):
-        self.dagRootEui64 = address
-        self.openbenchmarkResource.dagRootEui64 = self.dagRootEui64
 
     # ======================== private =========================================
 
@@ -377,6 +386,17 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         else:
             self._execute_command_safely(message.topic, message.payload)
 
+    # save dag root address and network prefix
+    def _registerDagRoot_notif(self, sender, signal, data):
+        self.dagRootEui64Buf = data['host']
+        self.openbenchmarkResource.dagRootEui64Buf = self.dagRootEui64Buf
+        self.networkPrefixBuf = data['prefix']
+
+    def _unregisterDagRoot_notif(self, sender, signal, data):
+        self.dagRootEui64Buf = None
+        self.openbenchmarkResource.dagRootEui64Buf = None
+        self.networkPrefixBuf = None
+
     # ==== mqtt command handlers
 
     def _mqtt_handler_echo(self, payload):
@@ -463,9 +483,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         # parse the payload
         payloadDecoded      = json.loads(payload)
         source              = payloadDecoded['source']
-
-        # remember DAG root's EUI64
-        self.updateDagRootEui64(source)
 
         # lookup corresponding mote port
         (destPort, testbedHost) = self.nodes[source]
@@ -771,7 +788,7 @@ class OpenbenchmarkResource(coapResource.coapResource):
 
         # params
         self.performanceEvent = performanceEvent
-        self.dagRootEui64 = dagRootEui64
+        self.dagRootEui64Buf = dagRootEui64
 
         # initialize parent class
         coapResource.coapResource.__init__(
@@ -780,10 +797,13 @@ class OpenbenchmarkResource(coapResource.coapResource):
         )
 
     def POST(self, options=[], payload=[], metaData={}):
+
+        assert self.dagRootEui64Buf
+
         # token is in the last 5 bytes of payload
         token = payload[-5:]
         timestamp = metaData['generic_1']
-        source = self.dagRootEui64
+        source = openvisualizer.openvisualizer_utils.formatAddr(self.dagRootEui64Buf)
 
         destination = u.ipv6AddrString2Bytes(metaData['srcIP'])
         destinationEui64String = openvisualizer.openvisualizer_utils.formatAddr(destination[8:])

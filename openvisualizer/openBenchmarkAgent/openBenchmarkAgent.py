@@ -194,28 +194,27 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         if not acknowledged:
            options += [o.NoResponse([d.DFLT_OPTION_NORESPONSE_SUPRESS_ALL])]
 
-        with self.clientLock:
-            for packetCounter in range (0, packetsInBurst):
-                try:
-                    # construct the payload of the POST request
-                    payload = []
-                    payload += [0] * packetPayloadLen
-                    payload += [packetCounter]
-                    payload += [packetToken[1:]]
+        for packetCounter in range (0, packetsInBurst):
+            try:
+                # construct the payload of the POST request
+                payload = []
+                payload += [0] * packetPayloadLen
+                payload += [packetCounter]
+                payload += [packetToken[1:]]
 
-                    # the call to POST() is blocking unless no response is expected
-                    token = [packetCounter] + packetToken[1:]
-                    self.performanceEvent.add_outstanding_packet((token, destination, self.coapServer.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT))
+                # FIXME the call to POST() is blocking unless no response is expected
+                token = [packetCounter] + packetToken[1:]
+                self.performanceEvent.add_outstanding_packet((token, destination, self.coapServer.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT))
 
-                    log.debug("Publishing on topic: {0} Payload: {1}".format(topic, returnVal))
-                    p = self.coapServer.POST('coap://[{0}:{1}]/b'.format(destinationIPv6, d.DEFAULT_UDP_PORT),
-                               confirmable=False,
-                               options=options,
-                               payload = payload)
+                log.debug("Publishing on topic: {0} Payload: {1}".format(topic, returnVal))
+                p = self.coapServer.coapServer.POST('coap://[{0}:{1}]/b'.format(destinationIPv6, d.DEFAULT_UDP_PORT),
+                           confirmable=False,
+                           options=options,
+                           payload = payload)
 
-                    # TODO log if a response is received
-                except e.coapNoResponseExpected:
-                    pass
+                # TODO log if a response is received
+            except e.coapNoResponseExpected:
+                pass
 
     def encodeSendPacketPayload(self, destination, confirmable, packetsInBurst, packetToken, packetPayloadLen):
         # construct command payload as byte-list:

@@ -417,7 +417,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             if len(commandPayload) != 16:
                 return False, returnVal
 
-            action = [moteState.moteState.SET_COMMAND, moteState.moteState.COMMAND_SEND_PACKET, commandPayload]
+            action = [moteState.moteState.SET_COMMAND, moteState.moteState.COMMAND_SEND_PACKET[0], commandPayload]
             # generate an eventbus signal to send a command over serial
 
             # dispatch
@@ -442,7 +442,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
         # lookup corresponding mote port
         (destPort, testbedHost) = self.nodes[source]
-        action = [moteState.moteState.SET_COMMAND, moteState.moteState.COMMAND_SET_TX_POWER, power]
+        action = [moteState.moteState.SET_COMMAND, moteState.moteState.COMMAND_SET_TX_POWER[0], power]
 
         # generate an eventbus signal to send a command over serial
 

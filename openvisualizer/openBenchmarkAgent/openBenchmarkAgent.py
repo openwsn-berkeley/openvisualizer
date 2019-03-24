@@ -735,8 +735,6 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
                 # wait for a while to gather the response from motes
                 time.sleep(1)
 
-                log.debug(self.dutyCycleMeasurements)
-
                 for measurement in self.dutyCycleMeasurements:
 
                     # dispatch each as an individual message

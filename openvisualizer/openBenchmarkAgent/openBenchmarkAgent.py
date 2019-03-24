@@ -301,7 +301,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
     def _execute_command_safely(self, topic, payload):
         # parse the topic to extract deviceType, deviceId and cmd ([0-9\-]+)
         try:
-            m = re.search("openbenchmark/experimentId/{0}/command/([a-z]+)".format(self.experimentId), topic)
+            m = re.search("openbenchmark/experimentId/{0}/command/([a-zA-Z]+)".format(self.experimentId), topic)
             assert m, "Invalid topic, could not parse: '{0}'".format(topic)
 
             cmd  = m.group(1)

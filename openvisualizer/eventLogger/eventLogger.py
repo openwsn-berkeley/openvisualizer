@@ -49,6 +49,13 @@ class eventLogger(threading.Thread):
             with open(self.num_pkt_dropped_file, 'a') as f:
                 f.write(str(self.moteState.moteConnector.parser.parserError.numPacketDropped)+'\n')
 
+
+            with open(self.num_desync_file, 'a') as f:
+                f.write("numDesync : {0}\n".format(self.moteState.moteConnector.parser.parserError.numDesync))
+
+            with open(self.num_booted_file, 'a') as f:
+                f.write("numDBooted : {0}\n".format(self.moteState.moteConnector.parser.parserError.numBooted))
+                
             time.sleep(2)
             '''
         

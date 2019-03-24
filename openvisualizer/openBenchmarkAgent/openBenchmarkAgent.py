@@ -159,12 +159,13 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             log.info("Experiment #{0} successfuly started".format(self.experimentId))
 
         except Exception as e:
-            log.warning(e)
+            log.exception(e)
             self.close()
 
     # ======================== public ==========================================
 
     def close(self):
+        log.debug("close called")
         if self.mqttClient:
             self.mqttClient.loop_stop()
         if self.coapServer:
@@ -285,7 +286,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 continue
             # give up
             except Exception as e:
-                log.warning(e)
+                log.exception(e)
                 break
 
         mqttClient.unsubscribe(self.OPENBENCHMARK_STARTBENCHMARK_RESPONSE_TOPIC)

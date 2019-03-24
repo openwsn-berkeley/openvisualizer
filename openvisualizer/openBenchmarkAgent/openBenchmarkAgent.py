@@ -206,7 +206,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         # construct command payload as byte-list:
         # dest_eui64 (8B) || con (1B) || packetsInBurst (1B) || packetToken (5B) || packetPayloadLen (1B)
         buf = []
-        buf += u.hex2buf(destination, separator='-')
+        buf += openvisualizer.openvisualizer_utils.hex2buf(destination, separator='-')
         buf += [int(confirmable)]
         buf += [int(packetsInBurst)]
         buf += packetToken
@@ -383,8 +383,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         payloadDecoded = json.loads(payload)
 
         sourceStr            = payloadDecoded['source']
-        source               = u.hex2buf(sourceStr, separator='-')
-        destination          = u.hex2buf(payloadDecoded['destination'], separator='-')
+        source               = openvisualizer.openvisualizer_utils.hex2buf(sourceStr, separator='-')
+        destination          = openvisualizer.openvisualizer_utils.hex2buf(payloadDecoded['destination'], separator='-')
         packetsInBurst       = payloadDecoded['packetsInBurst']
         packetToken          = payloadDecoded['packetToken']
         packetPayloadLen     = payloadDecoded['packetPayloadLen']

@@ -89,17 +89,19 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         self.performanceEvent = None
         self.dagRootEui64 = None
 
-        # dict with keys being eui64, and value corresponding testbed host identifier
+        # dict with keys being eui64, and value a tuple (localPort, testbedHost)
         self.nodes = {}
 
         # OV is running in simulation mode
         if self.testbed == 'simulation':
             for port in portNames:
-                self.nodes[port] = 'simulation'
+                # FIXME get eui64 in simulation
+                self.nodes[port] = (port, 'simulation')
         # Motes are attached locally on the physical port
         elif self.testbed == 'local':
             for port in portNames:
-                self.nodes[port] = 'local'
+                # FIXME get eui64 when executing locally
+                self.nodes[port] = (port, 'local')
         # General case, motes are in testbed connected over OpenTestbed software
         else:
             for port in portNames:
@@ -107,7 +109,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 if m:
                     # (testbed_host, eui64)
                     assert m.group(1) == self.testbed
-                    self.nodes[m.group(3)] = m.group(2)
+                    self.nodes[m.group(3)] = (port, m.group(2))
 
         log.info('Initializing OpenBenchmark with options:\n\t{0}'.format(
             '\n    '.join(['mqttBroker          = {0}'.format(self.mqttBroker),
@@ -232,13 +234,18 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         # generate a random token
         tokenGenerated = binascii.b2a_hex(os.urandom(8))
 
+        # format nodes to the format expected by OpenBenchmark
+        nodes = {}
+        for key, (portName, testbedId) in self.nodes.iteritems():
+            nodes[key] = testbedId
+
         payload = {
             'api_version': self.OPENBENCHMARK_API_VERSION,
             'token': tokenGenerated,
             'date': strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()),
             'firmware': self.firmware,
             'testbed': self.testbed,
-            'nodes': self.nodes,
+            'nodes': nodes,
             'scenario': self.scenario
         }
 
@@ -396,7 +403,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         else: # command is for one of the motes in the mesh, send it over the serial
 
             # lookup corresponding mote port
-            destPort = self.nodes[sourceStr]
+            (destPort, testbedHost) = self.nodes[sourceStr]
 
             # construct command payload as byte-list:
             # dest_eui64 (8B) || con (1B) || packetsInBurst (1B) || packetToken (5B) || packetPayloadLen (1B)
@@ -434,7 +441,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         power         = payloadDecoded['power']
 
         # lookup corresponding mote port
-        destPort = self.nodes[source]
+        (destPort, testbedHost) = self.nodes[source]
         action = [moteState.moteState.SET_COMMAND, moteState.moteState.COMMAND_SET_TX_POWER, power]
 
         # generate an eventbus signal to send a command over serial
@@ -461,7 +468,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         self.updateDagRootEui64(source)
 
         # lookup corresponding mote port
-        destPort = self.nodes[source]
+        (destPort, testbedHost) = self.nodes[source]
 
         # generate an eventbus signal to send a command over serial
         self.dispatch(

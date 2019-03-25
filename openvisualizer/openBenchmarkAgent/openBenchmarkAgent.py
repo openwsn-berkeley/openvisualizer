@@ -214,8 +214,10 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
                 # TODO log if a response is received
             except e.coapNoResponseExpected:
+                log.debug("No CoAP response expected.")
                 pass
             except e.coapTimeout:
+                log.debug("CoAP response timed out.")
                 pass
 
     def encodeSendPacketPayload(self, destination, confirmable, packetsInBurst, packetToken, packetPayloadLen):

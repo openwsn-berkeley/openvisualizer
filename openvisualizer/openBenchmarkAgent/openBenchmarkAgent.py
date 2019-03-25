@@ -202,7 +202,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 payload += [packetCounter]
                 payload += [packetToken[1:]]
 
-                # FIXME the call to POST() is blocking unless no response is expected
                 token = [packetCounter] + packetToken[1:]
                 self.performanceEvent.add_outstanding_packet((token, destination, self.coapServer.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT))
 
@@ -215,6 +214,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
                 # TODO log if a response is received
             except e.coapNoResponseExpected:
+                pass
+            except e.coapTimeout:
                 pass
 
     def encodeSendPacketPayload(self, destination, confirmable, packetsInBurst, packetToken, packetPayloadLen):
@@ -418,7 +419,13 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         acknowledged         = payloadDecoded['confirmable']
 
         if self.coapServer.getDagRootEui64() == source: # check if command is for the DAG root whose APP code is implemented here
-            self.triggerSendPacket(destination, acknowledged, packetsInBurst, packetToken, packetPayloadLen)
+            coapClientThread = threading.Thread(target = self.triggerSendPacket, args = (destination,
+                                                                                         acknowledged,
+                                                                                         packetsInBurst,
+                                                                                         packetToken,
+                                                                                         packetPayloadLen)
+                                                )
+            coapClientThread.start()
 
         else: # command is for one of the motes in the mesh, send it over the serial
 

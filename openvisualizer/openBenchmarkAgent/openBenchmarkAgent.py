@@ -600,7 +600,7 @@ class PerformanceEvent(object):
         payload = {}
 
         payload['event']        = event
-        payload['timestamp']    = timestamp
+        payload['timestamp']    = int(timestamp,16)
         payload['source']       = source
 
         # update the payload with event specific fields

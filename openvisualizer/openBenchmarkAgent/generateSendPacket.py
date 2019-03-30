@@ -1,5 +1,7 @@
 import paho.mqtt.client as mqtt
 from argparse       import ArgumentParser
+import json
+import random
 
 class PacketGenerator():
     OPENBENCHMARK_SENDPACKET_TOPIC = 'openbenchmark/experimentId/000/command/sendPacket'
@@ -25,7 +27,7 @@ class PacketGenerator():
             'source' : self.srcEui64,
             'destination' : self.destEui64,
             'packetsInBurst' : 1,
-            'packetToken' : [0, 1, 2, 3, 4],
+            'packetToken' : [0, random.randint(0,255), random.randint(0,255), random.randint(0,255), random.randint(0,255)],
             'packetPayloadLen' : 10,
             'confirmable' : self.confirmable
         }
@@ -50,13 +52,13 @@ class PacketGenerator():
                             )
         self.parser.add_argument('-d', '--destEui64',
                             dest='destEui64',
-                            default='',
+                            default='14-15-92-cc-00-00-00-03',
                             action='store',
                             help='Destination EUI-64.'
                             )
         self.parser.add_argument('-s', '--srcEui64',
                             dest='srcEui64',
-                            default='',
+                            default='14-15-92-cc-00-00-00-01',
                             action='store',
                             help='Source EUI-64.'
                             )

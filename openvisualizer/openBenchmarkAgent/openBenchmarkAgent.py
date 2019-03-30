@@ -26,6 +26,7 @@ log.addHandler(logging.NullHandler())
 
 from openvisualizer.eventBus      import eventBusClient
 from openvisualizer.moteState     import moteState
+from openvisualizer.coapServer    import coapServer
 import openvisualizer.openvisualizer_utils
 
 from   coap   import    coap,                    \
@@ -144,7 +145,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
             # everything is ok, start a coap server
             self.openbenchmarkResource = OpenbenchmarkResource(self.performanceEvent, self.dagRootEui64Buf)
-            self.coapServer.coapServer.addResource(self.openbenchmarkResource)
+            self.coapServer.addResource(self.openbenchmarkResource)
 
             # subscribe to eventBus performance-related events
             eventBusClient.eventBusClient.__init__(
@@ -203,11 +204,11 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 payload += [packetToken[1:]]
 
                 token = [packetCounter] + packetToken[1:]
-                self.performanceEvent.add_outstanding_packet((token, destination, self.coapServer.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT))
+                self.performanceEvent.add_outstanding_packet((token, destination, coapServer.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT))
 
                 log.debug("Sending a POST request to 'coap://[{0}]:{1}/b".format(destinationIPv6, d.DEFAULT_UDP_PORT))
 
-                p = self.coapServer.coapServer.POST('coap://[{0}]:{1}/b'.format(destinationIPv6, d.DEFAULT_UDP_PORT),
+                p = self.coapServer.POST('coap://[{0}]/b'.format(destinationIPv6),
                            confirmable=False,
                            options=options,
                            payload = payload)
@@ -420,7 +421,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         packetPayloadLen     = payloadDecoded['packetPayloadLen']
         acknowledged         = payloadDecoded['confirmable']
 
-        if self.coapServer.getDagRootEui64() == source: # check if command is for the DAG root whose APP code is implemented here
+        if self.dagRootEui64Buf == source: # check if command is for the DAG root whose APP code is implemented here
             coapClientThread = threading.Thread(target = self.triggerSendPacket, args = (destination,
                                                                                          acknowledged,
                                                                                          packetsInBurst,

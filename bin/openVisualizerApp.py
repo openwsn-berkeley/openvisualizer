@@ -17,6 +17,9 @@ from openvisualizer.OVtracer import OVtracer
 
 log = logging.getLogger('openVisualizerApp')
 
+from coap                           import coap, \
+                                           coapDefines
+
 from openvisualizer.eventBus        import eventBusMonitor
 from openvisualizer.eventLogger     import eventLogger
 from openvisualizer.moteProbe       import moteProbe
@@ -59,7 +62,13 @@ class OpenVisualizerApp(object):
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
         self.openLbr              = openLbr.OpenLbr(usePageZero)
-        self.coapServer           = coapServer.coapServer()
+
+        # run CoAP server in testing mode
+        # this mode does not open a real socket, rather uses PyDispatcher for sending/receiving messages
+        # We interface this mode with OpenVisualizer to run JRC co-located with the DAG root
+        self.coapServer           = coap.coap(udpPort=coapDefines.DEFAULT_UDP_PORT,
+                                              testing=True,
+                                              socketUdp=coapServer.coapDispatcher)
         self.rpl                  = RPL.RPL()
         self.jrc                  = JRC.JRC(self.coapServer)
         self.topology             = topology.topology()
@@ -225,6 +234,7 @@ class OpenVisualizerApp(object):
             probe.close()
         if self.openBenchmarkAgent:
             self.openBenchmarkAgent.close()
+        self.coapServer.close()
                 
     def getMoteState(self, moteid):
         '''

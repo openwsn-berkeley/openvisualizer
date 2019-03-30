@@ -30,8 +30,8 @@ class JRC(eventBusClient.eventBusClient):
 
         self.coapResource = joinResource()
 
-        self.coapServer.coapServer.addResource(self.coapResource)
-        self.coapServer.coapServer.addSecurityContextHandler(contextHandler(self.coapResource).securityContextLookup)
+        self.coapServer.addResource(self.coapResource)
+        self.coapServer.addSecurityContextHandler(contextHandler(self.coapResource).securityContextLookup)
 
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
@@ -50,7 +50,7 @@ class JRC(eventBusClient.eventBusClient):
     # ======================== public ==========================================
 
     def close(self):
-        self.coapServer.close()
+        pass
 
     # ==== handle EventBus notifications
 

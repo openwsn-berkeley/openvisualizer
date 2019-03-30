@@ -3,7 +3,8 @@ from   coap   import    coap,                    \
                         coapDefines as d,        \
                         coapOption as o,         \
                         coapUtils as u,          \
-                        coapObjectSecurity as oscoap
+                        coapObjectSecurity as oscoap, \
+                        socketUdp
 import logging.handlers
 try:
     from openvisualizer.eventBus import eventBusClient
@@ -18,35 +19,34 @@ log.addHandler(logging.NullHandler())
 import cbor
 import binascii
 import os
+import time
 import threading
 
-class coapServer(eventBusClient.eventBusClient):
+# default IPv6 hop limit
+COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT = 65
+
+class coapDispatcher(socketUdp.socketUdp, eventBusClient.eventBusClient):
+
     # link-local prefix
     LINK_LOCAL_PREFIX = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 
-    # default IPv6 hop limit
-    COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT = 65
-
-    def __init__(self):
+    def __init__(self, ipAddress, udpPort, callback):
         # log
-        log.info("create instance")
+        log.debug('creating instance')
 
-        # run CoAP server in testing mode
-        # this mode does not open a real socket, rather uses PyDispatcher for sending/receiving messages
-        # We interface this mode with OpenVisualizer to run JRC co-located with the DAG root
-        self.coapServer = coap.coap(udpPort=d.DEFAULT_UDP_PORT, testing=True)
-
-        self.ephemeralCoapClient = None
-
+        # params
+        self.udpPort = udpPort
         self.dagRootEui64 = None
         self.networkPrefix = None
+        self.callback = callback
 
-        # store params
+        # initialize the parent socketUdp class
+        socketUdp.socketUdp.__init__(self, ipAddress, self.udpPort, self.callback)
 
-        # initialize parent class
+        # initialize the parent class eventBusClient class
         eventBusClient.eventBusClient.__init__(
             self,
-            name='coapServer',
+            name='coapDispatcher',
             registrations=[
                 {
                     'sender': self.WILDCARD,
@@ -61,23 +61,106 @@ class coapServer(eventBusClient.eventBusClient):
             ]
         )
 
-        # local variables
-        self.stateLock = threading.Lock()
+        # change name
+        self.name = 'coapDispatcher@DagRootIpv6:{0}'.format(self.udpPort)
+        self.gotMsgSem = threading.Semaphore()
+
+        # start myself
+        self.start()
 
     # ======================== public ==========================================
+    # TODO rework the class for it to be completely stateless and not depend on self.dagRootEui64
+    def sendUdp(self, destIp, destPort, msg):
+        '''
+          Receive CoAP response and forward it to the mesh network.
+          Appends UDP and IPv6 headers to the CoAP message and forwards it on the Eventbus towards the mesh.
+          '''
+
+        assert self.dagRootEui64
+        assert self.networkPrefix
+
+        log.debug("sendUdp to {0}:{1} message {2}".format(destIp,destPort,msg))
+
+        # UDP
+        udplen = len(msg) + 8
+
+        # FIXME need to signal the source port from the packet
+        udp = u.int2buf(self.udpPort, 2)  # src port
+        udp += u.int2buf(destPort, 2)  # dest port
+        udp += [udplen >> 8, udplen & 0xff]  # length
+        udp += [0x00, 0x00]  # checksum
+        udp += msg
+
+        # destination address of the packet is CoAP client's IPv6 address (address of the mote)
+        dstIpv6Address = u.ipv6AddrString2Bytes(destIp)
+        assert len(dstIpv6Address) == 16
+        # source address of the packet is DAG root's IPV6 address
+        # use the same prefix (link-local or global) as in the destination address
+        srcIpv6Address = dstIpv6Address[:8]
+        srcIpv6Address += self.dagRootEui64
+        assert len(srcIpv6Address) == 16
+
+        # CRC See https://tools.ietf.org/html/rfc2460.
+
+        udp[6:8] = openvisualizer.openvisualizer_utils.calculatePseudoHeaderCRC(
+            src=srcIpv6Address,
+            dst=dstIpv6Address,
+            length=[0x00, 0x00] + udp[4:6],
+            nh=[0x00, 0x00, 0x00, 17],  # UDP as next header
+            payload=udp,
+        )
+
+        # IPv6
+        ip = [6 << 4]  # v6 + traffic class (upper nybble)
+        ip += [0x00, 0x00, 0x00]  # traffic class (lower nibble) + flow label
+        ip += udp[4:6]  # payload length
+        ip += [17]  # next header (protocol); UDP=17
+        ip += [COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT]  # hop limit (pick a safe value)
+        ip += srcIpv6Address  # source
+        ip += dstIpv6Address  # destination
+        ip += udp
+
+        self.dispatch(
+            signal='v6ToMesh',
+            data=ip
+        )
+
+        # update stats
+        self._incrementTx()
 
     def close(self):
-        # nothing to do
-        pass
-
-    def getDagRootEui64(self):
-        return self.dagRootEui64
-
-    def getDagRootIPv6(self):
-        ipv6buf = self.networkPrefix + self.dagRootEui64
-        return openvisualizer.openvisualizer_utils.formatIPv6Addr(ipv6buf)
+        # stop
+        self.goOn = False
+        self.gotMsgSem.release()
 
     # ======================== private =========================================
+
+    def _messageNotification(self, sender, signal, data):
+        # log
+        log.debug("messageNotification: got {1} from {0}".format(sender, data))
+
+        srcIpv6 = openvisualizer.openvisualizer_utils.formatIPv6Addr(data[0])
+        rawbytes = data[1]
+        hopLimit = data[2] # IPv6 metadata
+        timestamp = str(data[3]) # timestamp of the received packet
+
+        sender = (srcIpv6, self.udpPort, (hopLimit, timestamp))
+
+        # call the callback
+        self.callback(timestamp, sender, rawbytes)
+
+        # update stats
+        self._incrementRx()
+
+        # release the lock
+        self.gotMsgSem.release()
+
+        # return success in order to acknowledge the reception
+        return True
+
+    def run(self):
+        while self.goOn:
+            self.gotMsgSem.acquire()
 
     # ==== handle EventBus notifications
 
@@ -90,7 +173,7 @@ class coapServer(eventBusClient.eventBusClient):
                 self.PROTO_UDP,
                 d.DEFAULT_UDP_PORT
             ),
-            callback=self._receiveFromMesh,
+            callback=self._messageNotification,
         )
 
         # register to receive at link-local DAG root's address
@@ -101,7 +184,7 @@ class coapServer(eventBusClient.eventBusClient):
                 self.PROTO_UDP,
                 d.DEFAULT_UDP_PORT
             ),
-            callback=self._receiveFromMesh,
+            callback=self._messageNotification,
         )
 
         self.dagRootEui64 = data['host']
@@ -116,7 +199,7 @@ class coapServer(eventBusClient.eventBusClient):
                 self.PROTO_UDP,
                 d.DEFAULT_UDP_PORT
             ),
-            callback=self._receiveFromMesh,
+            callback=self._messageNotification,
         )
         # unregister link-local address
         self.unregister(
@@ -126,74 +209,8 @@ class coapServer(eventBusClient.eventBusClient):
                 self.PROTO_UDP,
                 d.DEFAULT_UDP_PORT
             ),
-            callback=self._receiveFromMesh,
+            callback=self._messageNotification,
         )
 
         self.dagRootEui64 = None
         self.networkPrefix = None
-
-    def _receiveFromMesh(self, sender, signal, data):
-        '''
-        Receive packet from the mesh destined for JRC's CoAP server.
-        Forwards the packet to the virtual CoAP server running in test mode (PyDispatcher).
-        '''
-        sender = openvisualizer.openvisualizer_utils.formatIPv6Addr(data[0])
-
-        hopLimit = data[2] # IPv6 metadata
-        timestamp = str(data[3]) # timestamp of the received packet
-
-        # FIXME pass source port within the signal and open coap client at this port
-        self.ephemeralCoapClient = coap.coap(ipAddress=sender, udpPort=d.DEFAULT_UDP_PORT, testing=True, receiveCallback=self._receiveFromCoAP)
-        self.ephemeralCoapClient.socketUdp.sendUdp(destIp='', destPort=d.DEFAULT_UDP_PORT, msg=data[1],metaData=(hopLimit, timestamp)) # low level forward of the CoAP message
-        return True
-
-    def _receiveFromCoAP(self, timestamp, sender, data):
-        '''
-        Receive CoAP response and forward it to the mesh network.
-        Appends UDP and IPv6 headers to the CoAP message and forwards it on the Eventbus towards the mesh.
-        '''
-        self.ephemeralCoapClient.close()
-
-        # UDP
-        udplen = len(data) + 8
-
-        udp = u.int2buf(sender[1], 2)  # src port
-        udp += u.int2buf(self.ephemeralCoapClient.udpPort, 2)  # dest port
-        udp += [udplen >> 8, udplen & 0xff]  # length
-        udp += [0x00, 0x00]  # checksum
-        udp += data
-
-        # destination address of the packet is CoAP client's IPv6 address (address of the mote)
-        dstIpv6Address = u.ipv6AddrString2Bytes(self.ephemeralCoapClient.ipAddress)
-        assert len(dstIpv6Address)==16
-        # source address of the packet is DAG root's IPV6 address
-        # use the same prefix (link-local or global) as in the destination address
-        srcIpv6Address = dstIpv6Address[:8]
-        srcIpv6Address += self.dagRootEui64
-        assert len(srcIpv6Address)==16
-
-        # CRC See https://tools.ietf.org/html/rfc2460.
-
-        udp[6:8] = openvisualizer.openvisualizer_utils.calculatePseudoHeaderCRC(
-            src=srcIpv6Address,
-            dst=dstIpv6Address,
-            length=[0x00, 0x00] + udp[4:6],
-            nh=[0x00, 0x00, 0x00, 17], # UDP as next header
-            payload=udp,
-        )
-
-        # IPv6
-        ip = [6 << 4]  # v6 + traffic class (upper nybble)
-        ip += [0x00, 0x00, 0x00]  # traffic class (lower nibble) + flow label
-        ip += udp[4:6]  # payload length
-        ip += [17]  # next header (protocol); UDP=17
-        ip += [self.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT]  # hop limit (pick a safe value)
-        ip += srcIpv6Address  # source
-        ip += dstIpv6Address  # destination
-        ip += udp
-
-        # announce network prefix
-        self.dispatch(
-            signal        = 'v6ToMesh',
-            data          = ip
-        )

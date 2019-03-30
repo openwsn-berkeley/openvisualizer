@@ -201,7 +201,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 payload = []
                 payload += [0] * packetPayloadLen
                 payload += [packetCounter]
-                payload += [packetToken[1:]]
+                payload += packetToken[1:]
 
                 token = [packetCounter] + packetToken[1:]
                 self.performanceEvent.add_outstanding_packet((token, destination, coapServer.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT))
@@ -753,7 +753,7 @@ class PerformanceUpdatePoller(eventBusClient.eventBusClient, threading.Thread):
                     topic = 'openbenchmark/experimentId/{0}/nodeId/{1}/performanceData'.format(self.experimentId, source)
                     payload = {
                         'event'     : self.EV_RADIO_DUTY_CYCLE_MEASUREMENT[0],
-                        'timestamp' : timestamp,
+                        'timestamp' : int(timestamp,16),
                         'source'    : source,
                         'dutyCycle' : dutyCycle,
                     }

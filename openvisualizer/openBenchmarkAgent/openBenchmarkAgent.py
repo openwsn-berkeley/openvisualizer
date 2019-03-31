@@ -208,17 +208,32 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
                 log.debug("Sending a POST request to 'coap://[{0}]:{1}/b".format(destinationIPv6, d.DEFAULT_UDP_PORT))
 
-                p = self.coapServer.POST('coap://[{0}]/b'.format(destinationIPv6),
+                token, metaData = self.coapServer.POST('coap://[{0}]:{1}/b'.format(destinationIPv6, d.DEFAULT_UDP_PORT),
                            confirmable=False,
                            options=options,
                            payload = payload)
 
-                # TODO log if a response is received
+                # response received, publish the event
+                hopLimit = metaData['generic_0']
+                timestamp = metaData['generic_1']
+                source = openvisualizer.openvisualizer_utils.formatAddr(self.dagRootEui64Buf)
+                dict = {
+                    'packetToken': token,
+                    'destination': destination,
+                    'hopLimit': hopLimit,
+                }
+
+                self.performanceEvent.publish_event(event=PerformanceEvent.EV_PACKET_RECEIVED[2],
+                                                    timestamp=timestamp,
+                                                    source=source,
+                                                    eventSpecificFields=dict)
+
             except e.coapNoResponseExpected:
                 log.debug("No CoAP response expected.")
                 pass
             except e.coapTimeout:
                 log.debug("CoAP response timed out.")
+                # should we add an event to log packet drop here
                 pass
 
     def encodeSendPacketPayload(self, destination, confirmable, packetsInBurst, packetToken, packetPayloadLen):
@@ -808,6 +823,9 @@ class OpenbenchmarkResource(coapResource.coapResource):
 
         assert self.dagRootEui64Buf
 
+        respPayload = []
+        respOptions = []
+
         # token is in the last 5 bytes of payload
         token = payload[-5:]
         timestamp = metaData['generic_1']
@@ -824,5 +842,19 @@ class OpenbenchmarkResource(coapResource.coapResource):
             'hopLimit'      : metaData['generic_0'],
         }
 
-        self.performanceEvent.publish_event(PerformanceEvent.EV_PACKET_RECEIVED[0], timestamp, source, dict)
-        return (d.COAP_RC_2_04_CHANGED, [], [])
+        self.performanceEvent.publish_event(PerformanceEvent.EV_PACKET_RECEIVED[2], timestamp, source, dict)
+
+        noResponse = False
+        for option in options:
+            if isinstance(option, o.NoResponse):
+                noResponse = True
+
+        # prepare the response
+        if not noResponse:
+            respPayload = token
+            respPayload[4] = (respPayload[4] + 1) % 255
+            self.performanceEvent.add_outstanding_packet(
+                (respPayload, destination, coapServer.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT)
+            )
+
+        return d.COAP_RC_2_04_CHANGED, respOptions, respPayload

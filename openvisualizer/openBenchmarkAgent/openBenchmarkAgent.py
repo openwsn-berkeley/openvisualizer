@@ -54,7 +54,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
     OPENBENCHMARK_MAX_RETRIES            = 3
     OPENBENCHMARK_PREFIX_CMD_HANDLER_NAME = '_mqtt_handler_'
 
-    def __init__(self, coapServer, mqttBroker, firmware, testbed, portNames, scenario):
+    def __init__(self, coapServer, mqttBroker, firmware, testbed, motes, scenario):
         '''
         :param mqttBroker:
             Address of the MQTT broker where to connect with OpenBenchmark
@@ -63,10 +63,11 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         :param testbed:
             Identifier of the testbed, 'simulation' for OV in simulation mode, or 'local' for OV with locally-connected
             motes
-        :param portNames:
-            List of port names. If the mote is in testbed, expects 'testbed_{{TESTBED}}_{{HOST}}_{{EUI-64}},
-            where {{TESTBED}} is the testbed identifier, {{HOST}} is the identifier of the remote machine in the testbed
-            where the mote is connected to, and {{EUI-64}} is the EUI-64 address of the mote.
+        :param motes:
+            Dictionary of motes with keys being EUI-64 and value a {'serialPort' : serialPortName} dict. If the mote is
+            in testbed, serialPortName is expected in 'testbed_{{TESTBED}}_{{HOST}}_{{EUI-64}} format, where {{TESTBED}}
+            is the testbed identifier, {{HOST}} is the identifier of the remote machine in the testbed where the mote is
+            connected to, and {{EUI-64}} is the EUI-64 address of the mote.
         :param scenario:
             Identifier of the requested scenario to benchmark the performance.
         '''
@@ -76,7 +77,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         self.mqttBroker = mqttBroker
         self.firmware = firmware
         self.testbed = testbed
-        self.portNames = portNames
+        self.motes = motes
         self.scenario = scenario
 
         # primitive for mutual exclusion
@@ -91,35 +92,22 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         self.dagRootEui64Buf = None
         self.networkPrefixBuf = None
 
-        # dict with keys being eui64, and value a tuple (localPort, testbedHost)
-        self.nodes = {}
-
-        # OV is running in simulation mode
-        if self.testbed == 'simulation':
-            for port in portNames:
-                # FIXME get eui64 in simulation
-                self.nodes[port] = (port, 'simulation')
-        # Motes are attached locally on the physical port
-        elif self.testbed == 'local':
-            for port in portNames:
-                # FIXME get eui64 when executing locally
-                self.nodes[port] = (port, 'local')
-        # General case, motes are in testbed connected over OpenTestbed software
-        else:
-            for port in portNames:
-                m = re.search('testbed_(.+)_(.+)_(.+)', port)
+        # Update the self.motes dict with testbed host id to be compatible with OpenBenchmark
+        for k, v in self.motes.iteritems():
+            if self.testbed == 'simulation' or self.testbed == 'local':
+                self.motes[k]['host'] = self.testbed
+            else:
+                m = re.search('testbed_(.+)_(.+)_(.+)', v['serialPort'])
                 if m:
-                    # (testbed_host, eui64)
                     assert m.group(1) == self.testbed
-                    self.nodes[m.group(3)] = (port, m.group(2))
+                    self.motes[k]['host'] = m.group(2)
 
         log.info('Initializing OpenBenchmark with options:\n\t{0}'.format(
             '\n    '.join(['mqttBroker          = {0}'.format(self.mqttBroker),
                            'firmware            = {0}'.format(self.firmware),
                            'testbed             = {0}'.format(self.testbed),
-                           'portNames           = {0}'.format(self.portNames),
-                           'scenario            = {0}'.format(self.scenario),
-                           'nodes               = {0}'.format(self.nodes)]
+                           'motes               = {0}'.format(self.motes),
+                           'scenario            = {0}'.format(self.scenario)]
                           )))
         try:
             # mqtt client
@@ -264,8 +252,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
         # format nodes to the format expected by OpenBenchmark
         nodes = {}
-        for key, (portName, testbedId) in self.nodes.iteritems():
-            nodes[key] = testbedId
+        for k,v in self.motes.iteritems():
+            nodes[k] = v['host']
 
         payload = {
             'api_version': self.OPENBENCHMARK_API_VERSION,
@@ -448,7 +436,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         else: # command is for one of the motes in the mesh, send it over the serial
 
             # lookup corresponding mote port
-            (destPort, testbedHost) = self.nodes[sourceStr]
+            destPort = self.motes[sourceStr]['serialPort']
 
             # construct command payload as byte-list:
             # dest_eui64 (8B) || con (1B) || packetsInBurst (1B) || packetToken (5B) || packetPayloadLen (1B)
@@ -486,7 +474,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         power         = payloadDecoded['power']
 
         # lookup corresponding mote port
-        (destPort, testbedHost) = self.nodes[source]
+        destPort = self.motes[source]['serialPort']
         action = [moteState.moteState.SET_COMMAND, moteState.moteState.COMMAND_SET_TX_POWER[0], power]
 
         # generate an eventbus signal to send a command over serial
@@ -510,7 +498,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
         source              = payloadDecoded['source']
 
         # lookup corresponding mote port
-        (destPort, testbedHost) = self.nodes[source]
+        destPort = self.motes[source]['serialPort']
 
         # generate an eventbus signal to send a command over serial
         self.dispatch(

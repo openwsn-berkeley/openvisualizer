@@ -12,6 +12,7 @@ import sys
 import os
 import logging
 import json
+import time
 
 from openvisualizer.OVtracer import OVtracer
 
@@ -204,12 +205,16 @@ class OpenVisualizerApp(object):
 
         # If cloud-based benchmarking service is requested, start the agent
         if self.benchmark:
+            # give some time to OV to discover nodes' EUI-64 addresses
+            time.sleep(5)
             self.openBenchmarkAgent = openBenchmarkAgent.OpenBenchmarkAgent(
                 mqttBroker=self.mqtt_broker_address,
                 coapServer=self.coapServer,
                 firmware='openwsn',
                 testbed=self.testEnvironment,
-                portNames=[mote.getPortName() for mote in self.moteProbes],
+                motes={
+                    ms.getStateElem(ms.ST_IDMANAGER).get_info()['64bAddr'] : { 'serialPort' : ms.getStateElem(ms.ST_IDMANAGER).get_info()['serial']  } for ms in self.moteStates
+                },
                 scenario=self.benchmark
             )
         

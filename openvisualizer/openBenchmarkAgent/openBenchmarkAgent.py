@@ -655,7 +655,7 @@ class PerformanceEvent(object):
                 # construct the missing fields from the saved values
                 newBuf += token
                 newBuf += destination
-                newBuf += [hopLimit]
+                newBuf += [hopLimit + 1] # +1 to account for the fact that root does not decrement hop limit
                 return self._handler_event_packetSent(newBuf)
         # not found, not all packets sent by dag root are originated by openbenchmark: ignore it
         log.debug("packetSentDagRoot event: miss for token {0}".format(receivedToken))

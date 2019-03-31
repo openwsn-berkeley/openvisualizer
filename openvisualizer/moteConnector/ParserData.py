@@ -97,7 +97,7 @@ class ParserData(Parser.Parser):
         #asn comes in the next 5bytes.  
         
         asnbytes=input[2:7]
-        self._asn = struct.unpack('<BHH',''.join([chr(c) for c in asnbytes]))
+        self._asn = struct.unpack('<HHB', ''.join([chr(c) for c in asnbytes]))
         timestamp = typeAsn.typeAsn()
         timestamp.update(self._asn[0], self._asn[1], self._asn[2])
         

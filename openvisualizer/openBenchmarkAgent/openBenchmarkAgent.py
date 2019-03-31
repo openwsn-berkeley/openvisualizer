@@ -819,8 +819,8 @@ class OpenbenchmarkResource(coapResource.coapResource):
         timestamp = metaData['generic_1']
         source = openvisualizer.openvisualizer_utils.formatAddr(self.dagRootEui64Buf)
 
-        destination = u.ipv6AddrString2Bytes(metaData['srcIP'])
-        destinationEui64String = openvisualizer.openvisualizer_utils.formatAddr(destination[8:])
+        destinationBuf = u.ipv6AddrString2Bytes(metaData['srcIP'])[8:]
+        destinationEui64String = openvisualizer.openvisualizer_utils.formatAddr(destinationBuf)
 
         log.debug("OpenbenchmarkResource: POST handler received metadata: {0}".format(metaData))
 
@@ -842,7 +842,7 @@ class OpenbenchmarkResource(coapResource.coapResource):
             respPayload = token
             respPayload[4] = (respPayload[4] + 1) % 255
             self.performanceEvent.add_outstanding_packet(
-                (respPayload, destination, coapServer.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT)
+                (respPayload, destinationBuf, coapServer.COAP_SERVER_DEFAULT_IPv6_HOP_LIMIT)
             )
 
         return d.COAP_RC_2_04_CHANGED, respOptions, respPayload

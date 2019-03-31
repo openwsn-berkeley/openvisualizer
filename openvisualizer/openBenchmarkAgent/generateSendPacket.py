@@ -12,7 +12,7 @@ class PacketGenerator():
 
         self.argspace = self.parser.parse_args()
 
-        self.confirmable = self.argspace.confirmable
+        self.confirmable = True if self.argspace.confirmable == 'True' else False
         self.mqttBroker = self.argspace.mqttBroker
         self.payloadLen = self.argspace.mqttBroker
         self.destEui64 = self.argspace.destEui64
@@ -40,8 +40,9 @@ class PacketGenerator():
     def _addParserArgs(self):
         self.parser.add_argument('-c', '--confirmable',
                             dest='confirmable',
-                            default=False,
+                            default='False',
                             action='store',
+                            choices=['False', 'True'],
                             help='Whether a packet should be ack-ed at the app layer'
                             )
         self.parser.add_argument('-p', '--payloadLen',

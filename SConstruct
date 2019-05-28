@@ -168,6 +168,12 @@ AddOption('--mqtt-broker-address',
     type      = 'string')
 runnerEnv['MQTT_BROKER_ADDRESS'] = GetOption('mqtt_broker_address')
 
+AddOption('--opentun-null',
+    dest      = 'opentun_null',
+    default   = False,
+    action    = 'store_true')
+runnerEnv['OPENTUN_NULL'] = GetOption('opentun_null')
+
 AddOption('--ovdebug',
     dest      = 'debugOpt',
     default   = False,

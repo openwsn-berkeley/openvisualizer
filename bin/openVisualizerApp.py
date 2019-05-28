@@ -38,7 +38,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, testbedmotes, pathTopo, mqtt_broker_address):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, testbedmotes, pathTopo, mqtt_broker_address, opentun_null):
         
         # store params
         self.confdir              = confdir
@@ -61,7 +61,7 @@ class OpenVisualizerApp(object):
         self.topology             = topology.topology()
         self.DAGrootList          = []
         # create openTun call last since indicates prefix
-        self.openTun              = openTun.create() 
+        self.openTun              = openTun.create(opentun_null)
         if self.simulatorMode:
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             
@@ -366,7 +366,8 @@ def main(parser=None):
         iotlabmotes         = argspace.iotlabmotes,
         testbedmotes        = argspace.testbedmotes,
         pathTopo            = argspace.pathTopo,
-        mqtt_broker_address = argspace.mqtt_broker_address
+        mqtt_broker_address = argspace.mqtt_broker_address,
+        opentun_null        = argspace.opentun_null
     )
 
 def _addParserArgs(parser):
@@ -429,6 +430,12 @@ def _addParserArgs(parser):
         default    = 'argus.paris.inria.fr',
         action     = 'store',
         help       = 'MQTT broker address to use'
+    )
+    parser.add_argument('--opentun-null',
+        dest       = 'opentun_null',
+        default    = False,
+        action     = 'store_true',
+        help       = 'don\'t use TUN device'
     )
     parser.add_argument('-i', '--pathTopo', 
         dest       = 'pathTopo',

@@ -59,6 +59,9 @@ def uiRunner(target, source, env):
         argList.append('--debug')
     if env['OPENTESTBED']:
         argList.append('--opentestbed')
+    if env['MQTT_BROKER_ADDRESS']:
+        argList.append('--mqtt-broker-address='
+                       + '{0}'.format(env['MQTT_BROKER_ADDRESS']))
 
     if env['USEPAGEZERO']:
         argList.append('--usePageZero')
@@ -186,4 +189,3 @@ roverEnv['PORTOPT']  = None
 roverEnv['ROVEROPT']  = None
 roverEnv['WAIT_ON_UI'] = True
 Alias('runrover', setupUiRunner(roverEnv, 'openRoverApp.py', []))
-

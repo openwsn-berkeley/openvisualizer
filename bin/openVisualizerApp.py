@@ -38,7 +38,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, testbedmotes, pathTopo):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, testbedmotes, pathTopo, mqtt_broker_address):
         
         # store params
         self.confdir              = confdir
@@ -91,24 +91,25 @@ class OpenVisualizerApp(object):
             for _ in range(self.numMotes):
                 moteHandler       = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
                 self.simengine.indicateNewMote(moteHandler)
-                self.moteProbes  += [moteProbe.moteProbe(emulatedMote=moteHandler)]
+                self.moteProbes  += [moteProbe.moteProbe(mqtt_broker_address, emulatedMote=moteHandler)]
         elif self.iotlabmotes:
             # in "IoT-LAB" mode, motes are connected to TCP ports
             
             self.moteProbes       = [
-                moteProbe.moteProbe(iotlabmote=p) for p in self.iotlabmotes.split(',')
+                moteProbe.moteProbe(mqtt_broker_address, iotlabmote=p) for p in self.iotlabmotes.split(',')
             ]
         elif self.testbedmotes:
-            motesfinder = moteProbe.OpentestbedMoteFinder()
+            motesfinder = moteProbe.OpentestbedMoteFinder(mqtt_broker_address)
             self.moteProbes       = [
-                moteProbe.moteProbe(testbedmote_eui64=p) for p in motesfinder.get_opentestbed_motelist()
+                moteProbe.moteProbe(mqtt_broker_address, testbedmote_eui64=p)
+                for p in motesfinder.get_opentestbed_motelist()
             ]
             
         else:
             # in "hardware" mode, motes are connected to the serial port
 
             self.moteProbes       = [
-                moteProbe.moteProbe(serialport=p) for p in moteProbe.findSerialPorts()
+                moteProbe.moteProbe(mqtt_broker_address, serialport=p) for p in moteProbe.findSerialPorts()
             ]
         
         # create a moteConnector for each moteProbe
@@ -353,18 +354,19 @@ def main(parser=None):
     log.info('sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path)))
         
     return OpenVisualizerApp(
-        confdir         = confdir,
-        datadir         = datadir,
-        logdir          = logdir,
-        simulatorMode   = argspace.simulatorMode,
-        numMotes        = argspace.numMotes,
-        trace           = argspace.trace,
-        debug           = argspace.debug,
-        usePageZero     = argspace.usePageZero,
-        simTopology     = argspace.simTopology,
-        iotlabmotes     = argspace.iotlabmotes,
-        testbedmotes    = argspace.testbedmotes,
-        pathTopo        = argspace.pathTopo
+        confdir             = confdir,
+        datadir             = datadir,
+        logdir              = logdir,
+        simulatorMode       = argspace.simulatorMode,
+        numMotes            = argspace.numMotes,
+        trace               = argspace.trace,
+        debug               = argspace.debug,
+        usePageZero         = argspace.usePageZero,
+        simTopology         = argspace.simTopology,
+        iotlabmotes         = argspace.iotlabmotes,
+        testbedmotes        = argspace.testbedmotes,
+        pathTopo            = argspace.pathTopo,
+        mqtt_broker_address = argspace.mqtt_broker_address
     )
 
 def _addParserArgs(parser):
@@ -421,6 +423,12 @@ def _addParserArgs(parser):
         default    = False,
         action     = 'store_true',
         help       = 'connect motes from opentestbed'
+    )
+    parser.add_argument('--mqtt-broker-address',
+        dest       = 'mqtt_broker_address',
+        default    = 'argus.paris.inria.fr',
+        action     = 'store',
+        help       = 'MQTT broker address to use'
     )
     parser.add_argument('-i', '--pathTopo', 
         dest       = 'pathTopo',

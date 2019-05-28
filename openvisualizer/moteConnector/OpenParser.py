@@ -37,7 +37,7 @@ class OpenParser(Parser.Parser):
     SERFRAME_ACTION_NO                 = ord('N')
     SERFRAME_ACTION_TOGGLE             = ord('T')
     
-    def __init__(self):
+    def __init__(self, mqtt_broker_address):
         
         # log
         log.info("create instance")
@@ -50,7 +50,7 @@ class OpenParser(Parser.Parser):
         self.parserInfo      = ParserIEC.ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_INFO)
         self.parserError     = ParserIEC.ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_ERROR)
         self.parserCritical  = ParserIEC.ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_CRITICAL)
-        self.parserData      = ParserData.ParserData()
+        self.parserData      = ParserData.ParserData(mqtt_broker_address)
         self.parserPacket    = ParserPacket.ParserPacket()
         self.parserPrintf    = ParserPrintf.ParserPrintf()
 

@@ -35,7 +35,7 @@ class moteConnector(eventBusClient.eventBusClient):
         self.serialport                = self.moteProbe.getPortName()
         
         # local variables
-        self.parser                    = OpenParser.OpenParser()
+        self.parser                    = OpenParser.OpenParser(moteProbe.mqtt_broker_address)
         self.stateLock                 = threading.Lock()
         self.networkPrefix             = None
         self._subcribedDataForDagRoot  = False

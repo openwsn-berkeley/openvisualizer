@@ -19,8 +19,6 @@ import paho.mqtt.client as mqtt
 import threading
 import json
 
-OPENTESTBED_BROKER_ADDRESS          = "argus.paris.inria.fr"
-
 class ParserData(Parser.Parser):
     
     HEADER_LENGTH  = 2
@@ -31,7 +29,7 @@ class ParserData(Parser.Parser):
     
     UINJECT_MASK    = 'uinject'
      
-    def __init__(self):
+    def __init__(self, mqtt_broker_address):
         
         # log
         log.info("create instance")
@@ -46,7 +44,7 @@ class ParserData(Parser.Parser):
 
         self.avg_pdr_latency_cellUsage = {}
 
-        self.broker                    = OPENTESTBED_BROKER_ADDRESS
+        self.broker                    = mqtt_broker_address
         self.mqttconnected             = False
 
          # connect to MQTT

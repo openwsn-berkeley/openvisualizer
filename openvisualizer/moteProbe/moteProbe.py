@@ -33,8 +33,6 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 
 #============================ defines =========================================
 
-OPENTESTBED_BROKER_ADDRESS          = "argus.paris.inria.fr"
-
 BAUDRATE_LOCAL_BOARD  = 115200
 BAUDRATE_IOTLAB       = 500000
 
@@ -105,8 +103,9 @@ class OpentestbedMoteFinder (object):
 
     OPENTESTBED_RESP_STATUS_TIMEOUT     = 10
 
-    def __init__(self):
+    def __init__(self, mqtt_broker_address):
         self.opentestbed_motelist = set()
+        self.mqtt_broker_address = mqtt_broker_address
         
     def get_opentestbed_motelist(self):
         
@@ -114,7 +113,7 @@ class OpentestbedMoteFinder (object):
         mqtt_client                = mqtt.Client('FindMotes')
         mqtt_client.on_connect     = self._on_mqtt_connect
         mqtt_client.on_message     = self._on_mqtt_message
-        mqtt_client.connect(OPENTESTBED_BROKER_ADDRESS)
+        mqtt_client.connect(self.mqtt_broker_address)
         mqtt_client.loop_start()
         
         # wait for a while to gather the response from otboxes
@@ -129,7 +128,7 @@ class OpentestbedMoteFinder (object):
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         
-        print "connected to : {0}".format(OPENTESTBED_BROKER_ADDRESS)
+        print "connected to : {0}".format(self.mqtt_broker_address)
         
         client.subscribe('opentestbed/deviceType/box/deviceId/+/resp/status')
         
@@ -173,7 +172,7 @@ class moteProbe(threading.Thread):
     # XON             is transmitted as [XONXOFF_ESCAPE,            XON^XONXOFF_MASK]==[0x12,0x11^0x10]==[0x12,0x01]
     # XONXOFF_ESCAPE  is transmitted as [XONXOFF_ESCAPE, XONXOFF_ESCAPE^XONXOFF_MASK]==[0x12,0x12^0x10]==[0x12,0x02]
     
-    def __init__(self,serialport=None,emulatedMote=None,iotlabmote=None,testbedmote_eui64=None):
+    def __init__(self,mqtt_broker_address,serialport=None,emulatedMote=None,iotlabmote=None,testbedmote_eui64=None):
         
         # verify params
         if   serialport:
@@ -215,7 +214,10 @@ class moteProbe(threading.Thread):
             self.portname           = 'opentestbed_{0}'.format(testbedmote_eui64)
         else:
             raise SystemError()
-        
+        # at this moment, MQTT broker is used even if the mode is not
+        # MODE_TESTBED; see moteConnector, OpenParser and ParserData.
+        self.mqtt_broker_address = mqtt_broker_address
+
         # log
         log.info("creating moteProbe attaching to {0}".format(
                 self.portname,
@@ -243,7 +245,7 @@ class moteProbe(threading.Thread):
             self.mqttclient                = mqtt.Client()
             self.mqttclient.on_connect     = self._on_mqtt_connect
             self.mqttclient.on_message     = self._on_mqtt_message
-            self.mqttclient.connect(OPENTESTBED_BROKER_ADDRESS)
+            self.mqttclient.connect(self.mqtt_broker_address)
             self.mqttclient.loop_start()
         
         # initialize the parent class

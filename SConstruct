@@ -163,6 +163,11 @@ AddOption('--opentestbed',
     action    = 'store_true')
 runnerEnv['OPENTESTBED'] = GetOption('opentestbed')
 
+AddOption('--mqtt-broker-address',
+    dest      = 'mqtt_broker_address',
+    type      = 'string')
+runnerEnv['MQTT_BROKER_ADDRESS'] = GetOption('mqtt_broker_address')
+
 AddOption('--ovdebug',
     dest      = 'debugOpt',
     default   = False,

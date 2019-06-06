@@ -19,15 +19,18 @@ from   openvisualizer.eventBus import eventBusClient
 IPV6PREFIX = [0xbb,0xbb,0x00,0x00,0x00,0x00,0x00,0x00]
 IPV6HOST   = [0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01]
     
-def create():
+def create(opentun_null=False):
     '''
     Module-based Factory method to create instance based on operating system
     '''
     # Must import here rather than at top of module to avoid a circular 
     # reference to OpenTun class.
     
+    if opentun_null:
+        from openTunNull import OpenTunNull
+        return OpenTunNull()
     
-    if sys.platform.startswith('win32'):
+    elif sys.platform.startswith('win32'):
         from openTunWindows import OpenTunWindows
         return OpenTunWindows()
         

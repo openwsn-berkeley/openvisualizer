@@ -37,14 +37,8 @@ class ParserInfoErrorCritical(Parser.Parser):
         # store params
         self.severity   = severity
 
-        self.numPacketDropped = {
-            'queue_overflow':          0,
-            'maxmium_retries_reached': 0,
-            'uinject_packet':          0,
-        }
-        
-        self.numDesync = 0
-        self.numBooted = 0
+        # store error info
+        self.errorinfo = {}
         
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)
@@ -63,34 +57,17 @@ class ParserInfoErrorCritical(Parser.Parser):
             callingComponent,
             error_code,
             arg1,
-            arg2) = struct.unpack('>HBBHH',''.join([chr(c) for c in input]))
+            arg2) = struct.unpack('>HBBhH',''.join([chr(c) for c in input]))
         except struct.error:
             raise ParserException(ParserException.DESERIALIZE,"could not extract data from {0}".format(input))
+            
+        if (callingComponent, error_code) in self.errorinfo.keys():
+            self.errorinfo[(callingComponent, error_code)] += 1
+        else:
+            self.errorinfo[(callingComponent, error_code)]  = 1
 
-        if error_code == 27:
-            # this is large time correction info, 
-            (arg1, arg2) = struct.unpack('>hH',''.join([chr(c) for c in input[-4:]]))
             
-        if error_code == 18:
-            # forwarding packet is dropped
-            if arg1 == 0:
-                self.numPacketDropped['queue_overflow'] += 1
-            elif arg1 == 1:
-                self.numPacketDropped['maxmium_retries_reached'] += 1
-
-        if error_code == 73:
-            # uinject packet is dropped
-            self.numPacketDropped['uinject_packet'] += 1
-            
-        if error_code == 25:
-            # desynchronized
-            self.numDesync += 1
-            
-        if error_code == 52:
-            # mote booted
-            self.numBooted += 1
-            
-        if error_code == 59:
+        if error_code == 28:
             # replace args of sixtop command/return code id by string
             arg1 = StackDefines.sixtop_returncode[arg1]
             arg2 = StackDefines.sixtop_statemachine[arg2]

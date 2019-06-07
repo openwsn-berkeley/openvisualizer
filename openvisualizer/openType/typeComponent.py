@@ -46,23 +46,24 @@ class typeComponent(openType.openType):
     #TRAN
     COMPONENT_OPENUDP                   = 0x17
     COMPONENT_OPENCOAP                  = 0x18
+    # secure join
+    COMPONENT_CJOIN                     = 0x19
+    COMPONENT_OPENOSCOAP                = 0x1a
     #applications
-    COMPONENT_C6T                       = 0x19
-    COMPONENT_CEXAMPLE                  = 0x1a
-    COMPONENT_CINFO                     = 0x1b
-    COMPONENT_CLEDS                     = 0x1c
-    COMPONENT_CSENSORS                  = 0x1d
-    COMPONENT_CSTORM                    = 0x1e
-    COMPONENT_CWELLKNOWN                = 0x1f
-    COMPONENT_UECHO                     = 0x20
-    COMPONENT_UINJECT                   = 0x21
-    COMPONENT_RRT                       = 0x22
-    COMPONENT_SECURITY                  = 0x23
-    COMPONENT_USERIALBRIDGE             = 0x24
-    COMPONENT_UEXPIRATION               = 0x25
-    COMPONENT_UMONITOR                  = 0x26
-    COMPONENT_CJOIN                     = 0x27
-    COMPONENT_OPENOSCOAP                = 0x28
+    COMPONENT_C6T                       = 0x1b
+    COMPONENT_CEXAMPLE                  = 0x1c
+    COMPONENT_CINFO                     = 0x1d
+    COMPONENT_CLEDS                     = 0x1e
+    COMPONENT_CSENSORS                  = 0x1f
+    COMPONENT_CSTORM                    = 0x20
+    COMPONENT_CWELLKNOWN                = 0x21
+    COMPONENT_UECHO                     = 0x22
+    COMPONENT_UINJECT                   = 0x23
+    COMPONENT_RRT                       = 0x24
+    COMPONENT_SECURITY                  = 0x25
+    COMPONENT_USERIALBRIDGE             = 0x26
+    COMPONENT_UEXPIRATION               = 0x27
+    COMPONENT_UMONITOR                  = 0x28
     COMPONENT_CINFRARED                 = 0x29
     
     def __init__(self):

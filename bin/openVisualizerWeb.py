@@ -138,9 +138,13 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
-        self.websrv.route(path='/rovers',                                 callback=self._showrovers)
-        self.websrv.route(path='/updateroverlist/:updatemsg',             callback=self._updateRoverList)
-        self.websrv.route(path='/motesdiscovery/:srcip',                  callback=self._motesDiscovery)
+
+        # activate these routes only if remoteConnectorServer is available
+        if self._isRoverMode():
+            self.websrv.route(path='/rovers',                                 callback=self._showrovers)
+            self.websrv.route(path='/updateroverlist/:updatemsg',             callback=self._updateRoverList)
+            self.websrv.route(path='/motesdiscovery/:srcip',                  callback=self._motesDiscovery)
+
     def _isRoverMode(self):
         return self.app.remoteConnectorServer is not None
 
@@ -156,7 +160,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         tmplData = {
             'myifdict'  : myifdict,
             'roverMotes' : self.roverMotes,
-            'roverMode' : True,
+            'roverMode' : self._isRoverMode()
         }
         return tmplData
 
@@ -238,7 +242,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         tmplData = {
             'motelist'       : motelist,
             'requested_mote' : moteid if moteid else 'none',
-            'roverMode'      : True,
+            'roverMode'      : self._isRoverMode()
         }
         return tmplData
 
@@ -320,7 +324,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         for periodic updates of event list.
         '''
         tmplData = self._getEventData().copy()
-        tmplData['roverMode'] = True
+        tmplData['roverMode'] = self._isRoverMode()
         return tmplData
 
     def _showDAG(self):
@@ -329,7 +333,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
 
     @view('connectivity.tmpl')
     def _showConnectivity(self):
-        return {'roverMode' : True}
+        return {'roverMode' : self._isRoverMode()}
 
     def _showMotesConnectivity(self):
         states,edges = self.app.getMotesConnectivity()
@@ -337,7 +341,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
 
     @view('routing.tmpl')
     def _showRouting(self):
-        return {'roverMode' : True}
+        return {'roverMode' : self._isRoverMode()}
 
     @view('topology.tmpl')
     def _topologyPage(self):
@@ -345,7 +349,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         Retrieve the HTML/JS page.
         '''
 
-        return {'roverMode' : True}
+        return {'roverMode' : self._isRoverMode()}
 
     def _topologyData(self):
         '''

@@ -141,6 +141,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         self.websrv.route(path='/rovers',                                 callback=self._showrovers)
         self.websrv.route(path='/updateroverlist/:updatemsg',             callback=self._updateRoverList)
         self.websrv.route(path='/motesdiscovery/:srcip',                  callback=self._motesDiscovery)
+    def _isRoverMode(self):
+        return self.app.remoteConnectorServer is not None
 
     @view('rovers.tmpl')
     def _showrovers(self):

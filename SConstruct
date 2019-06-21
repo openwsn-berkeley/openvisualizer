@@ -174,12 +174,6 @@ AddOption('--benchmark',
     action    = 'store')
 runnerEnv['BENCHMARK'] = GetOption('benchmark')
 
-AddOption('--mqttBroker',
-    dest      = 'mqttBroker',
-    default   = 'argus.paris.inria.fr',
-    action    = 'store')
-runnerEnv['MQTTBROKER'] = GetOption('mqttBroker')
-
 AddOption('--mqtt-broker-address',
     dest      = 'mqtt_broker_address',
     type      = 'string')

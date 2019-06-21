@@ -59,6 +59,7 @@ class OpenVisualizerApp(object):
         self.testbed              = testbed
         self.benchmark            = benchmark
         self.pathTopo             = pathTopo
+        self.mqtt_broker_address  = mqtt_broker_address
 
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -118,7 +119,7 @@ class OpenVisualizerApp(object):
             self.testEnvironment = self.testbed
             motesfinder = moteProbe.OpentestbedMoteFinder(testbed=self.testbed, mqtt_broker_address=self.mqtt_broker_address)
             self.moteProbes       = [
-                moteProbe.moteProbe(mqtt_broker_address, testbedmote_eui64=p)
+                moteProbe.moteProbe(mqtt_broker_address, testbedmote=p)
                 for p in motesfinder.get_opentestbed_motelist()
             ]
             
@@ -143,7 +144,7 @@ class OpenVisualizerApp(object):
             eventLogger.eventLogger(ms) for ms in self.moteStates
         ]
 
-        if self.testbedmotes:
+        if self.testbed:
             # at least, when we use OpenTestbed, we don't need
             # Rover. Don't instantiate remoteConnectorServer which
             # consumes a lot of CPU.
@@ -384,6 +385,7 @@ def main(parser=None):
                            'debug          = {0}'.format(argspace.debug),
                            'testbed        = {0}'.format(argspace.testbed),
                            'benchmark      = {0}'.format(argspace.benchmark),
+                           'mqttBroker     = {0}'.format(argspace.mqtt_broker_address),
                            'usePageZero    = {0}'.format(argspace.usePageZero)],
             )))
     log.info('Using external dirs:\n\t{0}'.format(

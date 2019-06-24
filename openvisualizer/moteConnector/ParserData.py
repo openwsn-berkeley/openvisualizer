@@ -19,6 +19,17 @@ import paho.mqtt.client as mqtt
 import threading
 import json
 
+
+def init_pkt_info():
+    return {
+                        'asn'            : 0,
+                        'src_id'      : None,
+                        'counter'        : 0,
+                        'latency'        : 0,
+                        'numCellsUsed'   : 0,
+                        'dutyCycle'      : 0
+    }
+
 class ParserData(Parser.Parser):
     
     HEADER_LENGTH  = 2
@@ -42,7 +53,7 @@ class ParserData(Parser.Parser):
           'asn_0_1',                   # H
          ]
 
-        self.avg_pdr_latency_cellUsage = {}
+        self.avg_kpi = {}
 
         self.broker                    = mqtt_broker_address
         self.mqttconnected             = False
@@ -111,48 +122,63 @@ class ParserData(Parser.Parser):
         # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
         if len(input) >37:
             if self.UINJECT_MASK == ''.join(chr(i) for i in input[-7:]):
-                numCellsUsed = input[-15]
+                                
+                pkt_info = init_pkt_info()
+                
+                pkt_info['numCellsUsed'] = input[-15]
+                pkt_info['asn']          = struct.unpack('<I',''.join([chr(c) for c in input[-14:-10]]))[0]
                 aux          = input[-14:-9]                               # last 5 bytes of the packet are the ASN in the UDP latency packet
                 diff         = self._asndiference(aux,asnbytes)            # calculate difference 
-                latency      = diff*self.MSPERSLOT                         # compute time in ms
-                counter      = input[-9] + 256*input[-8]                   # counter sent by mote
-                l3_source    = "{0:x}{1:x}".format(input[-16], input[-17]) # mote id
-
+                pkt_info['latency']      = diff                                        # compute time in slots
+                pkt_info['counter']      = input[-9] + 256*input[-8]                   # counter sent by mote
+                pkt_info['src_id']       = ''.join(['%02x' % x for x in [input[-16],input[-17]]]) # mote id
+                src_id                   = pkt_info['src_id']
+                numTicksOn               = struct.unpack('<I',''.join([chr(c) for c in input[-21:-17]]))[0]
+                numTicksInTotal          = struct.unpack('<I',''.join([chr(c) for c in input[-25:-21]]))[0]
+                pkt_info['dutyCycle']    = float(numTicksOn)/float(numTicksInTotal)    # duty cycle
+                
+                print pkt_info
+                with open('pkt_info.log'.format(),'a') as f:
+                    f.write(str(pkt_info)+'\n')
+                
                 payload = {
                     'token':       123,
                 }
                 
-                if l3_source in self.avg_pdr_latency_cellUsage:
-                    self.avg_pdr_latency_cellUsage[l3_source]['counter'].append(counter)
-                    self.avg_pdr_latency_cellUsage[l3_source]['latency'].append(latency)
-                    self.avg_pdr_latency_cellUsage[l3_source]['numCellsUsed'].append(numCellsUsed)
+                # self.avg_kpi:
+                if src_id in self.avg_kpi:
+                    self.avg_kpi[src_id]['counter'].append(pkt_info['counter'])
+                    self.avg_kpi[src_id]['latency'].append(pkt_info['latency'])
+                    self.avg_kpi[src_id]['numCellsUsed'].append(pkt_info['numCellsUsed'])
+                    self.avg_kpi[src_id]['dutyCycle'].append(pkt_info['dutyCycle'])
                 else:
-                    self.avg_pdr_latency_cellUsage[l3_source] = {
-                        'counter'        : [counter],
-                        'latency'        : [latency],
-                        'numCellsUsed'   : [numCellsUsed],
+                    self.avg_kpi[src_id] = {
+                        'counter'        : [pkt_info['counter']],
+                        'latency'        : [pkt_info['latency']],
+                        'numCellsUsed'   : [pkt_info['numCellsUsed']],
+                        'dutyCycle'      : [pkt_info['dutyCycle'] ],
                         'avg_cellsUsage' : 0.0,
                         'avg_latency'    : 0.0,
                         'avg_pdr'        : 0.0
                     }
 
-                mote_data = self.avg_pdr_latency_cellUsage[l3_source]
+                mote_data = self.avg_kpi[src_id]
 
-                self.avg_pdr_latency_cellUsage[l3_source]['avg_cellsUsage'] = float(sum(mote_data['numCellsUsed'])/len(mote_data['numCellsUsed']))/float(64)
-                self.avg_pdr_latency_cellUsage[l3_source]['avg_latency']    = sum(self.avg_pdr_latency_cellUsage[l3_source]['latency'])/len(self.avg_pdr_latency_cellUsage[l3_source]['latency'])
+                self.avg_kpi[src_id]['avg_cellsUsage'] = float(sum(mote_data['numCellsUsed'])/len(mote_data['numCellsUsed']))/float(64)
+                self.avg_kpi[src_id]['avg_latency']    = sum(self.avg_kpi[src_id]['latency'])/len(self.avg_kpi[src_id]['latency'])
                 mote_data['counter'].sort() # sort the counter before calculating
-                self.avg_pdr_latency_cellUsage[l3_source]['avg_pdr']        = float(len(set(mote_data['counter'])))/float(1+mote_data['counter'][-1]-mote_data['counter'][0])
+                self.avg_kpi[src_id]['avg_pdr']        = float(len(set(mote_data['counter'])))/float(1+mote_data['counter'][-1]-mote_data['counter'][0])
 
                 avg_pdr_all           = 0.0
                 avg_latency_all       = 0.0
                 avg_numCellsUsage_all = 0.0
 
-                for mote, data in self.avg_pdr_latency_cellUsage.items():
+                for mote, data in self.avg_kpi.items():
                     avg_pdr_all           += data['avg_pdr']
                     avg_latency_all       += data['avg_latency']
                     avg_numCellsUsage_all += data['avg_cellsUsage']
 
-                numMotes = len(self.avg_pdr_latency_cellUsage)
+                numMotes = len(self.avg_kpi)
                 avg_pdr_all                = avg_pdr_all/float(numMotes)
                 avg_latency_all            = avg_latency_all/float(numMotes)
                 avg_numCellsUsage_all      = avg_numCellsUsage_all/float(numMotes)
@@ -160,7 +186,7 @@ class ParserData(Parser.Parser):
                 payload['avg_cellsUsage']  = avg_numCellsUsage_all
                 payload['avg_latency']     = avg_latency_all
                 payload['avg_pdr']         = avg_pdr_all
-                payload['l3_source']       = l3_source
+                payload['src_id']       = src_id
 
 
                 print payload

@@ -58,17 +58,19 @@ class ParserData(Parser.Parser):
         self.broker                    = mqtt_broker_address
         self.mqttconnected             = False
 
-         # connect to MQTT
-        self.mqttclient                = mqtt.Client(self.UINJECT_MASK)
-        self.mqttclient.on_connect     = self._on_mqtt_connect
-        self.mqttclient.connect(self.broker)
-    
-        # start mqtt client
-        self.mqttthread                = threading.Thread(
-            name                       = 'mqtt_loop_thread',
-            target                     = self.mqttclient.loop_forever
-        )
-        self.mqttthread.start()
+        if not (self.broker == 'null'):
+
+             # connect to MQTT
+            self.mqttclient                = mqtt.Client(self.UINJECT_MASK)
+            self.mqttclient.on_connect     = self._on_mqtt_connect
+            self.mqttclient.connect(self.broker)
+        
+            # start mqtt client
+            self.mqttthread                = threading.Thread(
+                name                       = 'mqtt_loop_thread',
+                target                     = self.mqttclient.loop_forever
+            )
+            self.mqttthread.start()
 
      #======================== private =========================================
 
@@ -141,10 +143,6 @@ class ParserData(Parser.Parser):
                 with open('pkt_info.log'.format(),'a') as f:
                     f.write(str(pkt_info)+'\n')
                 
-                payload = {
-                    'token':       123,
-                }
-                
                 # self.avg_kpi:
                 if src_id in self.avg_kpi:
                     self.avg_kpi[src_id]['counter'].append(pkt_info['counter'])
@@ -162,41 +160,10 @@ class ParserData(Parser.Parser):
                         'avg_pdr'        : 0.0
                     }
 
-                mote_data = self.avg_kpi[src_id]
+                if not (self.broker == 'null'):
 
-                self.avg_kpi[src_id]['avg_cellsUsage'] = float(sum(mote_data['numCellsUsed'])/len(mote_data['numCellsUsed']))/float(64)
-                self.avg_kpi[src_id]['avg_latency']    = sum(self.avg_kpi[src_id]['latency'])/len(self.avg_kpi[src_id]['latency'])
-                mote_data['counter'].sort() # sort the counter before calculating
-                self.avg_kpi[src_id]['avg_pdr']        = float(len(set(mote_data['counter'])))/float(1+mote_data['counter'][-1]-mote_data['counter'][0])
+                    self.publish_kpi(src_id)
 
-                avg_pdr_all           = 0.0
-                avg_latency_all       = 0.0
-                avg_numCellsUsage_all = 0.0
-
-                for mote, data in self.avg_kpi.items():
-                    avg_pdr_all           += data['avg_pdr']
-                    avg_latency_all       += data['avg_latency']
-                    avg_numCellsUsage_all += data['avg_cellsUsage']
-
-                numMotes = len(self.avg_kpi)
-                avg_pdr_all                = avg_pdr_all/float(numMotes)
-                avg_latency_all            = avg_latency_all/float(numMotes)
-                avg_numCellsUsage_all      = avg_numCellsUsage_all/float(numMotes)
-
-                payload['avg_cellsUsage']  = avg_numCellsUsage_all
-                payload['avg_latency']     = avg_latency_all
-                payload['avg_pdr']         = avg_pdr_all
-                payload['src_id']       = src_id
-
-
-                print payload
-
-                # publish the cmd message
-                self.mqttclient.publish(
-                    topic   = 'opentestbed/uinject/arrived',
-                    payload = json.dumps(payload),
-                    qos=2
-                )
                 # in case we want to send the computed time to internet..
                 # computed=struct.pack('<H', timeinus)#to be appended to the pkt
                 # for x in computed:
@@ -224,3 +191,48 @@ class ParserData(Parser.Parser):
            pass
        
        return (0x10000*(asnend[1]-asninit[1])+(asnend[0]-asninit[0]))
+
+#========================== mqtt publish ====================================
+
+    def publish_kpi(self, src_id):
+
+        payload = {
+            'token':       123,
+        }
+        
+
+        mote_data = self.avg_kpi[src_id]
+
+        self.avg_kpi[src_id]['avg_cellsUsage'] = float(sum(mote_data['numCellsUsed'])/len(mote_data['numCellsUsed']))/float(64)
+        self.avg_kpi[src_id]['avg_latency']    = sum(self.avg_kpi[src_id]['latency'])/len(self.avg_kpi[src_id]['latency'])
+        mote_data['counter'].sort() # sort the counter before calculating
+        self.avg_kpi[src_id]['avg_pdr']        = float(len(set(mote_data['counter'])))/float(1+mote_data['counter'][-1]-mote_data['counter'][0])
+
+        avg_pdr_all           = 0.0
+        avg_latency_all       = 0.0
+        avg_numCellsUsage_all = 0.0
+
+        for mote, data in self.avg_kpi.items():
+            avg_pdr_all           += data['avg_pdr']
+            avg_latency_all       += data['avg_latency']
+            avg_numCellsUsage_all += data['avg_cellsUsage']
+
+        numMotes = len(self.avg_kpi)
+        avg_pdr_all                = avg_pdr_all/float(numMotes)
+        avg_latency_all            = avg_latency_all/float(numMotes)
+        avg_numCellsUsage_all      = avg_numCellsUsage_all/float(numMotes)
+
+        payload['avg_cellsUsage']  = avg_numCellsUsage_all
+        payload['avg_latency']     = avg_latency_all
+        payload['avg_pdr']         = avg_pdr_all
+        payload['src_id']          = src_id
+
+
+        print payload
+
+        # publish the cmd message
+        self.mqttclient.publish(
+            topic   = 'opentestbed/uinject/arrived',
+            payload = json.dumps(payload),
+            qos=2
+        )

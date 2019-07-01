@@ -97,7 +97,7 @@ class OpenVisualizerApp(object):
 
         # create a moteProbe for each mote
         if self.simulatorMode:
-            self.testEnvironment = 'simulation'
+            self.testEnvironment = 'opensim'
             # in "simulator" mode, motes are emulated
             sys.path.append(os.path.join(self.datadir, 'sim_files'))
             import oos_openwsn

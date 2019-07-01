@@ -94,8 +94,8 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
         # Update the self.motes dict with testbed host id to be compatible with OpenBenchmark
         for k, v in self.motes.iteritems():
-            if self.testbed == 'simulation' or self.testbed == 'local':
-                self.motes[k]['host'] = self.testbed
+            if self.testbed == 'opensim' or self.testbed == 'local':
+                self.motes[k]['host'] = self.motes[k]['serialPort']
             else:
                 m = re.search('testbed_(.+)_(.+)_(.+)', v['serialPort'])
                 if m:

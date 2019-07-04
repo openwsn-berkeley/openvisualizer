@@ -516,7 +516,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 class PerformanceEvent(object):
 
     # period for measurement polling
-    PERFORMANCE_EVENT_MEASUREMENT_PERIOD              = 3
+    PERFORMANCE_EVENT_MEASUREMENT_PERIOD              = 30
 
     # asynchronous event               #name                         #id    #openbenchmark ID
     EV_PACKET_SENT                  = ['packetSent',                  0,    'packetSent'                ]

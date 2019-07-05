@@ -52,7 +52,7 @@ class SimEngine(object):
     
     #======================== main ============================================
     
-    def __init__(self,simTopology='',loghandler=logging.NullHandler()):
+    def __init__(self,simTopology='',loghandler=logging.NullHandler(), currentTime_semaphore=None):
         
         # don't re-initialize an instance (singleton pattern)
         if self._init:
@@ -61,10 +61,11 @@ class SimEngine(object):
         
         # store params
         self.loghandler           = loghandler
+        self.ct_semaphore         = currentTime_semaphore
         
         # local variables
         self.moteHandlers         = []
-        self.timeline             = TimeLine.TimeLine()
+        self.timeline             = TimeLine.TimeLine(self.ct_semaphore)
         self.propagation          = Propagation.Propagation(simTopology)
         self.idmanager            = IdManager.IdManager()
         self.locationmanager      = LocationManager.LocationManager() 

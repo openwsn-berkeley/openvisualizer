@@ -37,13 +37,15 @@ class TimeLine(threading.Thread):
     The timeline of the engine.
     '''
     
-    def __init__(self):
+    def __init__(self,ct_semaphore):
         
         # store params
-        self.engine               = SimEngine.SimEngine()
+        self.engine               = SimEngine.SimEngine(ct_semaphore)
+        self.ct_semaphore         = ct_semaphore
         
         # local variables
         self.currentTime          = 0   # current time
+        self.currentTimeLock      = threading.Lock()
         self.timeline             = []  # list of upcoming events
         self.firstEventPassed     = False
         self.firstEvent           = threading.Lock()
@@ -94,7 +96,15 @@ class TimeLine(threading.Thread):
                 output += ' - currentTime='+str(self.getCurrentTime())+'\n'
                 self.log.warning(output)
                 raise StopIteration(output)
+
+            '''
+            use semaphore to resolve the inconsistant reading of currentTime 
+                - acquire right before a pop the next event
+                - release right after the currentTime is assigned.
+            '''
             
+            self.ct_semaphore.acquire()
+
             # pop the event at the head of the timeline
             event = self.timeline.pop(0)
             
@@ -103,6 +113,8 @@ class TimeLine(threading.Thread):
             
             # record the current time
             self.currentTime = event.atTime
+
+            self.ct_semaphore.release()
             
             # log
             if self.log.isEnabledFor(logging.DEBUG):

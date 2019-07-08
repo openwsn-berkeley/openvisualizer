@@ -126,8 +126,13 @@ class OpenVisualizerApp(object):
             eventLogger.eventLogger(ms) for ms in self.moteStates
         ]
 
-        self.remoteConnectorServer = remoteConnectorServer.remoteConnectorServer()
-
+        if self.testbedmotes:
+            # at least, when we use OpenTestbed, we don't need
+            # Rover. Don't instantiate remoteConnectorServer which
+            # consumes a lot of CPU.
+            self.remoteConnectorServer = None
+        else:
+            self.remoteConnectorServer = remoteConnectorServer.remoteConnectorServer()
 
         # boot all emulated motes, if applicable
         if self.simulatorMode:

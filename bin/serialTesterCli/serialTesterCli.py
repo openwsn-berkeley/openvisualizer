@@ -118,6 +118,7 @@ def main():
     
     moteProbe_handler        = None
     moteConnector_handler    = None
+    mqtt_broker_address      = 'argus.paris.inria.fr'
     
     # get serial port name
     if len(sys.argv)>1:
@@ -128,11 +129,11 @@ def main():
             serialportname = raw_input('Serial port to connect to (e.g. COM3, /dev/ttyUSB1): ')
             serialport = (serialportname, moteProbe.BAUDRATE_LOCAL_BOARD)
             # create a moteProbe from serial port
-            moteProbe_handler = moteProbe.moteProbe(serialport)
+            moteProbe_handler = moteProbe.moteProbe(mqtt_broker_address=mqtt_broker_address, serialport=serialport)
         elif test_mode == '1':
             testbedmote = raw_input('testbed mote to connect to (e.g. 00-12-4b-00-14-b5-b6-0b): ')
             # create a moteProbe from opentestbed
-            moteProbe_handler = moteProbe.moteProbe(testbedmote_eui64=testbedmote)
+            moteProbe_handler = moteProbe.moteProbe(mqtt_broker_address=mqtt_broker_address,testbedmote_eui64=testbedmote)
         else:
             raw_input("wrong input! Press Enter to quit..")
             return

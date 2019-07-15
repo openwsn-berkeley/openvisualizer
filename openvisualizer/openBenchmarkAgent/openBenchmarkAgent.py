@@ -286,9 +286,9 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                     raise ValueError("No response from OpenBenchmark")
 
                 # parse it
-                payload = json.loads(self.experimentRequestResponse)
-                tokenReceived = payload['token']
-                success = payload['success']
+                payloadResponse = json.loads(self.experimentRequestResponse)
+                tokenReceived = payloadResponse['token']
+                success = payloadResponse['success']
 
                 # check token match
                 if tokenGenerated != tokenReceived:
@@ -297,7 +297,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                 if success != True:
                     raise ValueError("Fail indicated")
 
-                experimentId = payload['experimentId']
+                experimentId = payloadResponse['experimentId']
                 break
 
             # Retry for all ValueErrors

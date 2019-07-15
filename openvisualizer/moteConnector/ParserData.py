@@ -61,7 +61,7 @@ class ParserData(Parser.Parser):
         if not (self.broker == 'null'):
 
              # connect to MQTT
-            self.mqttclient                = mqtt.Client(self.UINJECT_MASK)
+            self.mqttclient                = mqtt.Client()
             self.mqttclient.on_connect     = self._on_mqtt_connect
             self.mqttclient.connect(self.broker)
         

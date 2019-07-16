@@ -13,6 +13,7 @@ import os
 import logging
 import json
 import time
+import subprocess
 
 from openvisualizer.OVtracer import OVtracer
 
@@ -211,7 +212,7 @@ class OpenVisualizerApp(object):
             self.openBenchmarkAgent = openBenchmarkAgent.OpenBenchmarkAgent(
                 mqttBroker=self.mqtt_broker_address,
                 coapServer=self.coapServer,
-                firmware='openwsn',
+                firmware='openwsn-{0}'.format(subprocess.check_output(["git", "describe", "--tags"]).strip()),
                 testbed=self.testEnvironment,
                 motes={
                     ms.getStateElem(ms.ST_IDMANAGER).get_info()['64bAddr'] : { 'serialPort' : ms.getStateElem(ms.ST_IDMANAGER).get_info()['serial']  } for ms in self.moteStates

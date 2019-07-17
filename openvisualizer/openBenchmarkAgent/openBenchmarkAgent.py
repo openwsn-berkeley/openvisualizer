@@ -523,8 +523,9 @@ class PerformanceEvent(object):
     EV_PACKET_RECEIVED              = ['packetReceived',              1,    'packetReceived'            ]
     EV_SYNCHRONIZATION_COMPLETED    = ['synchronizationCompleted',    2,    'synchronizationCompleted'  ]
     EV_SECURE_JOIN_COMPLETED        = ['secureJoinCompleted',         3,    'secureJoinCompleted'       ]
-    EV_BANDWIDTH_ASSIGNED           = ['bandwidthAssigned',           4,   'bandwidthAssigned'          ]
+    EV_BANDWIDTH_ASSIGNED           = ['bandwidthAssigned',           4,    'bandwidthAssigned'         ]
     EV_PACKET_SENT_DAGROOT          = ['packetSentDagRoot',           5,    'packetSent'                ] # special event to precisely get the ASN when dag root sent a packet
+    EV_DESYNCHRONIZED               = ['desynchronized',              6,    'desynchronized'            ]
     EV_NETWORK_FORMATION_COMPLETED  = ['networkFormationCompleted',   257,  'networkFormationCompleted' ]
 
     EV_ASYNC_ALL = [
@@ -534,6 +535,7 @@ class PerformanceEvent(object):
         EV_BANDWIDTH_ASSIGNED,
         EV_SYNCHRONIZATION_COMPLETED,
         EV_PACKET_SENT_DAGROOT,
+        EV_DESYNCHRONIZED,
         EV_NETWORK_FORMATION_COMPLETED,
     ]
 
@@ -667,6 +669,10 @@ class PerformanceEvent(object):
 
     # synchronizationCompleted
     def _handler_event_synchronizationCompleted(self, buf):
+        return (True, {})
+
+    # desynchronized
+    def _handler_event_desynchronized(self, buf):
         return (True, {})
 
     # secureJoinCompleted

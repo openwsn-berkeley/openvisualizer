@@ -207,16 +207,26 @@ class OpenVisualizerApp(object):
 
         # If cloud-based benchmarking service is requested, start the agent
         if self.benchmark:
+
             # give some time to OV to discover nodes' EUI-64 addresses
-            time.sleep(5)
+            motes = {}
+            for ms in self.moteStates:
+                attempt = 0
+                while ms.getStateElem(ms.ST_IDMANAGER).get_info()['64bAddr'] == '':
+                    if attempt >= 10:
+                        motes['invalid_eui64_' + ms.getStateElem(ms.ST_IDMANAGER).get_info()['serial']] = {
+                            'serialPort': ms.getStateElem(ms.ST_IDMANAGER).get_info()['serial']}
+                        break
+                    attempt += 1
+                    time.sleep(1)
+                motes[ ms.getStateElem(ms.ST_IDMANAGER).get_info()['64bAddr'] ] = { 'serialPort' : ms.getStateElem(ms.ST_IDMANAGER).get_info()['serial'] }
+
             self.openBenchmarkAgent = openBenchmarkAgent.OpenBenchmarkAgent(
                 mqttBroker=self.mqtt_broker_address,
                 coapServer=self.coapServer,
                 firmware='openwsn-{0}'.format(subprocess.check_output(["git", "describe", "--tags"]).strip()),
                 testbed=self.testEnvironment,
-                motes={
-                    ms.getStateElem(ms.ST_IDMANAGER).get_info()['64bAddr'] : { 'serialPort' : ms.getStateElem(ms.ST_IDMANAGER).get_info()['serial']  } for ms in self.moteStates
-                },
+                motes=motes,
                 scenario=self.benchmark
             )
         

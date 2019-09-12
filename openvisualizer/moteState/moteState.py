@@ -738,7 +738,11 @@ class moteState(eventBusClient.eventBusClient):
         # get last duty cycle measurement
         dutyCycle = self.state[self.ST_MACSTATS].getDutyCycle()
         # asn of the dutyCycle measurement is an approximation as the exact timestamp is not available
-        timestamp = str(self.state[self.ST_ASN].getAsn())
+        timestamp = self.state[self.ST_ASN].getAsn()
+        if timestamp:
+            timestamp = str(timestamp)
+        else:
+            timestamp = '0'
 
         if source and dutyCycle and timestamp:
             data = {

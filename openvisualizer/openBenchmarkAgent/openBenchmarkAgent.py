@@ -187,7 +187,6 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
             try:
                 # construct the payload of the POST request
                 payload = []
-                payload += [0] * packetPayloadLen
                 payload += [packetCounter]
                 payload += packetToken[1:]
 
@@ -820,8 +819,8 @@ class OpenbenchmarkResource(coapResource.coapResource):
         respPayload = []
         respOptions = []
 
-        # token is in the last 5 bytes of payload
-        token = payload[-5:]
+        # token is the payload
+        token = payload
         timestamp = metaData['generic_1']
         source = openvisualizer.openvisualizer_utils.formatAddr(self.dagRootEui64Buf)
 

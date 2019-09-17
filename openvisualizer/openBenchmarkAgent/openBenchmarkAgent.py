@@ -111,7 +111,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
                           )))
         try:
             # mqtt client
-            self.mqttClient = mqtt.Client('openBenchmarkAgent')
+            self.mqttClient = mqtt.Client()
             self.mqttClient.on_connect = self._on_mqtt_connect
             self.mqttClient.on_message = self._on_mqtt_message
             self.mqttClient.connect(self.mqttBroker)

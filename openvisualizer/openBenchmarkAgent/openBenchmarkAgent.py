@@ -217,6 +217,7 @@ class OpenBenchmarkAgent(eventBusClient.eventBusClient):
 
             except e.coapNoResponseExpected:
                 log.debug("No CoAP response expected.")
+                time.sleep(0.2)
                 pass
             except e.coapTimeout:
                 log.debug("CoAP response timed out.")

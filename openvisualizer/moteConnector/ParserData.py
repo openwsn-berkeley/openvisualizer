@@ -26,7 +26,8 @@ def init_pkt_info():
                         'src_id'      : None,
                         'counter'        : 0,
                         'latency'        : 0,
-                        'numCellsUsed'   : 0,
+                        'numCellsUsedTx' : 0,
+                        'numCellsUsedRx' : 0,
                         'dutyCycle'      : 0
     }
 
@@ -122,21 +123,38 @@ class ParserData(Parser.Parser):
         # when the packet goes to internet it comes with the asn at the beginning as timestamp.
          
         # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
+        offset  = 0
         if len(input) >37:
-            if self.UINJECT_MASK == ''.join(chr(i) for i in input[-7:]):
+            offset -= 7
+            if self.UINJECT_MASK == ''.join(chr(i) for i in input[offset:]):
                                 
                 pkt_info = init_pkt_info()
-                
-                pkt_info['numCellsUsed'] = input[-15]
-                pkt_info['asn']          = struct.unpack('<I',''.join([chr(c) for c in input[-14:-10]]))[0]
-                aux          = input[-14:-9]                               # last 5 bytes of the packet are the ASN in the UDP latency packet
-                diff         = self._asndiference(aux,asnbytes)            # calculate difference 
+
+                pkt_info['counter']      = input[offset-2] + 256*input[offset-1]                   # counter sent by mote
+                offset -= 2
+
+                pkt_info['asn']          = struct.unpack('<I',''.join([chr(c) for c in input[offset-5:offset-1]]))[0]
+                aux                      = input[offset-5:offset]                               # last 5 bytes of the packet are the ASN in the UDP latency packet
+                diff                     = self._asndiference(aux,asnbytes)            # calculate difference 
                 pkt_info['latency']      = diff                                        # compute time in slots
-                pkt_info['counter']      = input[-9] + 256*input[-8]                   # counter sent by mote
-                pkt_info['src_id']       = ''.join(['%02x' % x for x in [input[-16],input[-17]]]) # mote id
+                offset -= 5
+                
+                pkt_info['numCellsUsedTx'] = input[offset-1]
+                offset -=1
+
+                pkt_info['numCellsUsedRx'] = input[offset-1]
+                offset -=1
+
+                pkt_info['src_id']       = ''.join(['%02x' % x for x in [input[offset-1],input[offset-2]]]) # mote id
                 src_id                   = pkt_info['src_id']
-                numTicksOn               = struct.unpack('<I',''.join([chr(c) for c in input[-21:-17]]))[0]
-                numTicksInTotal          = struct.unpack('<I',''.join([chr(c) for c in input[-25:-21]]))[0]
+                offset -=2
+
+                numTicksOn               = struct.unpack('<I',''.join([chr(c) for c in input[offset-4:offset]]))[0]
+                offset -= 4
+
+                numTicksInTotal          = struct.unpack('<I',''.join([chr(c) for c in input[offset-4:offset]]))[0]
+                offset -= 4
+
                 pkt_info['dutyCycle']    = float(numTicksOn)/float(numTicksInTotal)    # duty cycle
                 
                 print pkt_info
@@ -147,13 +165,15 @@ class ParserData(Parser.Parser):
                 if src_id in self.avg_kpi:
                     self.avg_kpi[src_id]['counter'].append(pkt_info['counter'])
                     self.avg_kpi[src_id]['latency'].append(pkt_info['latency'])
-                    self.avg_kpi[src_id]['numCellsUsed'].append(pkt_info['numCellsUsed'])
+                    self.avg_kpi[src_id]['numCellsUsedTx'].append(pkt_info['numCellsUsedTx'])
+                    self.avg_kpi[src_id]['numCellsUsedRx'].append(pkt_info['numCellsUsedRx'])
                     self.avg_kpi[src_id]['dutyCycle'].append(pkt_info['dutyCycle'])
                 else:
                     self.avg_kpi[src_id] = {
                         'counter'        : [pkt_info['counter']],
                         'latency'        : [pkt_info['latency']],
-                        'numCellsUsed'   : [pkt_info['numCellsUsed']],
+                        'numCellsUsedTx' : [pkt_info['numCellsUsedTx']],
+                        'numCellsUsedRx' : [pkt_info['numCellsUsedRx']],
                         'dutyCycle'      : [pkt_info['dutyCycle'] ],
                         'avg_cellsUsage' : 0.0,
                         'avg_latency'    : 0.0,
@@ -203,7 +223,7 @@ class ParserData(Parser.Parser):
 
         mote_data = self.avg_kpi[src_id]
 
-        self.avg_kpi[src_id]['avg_cellsUsage'] = float(sum(mote_data['numCellsUsed'])/len(mote_data['numCellsUsed']))/float(64)
+        self.avg_kpi[src_id]['avg_cellsUsage'] = float(sum(mote_data['numCellsUsedTx'])/len(mote_data['numCellsUsedTx']))/float(64)
         self.avg_kpi[src_id]['avg_latency']    = sum(self.avg_kpi[src_id]['latency'])/len(self.avg_kpi[src_id]['latency'])
         mote_data['counter'].sort() # sort the counter before calculating
         self.avg_kpi[src_id]['avg_pdr']        = float(len(set(mote_data['counter'])))/float(1+mote_data['counter'][-1]-mote_data['counter'][0])

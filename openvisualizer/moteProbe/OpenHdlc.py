@@ -95,8 +95,8 @@ class OpenHdlc(object):
         
         :returns: the extracted frame, or -1 if wrong checksum
         '''
-        assert inBuf[ 0]==self.HDLC_FLAG
-        assert inBuf[-1]==self.HDLC_FLAG
+        if inBuf[0]!=self.HDLC_FLAG or inBuf[-1]!=self.HDLC_FLAG:
+            raise HdlcException('unexpected frame')
         
         # make copy of input
         outBuf     = inBuf[:]

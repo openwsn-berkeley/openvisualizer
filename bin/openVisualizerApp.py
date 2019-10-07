@@ -12,18 +12,25 @@ import sys
 import os
 import logging
 import json
+import time
+import subprocess
 
 from openvisualizer.OVtracer import OVtracer
 
 log = logging.getLogger('openVisualizerApp')
+
+from coap                           import coap, \
+                                           coapDefines
 
 from openvisualizer.eventBus        import eventBusMonitor
 from openvisualizer.eventLogger     import eventLogger
 from openvisualizer.moteProbe       import moteProbe
 from openvisualizer.moteConnector   import moteConnector
 from openvisualizer.moteState       import moteState
+from openvisualizer.coapServer      import coapServer
 from openvisualizer.RPL             import RPL
 from openvisualizer.JRC             import JRC
+from openvisualizer.openBenchmarkAgent import openBenchmarkAgent
 from openvisualizer.openLbr         import openLbr
 from openvisualizer.openTun         import openTun
 from openvisualizer.RPL             import topology
@@ -38,7 +45,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, testbedmotes, pathTopo, mqtt_broker_address, opentun_null):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes,testbed,benchmark,pathTopo,mqtt_broker_address,opentun_null):
         
         # store params
         self.confdir              = confdir
@@ -50,15 +57,25 @@ class OpenVisualizerApp(object):
         self.debug                = debug
         self.usePageZero          = usePageZero
         self.iotlabmotes          = iotlabmotes
-        self.testbedmotes         = testbedmotes
+        self.testbed              = testbed
+        self.benchmark            = benchmark
         self.pathTopo             = pathTopo
+        self.mqtt_broker_address  = mqtt_broker_address
 
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
         self.openLbr              = openLbr.OpenLbr(usePageZero)
+
+        # run CoAP server in testing mode
+        # this mode does not open a real socket, rather uses PyDispatcher for sending/receiving messages
+        # We interface this mode with OpenVisualizer to run JRC co-located with the DAG root
+        self.coapServer           = coap.coap(udpPort=coapDefines.DEFAULT_UDP_PORT,
+                                              testing=True,
+                                              socketUdp=coapServer.coapDispatcher)
         self.rpl                  = RPL.RPL()
-        self.jrc                  = JRC.JRC()
+        self.jrc                  = JRC.JRC(self.coapServer)
         self.topology             = topology.topology()
+        self.openBenchmarkAgent   = None
         self.DAGrootList          = []
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create(opentun_null)
@@ -79,9 +96,9 @@ class OpenVisualizerApp(object):
                 app.close()
                 os.kill(os.getpid(), signal.SIGTERM)
 
-        
         # create a moteProbe for each mote
         if self.simulatorMode:
+            self.testEnvironment = 'opensim'
             # in "simulator" mode, motes are emulated
             sys.path.append(os.path.join(self.datadir, 'sim_files'))
             import oos_openwsn
@@ -93,21 +110,23 @@ class OpenVisualizerApp(object):
                 self.simengine.indicateNewMote(moteHandler)
                 self.moteProbes  += [moteProbe.moteProbe(mqtt_broker_address, emulatedMote=moteHandler)]
         elif self.iotlabmotes:
+            self.testEnvironment = 'iotlab-tcp'
             # in "IoT-LAB" mode, motes are connected to TCP ports
             
             self.moteProbes       = [
                 moteProbe.moteProbe(mqtt_broker_address, iotlabmote=p) for p in self.iotlabmotes.split(',')
             ]
-        elif self.testbedmotes:
-            motesfinder = moteProbe.OpentestbedMoteFinder(mqtt_broker_address)
+        elif self.testbed:
+            self.testEnvironment = self.testbed
+            motesfinder = moteProbe.OpentestbedMoteFinder(testbed=self.testbed, mqtt_broker_address=self.mqtt_broker_address)
             self.moteProbes       = [
-                moteProbe.moteProbe(mqtt_broker_address, testbedmote_eui64=p)
+                moteProbe.moteProbe(mqtt_broker_address, testbedmote=p)
                 for p in motesfinder.get_opentestbed_motelist()
             ]
             
         else:
+            self.testEnvironment = 'local'
             # in "hardware" mode, motes are connected to the serial port
-
             self.moteProbes       = [
                 moteProbe.moteProbe(mqtt_broker_address, serialport=p) for p in moteProbe.findSerialPorts()
             ]
@@ -126,7 +145,7 @@ class OpenVisualizerApp(object):
             eventLogger.eventLogger(ms) for ms in self.moteStates
         ]
 
-        if self.testbedmotes:
+        if self.testbed:
             # at least, when we use OpenTestbed, we don't need
             # Rover. Don't instantiate remoteConnectorServer which
             # consumes a lot of CPU.
@@ -185,6 +204,31 @@ class OpenVisualizerApp(object):
                     prefix += "0"
                 moteid = prefix+hexaDAGroot
                 self.DAGrootList.append(moteid)
+
+        # If cloud-based benchmarking service is requested, start the agent
+        if self.benchmark:
+
+            # give some time to OV to discover nodes' EUI-64 addresses
+            motes = {}
+            for ms in self.moteStates:
+                attempt = 0
+                while ms.getStateElem(ms.ST_IDMANAGER).get_info()['64bAddr'] == '':
+                    if attempt >= 10:
+                        motes['invalid_eui64_' + ms.getStateElem(ms.ST_IDMANAGER).get_info()['serial']] = {
+                            'serialPort': ms.getStateElem(ms.ST_IDMANAGER).get_info()['serial']}
+                        break
+                    attempt += 1
+                    time.sleep(1)
+                motes[ ms.getStateElem(ms.ST_IDMANAGER).get_info()['64bAddr'] ] = { 'serialPort' : ms.getStateElem(ms.ST_IDMANAGER).get_info()['serial'] }
+
+            self.openBenchmarkAgent = openBenchmarkAgent.OpenBenchmarkAgent(
+                mqttBroker=self.mqtt_broker_address,
+                coapServer=self.coapServer,
+                firmware='openwsn-{0}'.format(subprocess.check_output(["git", "describe", "--tags"]).strip()),
+                testbed=self.testEnvironment,
+                motes=motes,
+                scenario=self.benchmark
+            )
         
         # start tracing threads
         if self.trace:
@@ -205,6 +249,9 @@ class OpenVisualizerApp(object):
         self.jrc.close()
         for probe in self.moteProbes:
             probe.close()
+        if self.openBenchmarkAgent:
+            self.openBenchmarkAgent.close()
+        self.coapServer.close()
                 
     def getMoteState(self, moteid):
         '''
@@ -342,14 +389,15 @@ def main(parser=None):
         argspace.numMotes = DEFAULT_MOTE_COUNT
 
     log.info('Initializing OpenVisualizerApp with options:\n\t{0}'.format(
-            '\n    '.join(['appdir      = {0}'.format(argspace.appdir),
-                           'sim         = {0}'.format(argspace.simulatorMode),
-                           'simCount    = {0}'.format(argspace.numMotes),
-                           'trace       = {0}'.format(argspace.trace),
-                           'debug       = {0}'.format(argspace.debug),
-                           'testbedmotes= {0}'.format(argspace.testbedmotes),
-                           
-                           'usePageZero = {0}'.format(argspace.usePageZero)],
+            '\n    '.join(['appdir         = {0}'.format(argspace.appdir),
+                           'sim            = {0}'.format(argspace.simulatorMode),
+                           'simCount       = {0}'.format(argspace.numMotes),
+                           'trace          = {0}'.format(argspace.trace),
+                           'debug          = {0}'.format(argspace.debug),
+                           'testbed        = {0}'.format(argspace.testbed),
+                           'benchmark      = {0}'.format(argspace.benchmark),
+                           'mqttBroker     = {0}'.format(argspace.mqtt_broker_address),
+                           'usePageZero    = {0}'.format(argspace.usePageZero)],
             )))
     log.info('Using external dirs:\n\t{0}'.format(
             '\n    '.join(['conf     = {0}'.format(confdir),
@@ -369,8 +417,9 @@ def main(parser=None):
         usePageZero         = argspace.usePageZero,
         simTopology         = argspace.simTopology,
         iotlabmotes         = argspace.iotlabmotes,
-        testbedmotes        = argspace.testbedmotes,
+        testbed             = argspace.testbed,
         pathTopo            = argspace.pathTopo,
+        benchmark           = argspace.benchmark,
         mqtt_broker_address = argspace.mqtt_broker_address,
         opentun_null        = argspace.opentun_null
     )
@@ -424,11 +473,19 @@ def _addParserArgs(parser):
         action     = 'store',
         help       = 'comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
     )
-    parser.add_argument('-tb', '--opentestbed',
-        dest       = 'testbedmotes',
+    parser.add_argument('-tb', '--testbed',
+        dest       = 'testbed',
         default    = False,
-        action     = 'store_true',
-        help       = 'connect motes from opentestbed'
+        choices    = ['opentestbed', 'iotlab', 'wilab'],
+        action     = 'store',
+        help       = 'connect remote motes from a --testbed over OpenTestbed serial-MQTT bridge.'
+    )
+    parser.add_argument('-b', '--benchmark',
+        dest       = 'benchmark',
+        default    = False,
+        choices    = ['building-automation', 'home-automation', 'industrial-monitoring', 'demo-scenario'],
+        action     = 'store',
+        help       = 'trigger --benchmark scenario using OpenBenchmark cloud service. see benchmark.6tis.ch'
     )
     parser.add_argument('--mqtt-broker-address',
         dest       = 'mqtt_broker_address',

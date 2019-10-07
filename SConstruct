@@ -54,6 +54,9 @@ Targets:
                         openwsn-fw directory.
           --ovdebug     Enable debug mode; more detailed logging
           --usePageZero Use page number 0 in page dispatch of 6lowpan packet (only works within one-hop).
+          --benchmark   Benchmark the network performance using OpenBenchmark cloud service.
+          --testbed     Connect remote motes from a testbed using OpenTestbed software component over MQTT.
+          --mqttBroker  Use specified MQTT broker to interconnect with --testbed motes and --benchmark service.
 
         Web UI only
           --host=<address> Web server listens on IP address;
@@ -157,11 +160,19 @@ AddOption('--trace',
     action    = 'store_true')
 runnerEnv['TRACEOPT'] = GetOption('traceOpt')
 
-AddOption('--opentestbed',
-    dest      = 'opentestbed',
+AddOption('--testbed',
+    dest      = 'testbed',
     default   = False,
-    action    = 'store_true')
-runnerEnv['OPENTESTBED'] = GetOption('opentestbed')
+    choices   = ['opentestbed', 'iotlab', 'wilab'],
+    action    = 'store')
+runnerEnv['TESTBED'] = GetOption('testbed')
+
+AddOption('--benchmark',
+    dest      = 'benchmark',
+    default   = False,
+    choices   = ['building-automation', 'home-automation', 'industrial-monitoring', 'demo-scenario'],
+    action    = 'store')
+runnerEnv['BENCHMARK'] = GetOption('benchmark')
 
 AddOption('--mqtt-broker-address',
     dest      = 'mqtt_broker_address',

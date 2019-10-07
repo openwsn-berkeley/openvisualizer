@@ -13,6 +13,7 @@ log = logging.getLogger('moteState')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
+
 import copy
 import time
 import threading
@@ -26,6 +27,8 @@ from openvisualizer.openType      import openType,         \
                                          typeCellType,     \
                                          typeComponent,    \
                                          typeRssi
+
+from openvisualizer import openvisualizer_utils as u
 
 class OpenEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -121,7 +124,8 @@ class StateElem(object):
 
 class StateOutputBuffer(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -130,7 +134,8 @@ class StateOutputBuffer(StateElem):
 
 class StateAsn(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -139,21 +144,16 @@ class StateAsn(StateElem):
         self.data[0]['asn'].update(notif.asn_0_1,
                                    notif.asn_2_3,
                                    notif.asn_4)
-class StateJoined(StateElem):
-    
-    def update(self,notif):
-        StateElem.update(self)
-        if len(self.data)==0:
-            self.data.append({})
-        if 'joinedAsn' not in self.data[0]:
-            self.data[0]['joinedAsn']             = typeAsn.typeAsn()
-        self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1,
-                                   notif.joinedAsn_2_3,
-                                   notif.joinedAsn_4)
+
+    def getAsn(self):
+        if len(self.data) != 0:
+            return self.data[0]['asn']
+        return None
 
 class StateMacStats(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -168,9 +168,15 @@ class StateMacStats(StateElem):
         else:
             self.data[0]['dutyCycle']       = '?'
 
+    def getDutyCycle(self):
+        if len(self.data)!=0:
+            return self.data[0]['dutyCycle']
+        return None
+
 class StateScheduleRow(StateElem):
 
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -194,9 +200,13 @@ class StateScheduleRow(StateElem):
                                            notif.lastUsedAsn_2_3,
                                            notif.lastUsedAsn_4)
 
+    def getType(self):
+        return self.data[0]['type']
+
 class StateBackoff(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -225,7 +235,8 @@ class StateQueue(StateElem):
         for i in range(20):
             self.data.append(StateQueueRow())
     
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         self.data[0].update(notif.creator_0,notif.owner_0)
         self.data[1].update(notif.creator_1,notif.owner_1)
@@ -250,7 +261,8 @@ class StateQueue(StateElem):
 
 class StateNeighborsRow(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -285,7 +297,8 @@ class StateNeighborsRow(StateElem):
 
 class StateIsSync(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -303,9 +316,28 @@ class StateIdManager(StateElem):
         try:
             return self.data[0]['my16bID'].addr[:]
         except IndexError:
-            return None
-    
-    def update(self,notif):
+            return []
+
+    def get64bAddr(self):
+        try:
+            return self.data[0]['my64bID'].addr[:]
+        except IndexError:
+            return []
+
+    def get_serial(self):
+        return self.moteConnector.serialport
+
+    def get_info(self):
+        return {
+            '64bAddr'   : u.formatAddr(self.get64bAddr()),
+            '16bAddr'   : u.formatAddr(self.get16bAddr()),
+            'isDAGroot' : self.isDAGroot,
+            'serial'    : self.get_serial(),
+        }
+
+    def update(self,data):
+
+        (moteInfo, notif) = data
     
         # update state
         StateElem.update(self)
@@ -376,7 +408,8 @@ class StateIdManager(StateElem):
 
 class StateMyDagRank(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -384,12 +417,14 @@ class StateMyDagRank(StateElem):
 
 class StatekaPeriod(StateElem):
     
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
         self.data[0]['kaPeriod']            = notif.kaPeriod
 
+# abstract class
 class StateTable(StateElem):
 
     def __init__(self,rowClass,columnOrder=None):
@@ -399,29 +434,58 @@ class StateTable(StateElem):
             self.meta[0]['columnOrder']     = columnOrder
         self.data                           = []
 
-    def update(self,notif):
+    def update(self,data):
+        (moteInfo, notif) = data
         StateElem.update(self)
         while len(self.data)<notif.row+1:
             self.data.append(self.meta[0]['rowClass']())
-        self.data[notif.row].update(notif)
+        self.data[notif.row].update(data)
+
+        if notif.row + 1 == len(self.data):
+            self.log(moteInfo)
+
+    def log(self, id):
+        raise NotImplementedError
+
+class StateSchedule(StateTable):
+
+    def __init__(self, *args, **kwargs):
+        super(StateSchedule, self).__init__(*args, **kwargs)
+
+    def log(self, moteInfo):
+        try:
+            numCellsTx = sum(row.getType().getCellType() == "TX" for row in self.data)
+            numCellsRx = sum(row.getType().getCellType() == "RX" for row in self.data)
+            numCellsTxRx = sum(row.getType().getCellType() == "TXRX" for row in self.data)
+            numCells = numCellsTx + numCellsRx + numCellsTxRx
+
+            # TODO publish
+        except:
+            pass
+
+class StateNeighbors(StateTable):
+    def __init__(self, *args, **kwargs):
+        super(StateNeighbors, self).__init__(*args, **kwargs)
+
+    def log(self,moteInfo):
+        pass
 
 class moteState(eventBusClient.eventBusClient):
     
-    ST_OUPUTBUFFER      = 'OutputBuffer'
-    ST_ASN              = 'Asn'
-    ST_MACSTATS         = 'MacStats'
-    ST_SCHEDULEROW      = 'ScheduleRow'
-    ST_SCHEDULE         = 'Schedule'
-    ST_BACKOFF          = 'Backoff'
-    ST_QUEUEROW         = 'QueueRow'
-    ST_QUEUE            = 'Queue'
-    ST_NEIGHBORSROW     = 'NeighborsRow'
-    ST_NEIGHBORS        = 'Neighbors'
-    ST_ISSYNC           = 'IsSync'
-    ST_IDMANAGER        = 'IdManager'
-    ST_MYDAGRANK        = 'MyDagRank'
-    ST_KAPERIOD         = 'kaPeriod'
-    ST_JOINED           = 'Joined'
+    ST_OUPUTBUFFER                 = 'OutputBuffer'
+    ST_ASN                         = 'Asn'
+    ST_MACSTATS                    = 'MacStats'
+    ST_SCHEDULEROW                 = 'ScheduleRow'
+    ST_SCHEDULE                    = 'Schedule'
+    ST_BACKOFF                     = 'Backoff'
+    ST_QUEUEROW                    = 'QueueRow'
+    ST_QUEUE                       = 'Queue'
+    ST_NEIGHBORSROW                = 'NeighborsRow'
+    ST_NEIGHBORS                   = 'Neighbors'
+    ST_ISSYNC                      = 'IsSync'
+    ST_IDMANAGER                   = 'IdManager'
+    ST_MYDAGRANK                   = 'MyDagRank'
+    ST_KAPERIOD                    = 'kaPeriod'
     ST_ALL              = [
         ST_OUPUTBUFFER,
         ST_ASN,
@@ -434,7 +498,6 @@ class moteState(eventBusClient.eventBusClient):
         ST_IDMANAGER, 
         ST_MYDAGRANK,
         ST_KAPERIOD,
-        ST_JOINED,
     ]
     
     TRIGGER_DAGROOT     = 'DAGroot'
@@ -461,6 +524,8 @@ class moteState(eventBusClient.eventBusClient):
     COMMAND_SET_UINJECTPERIOD     = ['uinjectPeriod', 17, 1]
     COMMAND_SET_ECHO_REPLY_STATUS = ['echoReply',     18, 1]
     COMMAND_SET_JOIN_KEY          = ['joinKey',       19,16]
+    COMMAND_SET_TX_POWER          = ['txPower',       20, 1]
+    COMMAND_SEND_PACKET           = ['sendPacket',    21, 16] # dest_eui64 (8B) || con (1B) || packetsInBurst (1B) || packetToken (5B) || packetPayloadLen (1B)
     COMMAND_ALL                   = [
         COMMAND_SET_EBPERIOD ,
         COMMAND_SET_CHANNEL,
@@ -482,6 +547,8 @@ class moteState(eventBusClient.eventBusClient):
         COMMAND_SET_UINJECTPERIOD,
         COMMAND_SET_ECHO_REPLY_STATUS,
         COMMAND_SET_JOIN_KEY,
+        COMMAND_SET_TX_POWER,
+        COMMAND_SEND_PACKET,
     ]
 
     TRIGGER_ALL         = [
@@ -504,9 +571,8 @@ class moteState(eventBusClient.eventBusClient):
         
         self.state[self.ST_OUPUTBUFFER]     = StateOutputBuffer()
         self.state[self.ST_ASN]             = StateAsn()
-        self.state[self.ST_JOINED]          = StateJoined()
         self.state[self.ST_MACSTATS]        = StateMacStats()
-        self.state[self.ST_SCHEDULE]        = StateTable(
+        self.state[self.ST_SCHEDULE]        = StateSchedule(
                                                 StateScheduleRow,
                                                 columnOrder = '.'.join(
                                                     [
@@ -524,7 +590,7 @@ class moteState(eventBusClient.eventBusClient):
                                               )
         self.state[self.ST_BACKOFF]         = StateBackoff()
         self.state[self.ST_QUEUE]           = StateQueue()
-        self.state[self.ST_NEIGHBORS]       = StateTable(
+        self.state[self.ST_NEIGHBORS]       = StateNeighbors(
                                                 StateNeighborsRow,
                                                 columnOrder = '.'.join(
                                                     [
@@ -579,9 +645,6 @@ class moteState(eventBusClient.eventBusClient):
                 self.state[self.ST_MYDAGRANK].update,
             self.parserStatus.named_tuple[self.ST_KAPERIOD]:
                 self.state[self.ST_KAPERIOD].update,
-            self.parserStatus.named_tuple[self.ST_JOINED]:
-                self.state[self.ST_JOINED].update,
-
         }
         
         # initialize parent class
@@ -593,6 +656,11 @@ class moteState(eventBusClient.eventBusClient):
                     'sender'      : 'moteConnector@{0}'.format(self.moteConnector.serialport),
                     'signal'      : 'fromMote.status',
                     'callback'    : self._receivedStatus_notif,
+                },
+                {
+                    'sender':  self.WILDCARD,
+                    'signal': 'getDutyCycleMeasurement',
+                    'callback': self._getDutyCycle,
                 },
             ]
         )
@@ -641,13 +709,17 @@ class moteState(eventBusClient.eventBusClient):
         
         # lock the state data
         self.stateLock.acquire()
-        
+
         # call handler
         found = False
         for k,v in self.notifHandlers.items():
             if self._isnamedtupleinstance(data,k):
                 found = True
-                v(data)
+                try:
+                    moteInfo = self.state[self.ST_IDMANAGER].get_info()
+                except:
+                    moteInfo = ''
+                v((moteInfo, data))
                 break
         
         # unlock the state data
@@ -658,3 +730,26 @@ class moteState(eventBusClient.eventBusClient):
     
     def _isnamedtupleinstance(self,var,tupleInstance):
         return var._fields==tupleInstance._fields
+
+    def _getDutyCycle(self, sender, signal, data):
+
+        # source
+        source = self.state[self.ST_IDMANAGER].get_info()
+        # get last duty cycle measurement
+        dutyCycle = self.state[self.ST_MACSTATS].getDutyCycle()
+        # asn of the dutyCycle measurement is an approximation as the exact timestamp is not available
+        timestamp = self.state[self.ST_ASN].getAsn()
+        if timestamp:
+            timestamp = str(timestamp)
+        else:
+            timestamp = '0'
+
+        if source and dutyCycle and timestamp:
+            data = {
+                'source'    : source['64bAddr'],
+                'timestamp' : timestamp,
+                'dutyCycle' : dutyCycle,
+            }
+
+            # dispatch
+            self.dispatch('dutyCycleMeasurement', data)

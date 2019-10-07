@@ -172,8 +172,7 @@ class moteConnector(eventBusClient.eventBusClient):
     
     def _commandToBytes(self,data):
         
-        # data[0]: commandID
-        # data[1]: parameter
+
 
         outcome    = False
         dataToSend = []
@@ -182,9 +181,13 @@ class moteConnector(eventBusClient.eventBusClient):
         # get commandId
         commandIndex = 0
         for cmd in moteState.moteState.COMMAND_ALL:
+            # data[0]: command name
+            # data[1]: parameter
             if data[0] == cmd[0]:
+                commandName = cmd[0]
                 commandId  = cmd[1]
                 commandLen = cmd[2]
+                parameter = data[1]
                 break
             else:
                 commandIndex += 1
@@ -198,14 +201,14 @@ class moteConnector(eventBusClient.eventBusClient):
             print " }"
             return [outcome,dataToSend]
 
-        if data[0][:2] == '6p':
+        if '6p' in commandName:
             try:
                 dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,
                     commandId,
                     commandLen
                 ]
-                paramList = data[1].split(',')
-                if data[0] != '6pClear':
+                paramList = parameter.split(',')
+                if commandId != '6pClear':
                     if paramList[0] == 'tx':
                         cellOptions = 1<<0
                     elif paramList[0] == 'rx':
@@ -223,9 +226,9 @@ class moteConnector(eventBusClient.eventBusClient):
                 dataToSend  += [cellOptions]
                 celllist_add    = {}
                 celllist_delete = {}
-                if data[0] == '6pList'  and len(paramList)==3:
+                if commandId == '6pList'  and len(paramList)==3:
                     dataToSend += map(int,paramList[ptr:])
-                if data[0] == '6pAdd':
+                if commandId == '6pAdd':
                     # append numCell
                     dataToSend += [int(paramList[ptr])]
                     # append celllist
@@ -236,7 +239,7 @@ class moteConnector(eventBusClient.eventBusClient):
                         assert TRUE
                     dataToSend += map(int,celllist_add['slotoffset'])
                     dataToSend += map(int,celllist_add['channeloffset'])
-                if data[0] == '6pDelete':
+                if commandId == '6pDelete':
                     # append numCell
                     dataToSend += [int(paramList[ptr])]
                     # append celllist
@@ -247,7 +250,7 @@ class moteConnector(eventBusClient.eventBusClient):
                         assert TRUE
                     dataToSend += map(int,celllist_delete['slotoffset'])
                     dataToSend += map(int,celllist_delete['channeloffset'])
-                if data[0] == '6pRelocate':
+                if commandId == '6pRelocate':
                     dataToSend += [int(paramList[ptr])]
                     # append celllist
                     celllist_delete['slotoffset']    = paramList[ptr+1].split('-')
@@ -281,11 +284,11 @@ class moteConnector(eventBusClient.eventBusClient):
                 print "comma. e.g. set <portname> 6pList     tx,                                                                 5,         3"
                 print "comma. e.g. set <portname> 6pClear                                                                                              all"
                 return [outcome,dataToSend]
-        elif data[0] == 'joinKey':
+        elif commandName == 'joinKey':
             try:
-                if len(data[1]) != commandLen*2: # two hex chars is one byte
+                if len(parameter) != commandLen*2: # two hex chars is one byte
                     raise ValueError
-                payload = binascii.unhexlify(data[1])
+                payload = binascii.unhexlify(parameter)
                 dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,
                     commandId,
                     commandLen,
@@ -294,8 +297,29 @@ class moteConnector(eventBusClient.eventBusClient):
             except:
                 print "============================================="
                 print "Wrong joinKey format. Input 16-byte long hex string. e.g. cafebeefcafebeefcafebeefcafebeef"
+        elif commandName == 'sendPacket':
+            try:
+
+                if len(parameter) != commandLen:
+                    raise ValueError("Invalid sendPacket payload, expecting {0} bytes".format(commandLen))
+
+                dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,
+                    commandId,
+                    commandLen,
+                ]
+                dataToSend += parameter
+            except:
+                debug = "=============================================\n"
+                debug += "Wrong sendPacket command format.\n"
+                debug += "Supported: ( destination, confirmable, packetsInBurst, packetToken, packetPayloadLen )\n"
+                debug += "destination: dash-separated EUI-64 string, e.g. AA-BB-CC-DD-EE-FF-00-11\n"
+                debug += "confirmable: boolean\n"
+                debug += "packetsInBurst: integer\n"
+                debug += "packetToken: integer array\n"
+                debug += "packetPayloadLen: integer\n"
+                log.warning(debug)
         else:
-            parameter = int(data[1])
+            parameter = int(parameter)
             if parameter <= 0xffff:
                 parameter  = [(parameter & 0xff),((parameter >> 8) & 0xff)]
                 dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,
@@ -314,7 +338,6 @@ class moteConnector(eventBusClient.eventBusClient):
         dataToSend[2] = len(dataToSend)-3
         outcome       = True
         return [outcome,dataToSend]
-
 
     def _bytesToMesh_handler(self,sender,signal,data):
         assert type(data)==tuple

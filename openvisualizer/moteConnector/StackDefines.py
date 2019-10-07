@@ -46,6 +46,7 @@ components = {
   39: "UEXPIRATION",
   40: "UMONITOR",
   41: "CINFRARED",
+  42: "CBENCHMARK",
 }
 
 errorDescriptions = {

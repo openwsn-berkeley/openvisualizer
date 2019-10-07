@@ -53,24 +53,32 @@ def formatThreadList():
 
 #===== parsing
 
-def hex2buf(s):
+def hex2buf(s,separator=None):
     '''
     Convert a string of hex caracters into a byte list. For example:
 
     ``'abcdef00' -> [0xab,0xcd,0xef,0x00]``
     
     :param s: [in] The string to convert
+    :param separator: [in] Optional separator char used in the string, e.g ab-cd-ef-00'
     
     :returns: A list of integers, each element in [0x00..0xff].
     '''
     assert type(s)==str
-    assert len(s)%2 == 0
+    if separator:
+        assert type(separator)==str
+        assert len(separator)==1
+        newVal = s.replace(separator,'') # remove the separator before proceding
+    else:
+        newVal = s
+
+    assert len(newVal)%2 == 0
     
     returnVal = []
     
-    for i in range(len(s)/2):
+    for i in range(len(newVal)/2):
         realIdx = i*2
-        returnVal.append(int(s[realIdx:realIdx+2],16))
+        returnVal.append(int(newVal[realIdx:realIdx+2],16))
     
     return returnVal
 

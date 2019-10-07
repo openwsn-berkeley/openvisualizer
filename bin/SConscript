@@ -55,21 +55,29 @@ def uiRunner(target, source, env):
  
     if env['TRACEOPT']:
         argList.append('--trace')
+        
     if env['DEBUGOPT']:
         argList.append('--debug')
-    if env['OPENTESTBED']:
-        argList.append('--opentestbed')
+
+    if env['TESTBED']:
+        argList.append('--testbed={0}'.format(env['TESTBED']))
+        
     if env['MQTT_BROKER_ADDRESS']:
         argList.append('--mqtt-broker-address='
                        + '{0}'.format(env['MQTT_BROKER_ADDRESS']))
+                       
     if env['OPENTUN_NULL']:
         argList.append('--opentun-null')
-
+        
+    if env['BENCHMARK']:
+        argList.append('--benchmark={0}'.format(env['BENCHMARK']))        
+        
     if env['USEPAGEZERO']:
         argList.append('--usePageZero')
         
     if env['HOSTOPT']:
         argList.append('-H {0}'.format(env['HOSTOPT']))
+        
     if env['PORTOPT']:
         argList.append('-p {0}'.format(env['PORTOPT']))
 

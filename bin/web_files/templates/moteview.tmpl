@@ -202,6 +202,11 @@
 	                                                <h5>Sync</h5>
 	                                                <div class="list-group">
 	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Status
+	                                                        <span class="pull-right text-muted small" id="sync_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
 	                                                        <i class="fa fa-upload fa-fw"></i> Min. Correction
 	                                                        <span class="pull-right text-muted small" id="mincorrection_fld"><em></em>
 	                                                        </span>
@@ -306,7 +311,7 @@
 									        
 									        $("#dagroot_fld").text(      hasJson && idJson.isDAGroot > 0 ? 'Yes' : 'No');
 									        $("#bridge_fld").text(       hasJson && idJson.isBridge > 0 ? 'Yes' : 'No');
-									        $("#sync_fld").text(         hasJson && syncJson.isSync > 0 ? 'Synchronized!' : 'Not synchronized');
+									        $("#sync_fld").text(         hasJson && syncJson.isSync > 0 ? 'Synchronized' : 'Not synchronized');
 									        $("#pan_fld").text(          hasJson ? idJson.myPANID                  : '');
 									        $("#asn_fld").text(          hasJson ? asnJson.asn                     : '');
 									        $("#join_fld").text(         hasJson ? joinedJson.joinedAsn                     : '');

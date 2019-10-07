@@ -163,6 +163,11 @@
 	                                                        <span class="pull-right text-muted small" id="join_fld"><em></em>
 	                                                        </span>
 	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Radio Duty Cycle
+	                                                        <span class="pull-right text-muted small" id="dutycycle_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
 	                                                </div>
 	                                                <h5>Output Buffer</h5>
 	                                                <div class="list-group">
@@ -194,7 +199,7 @@
 	                                        </div>
 	                                        <div class="col-lg-6">
 	                                            <div class="well well-lg">
-	                                                <h5>Backoff</h5>
+	                                                <h5>Sync</h5>
 	                                                <div class="list-group">
 	                                                    <a class="list-group-item">
 	                                                        <i class="fa fa-upload fa-fw"></i> Min. Correction
@@ -211,9 +216,6 @@
 	                                                        <span class="pull-right text-muted small" id="syncpkts_fld"><em></em>
 	                                                        </span>
 	                                                    </a>
-	                                                </div>
-	                                                <h5>Sync</h5>
-	                                                <div class="list-group">
 	                                                    <a class="list-group-item">
 	                                                        <i class="fa fa-upload fa-fw"></i> Num. Ack Sync
 	                                                        <span class="pull-right text-muted small" id="syncacks_fld"><em></em>
@@ -224,14 +226,17 @@
 	                                                        <span class="pull-right text-muted small" id="desyncpkts_fld"><em></em>
 	                                                        </span>
 	                                                    </a>
-	                                                    <a class="list-group-item">
-	                                                        <i class="fa fa-upload fa-fw"></i> Radio Duty Cycle
-	                                                        <span class="pull-right text-muted small" id="dutycycle_fld"><em></em>
-	                                                        </span>
-	                                                    </a>
+	                                                </div>
+                                                    <h5>Sixtop</h5>
+	                                                <div class="list-group">
                                                         <a class="list-group-item">
 	                                                        <i class="fa fa-upload fa-fw"></i> Keep-Alive Period
 	                                                        <span class="pull-right text-muted small" id="kaperiod_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> SixtopFSM
+	                                                        <span class="pull-right text-muted small" id="sixtop_fld"><em></em>
 	                                                        </span>
 	                                                    </a>
 	                                                </div>
@@ -283,6 +288,7 @@
 									            asnJson      = $.parseJSON(json.Asn)[0];
 									            idJson       = $.parseJSON(json.IdManager)[0];
 									            syncJson     = $.parseJSON(json.IsSync)[0];
+                                                sixpJson     = $.parseJSON(json.SixtopFSM)[0];
 									            dagrankJson  = $.parseJSON(json.MyDagRank)[0];
 									            outbufJson   = $.parseJSON(json.OutputBuffer)[0];
 									            backoffJson  = $.parseJSON(json.Backoff)[0];
@@ -316,6 +322,7 @@
 									        $("#desyncpkts_fld").text(   hasJson ? macstatsJson.numDeSync          : '');
 									        $("#dutycycle_fld").text(    hasJson ? macstatsJson.dutyCycle          : '');
                                             $("#kaperiod_fld").text(     hasJson ? kaPeriodJson.kaPeriod           : '');
+                                            $("#sixtop_fld").text(       hasJson ? sixpJson.SixtopFSM              : '');
 									        
 									        // Slot Schedule responsive table
 									        if (hasJson) {

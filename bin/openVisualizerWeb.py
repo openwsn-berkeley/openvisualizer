@@ -295,6 +295,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                 ms.ST_QUEUE       : ms.getStateElem(ms.ST_QUEUE).toJson('data'),
                 ms.ST_NEIGHBORS   : ms.getStateElem(ms.ST_NEIGHBORS).toJson('data'),
                 ms.ST_JOINED      : ms.getStateElem(ms.ST_JOINED).toJson('data'),
+                ms.ST_SIXTOPFSM   : ms.getStateElem(ms.ST_SIXTOPFSM).toJson('data'),
             }
         else:
             if log.isEnabledFor(logging.DEBUG):

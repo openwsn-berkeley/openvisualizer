@@ -404,6 +404,14 @@ class StateTable(StateElem):
         while len(self.data)<notif.row+1:
             self.data.append(self.meta[0]['rowClass']())
         self.data[notif.row].update(notif)
+        
+class StateSixtopFSM(StateElem):
+    
+    def update(self,notif):
+        StateElem.update(self)
+        if len(self.data)==0:
+            self.data.append({})
+        self.data[0]['SixtopFSM']            = notif.SixtopFSM
 
 class moteState(eventBusClient.eventBusClient):
     
@@ -422,6 +430,7 @@ class moteState(eventBusClient.eventBusClient):
     ST_MYDAGRANK        = 'MyDagRank'
     ST_KAPERIOD         = 'kaPeriod'
     ST_JOINED           = 'Joined'
+    ST_SIXTOPFSM        = 'SixtopFSM'
     ST_ALL              = [
         ST_OUPUTBUFFER,
         ST_ASN,
@@ -435,6 +444,7 @@ class moteState(eventBusClient.eventBusClient):
         ST_MYDAGRANK,
         ST_KAPERIOD,
         ST_JOINED,
+        ST_SIXTOPFSM,
     ]
     
     TRIGGER_DAGROOT     = 'DAGroot'
@@ -555,6 +565,7 @@ class moteState(eventBusClient.eventBusClient):
                                               )
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
         self.state[self.ST_KAPERIOD]        = StatekaPeriod()
+        self.state[self.ST_SIXTOPFSM]       = StateSixtopFSM()
         
         self.notifHandlers = {
             self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
@@ -581,7 +592,8 @@ class moteState(eventBusClient.eventBusClient):
                 self.state[self.ST_KAPERIOD].update,
             self.parserStatus.named_tuple[self.ST_JOINED]:
                 self.state[self.ST_JOINED].update,
-
+            self.parserStatus.named_tuple[self.ST_SIXTOPFSM]:
+                self.state[self.ST_SIXTOPFSM].update,
         }
         
         # initialize parent class

@@ -254,6 +254,16 @@ class ParserStatus(Parser.Parser):
                                         'joinedAsn_0_1',                   # H
                                     ],
                                 )
+        self._addFieldsParser   (
+                                    3,
+                                    12,
+                                    'SixtopFSM',
+                                    '<B',
+                                    [
+                                        'SixtopFSM',                       # B
+                                    ],
+                                )
+        
     #======================== public ==========================================
     
     def parseInput(self,input):

@@ -64,14 +64,18 @@ class ParserData(Parser.Parser):
              # connect to MQTT
             self.mqttclient                = mqtt.Client()
             self.mqttclient.on_connect     = self._on_mqtt_connect
-            self.mqttclient.connect(self.broker)
-        
-            # start mqtt client
-            self.mqttthread                = threading.Thread(
-                name                       = 'mqtt_loop_thread',
-                target                     = self.mqttclient.loop_forever
-            )
-            self.mqttthread.start()
+
+            try:
+                self.mqttclient.connect(self.broker)
+            except Exception as e:
+                log.error("Failed to connect to {} with error msg: {}".format(self.broker, e))
+            else: 
+                # start mqtt client
+                self.mqttthread                = threading.Thread(
+                    name                       = 'mqtt_loop_thread',
+                    target                     = self.mqttclient.loop_forever
+                )
+                self.mqttthread.start()
 
      #======================== private =========================================
 
@@ -180,8 +184,7 @@ class ParserData(Parser.Parser):
                         'avg_pdr'        : 0.0
                     }
 
-                if not (self.broker == 'null'):
-
+                if self.mqttconnected:
                     self.publish_kpi(src_id)
 
                 # in case we want to send the computed time to internet..
@@ -250,9 +253,11 @@ class ParserData(Parser.Parser):
 
         print payload
 
-        # publish the cmd message
-        self.mqttclient.publish(
-            topic   = 'opentestbed/uinject/arrived',
-            payload = json.dumps(payload),
-            qos=2
-        )
+        if self.mqttconnected:
+            # publish the cmd message
+            self.mqttclient.publish(
+                topic   = 'opentestbed/uinject/arrived',
+                payload = json.dumps(payload),
+                qos=2
+            )
+

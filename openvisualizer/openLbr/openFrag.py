@@ -45,7 +45,7 @@ class OpenFrag(object):
 
         self.datagram_tag = tag
 
-    def reassemble(self, lowpan_pkt):
+    def do_reassemble(self, lowpan_pkt):
         reassembled_pkt = None
 
         # parse fragmentation header
@@ -74,7 +74,8 @@ class OpenFrag(object):
             self.reassemble_buffer[datagram_tag] = new_entry
 
         # check if we can reassemble
-        for entry in self.reassemble_buffer.values():
+
+        for tag, entry in self.reassemble_buffer.items():
             if entry.total_bytes == entry.recvd_bytes:
                 frags = sorted(entry.fragments, key=lambda frag: frag[0])
                 reassembled_pkt = []
@@ -82,9 +83,11 @@ class OpenFrag(object):
                 for frag in frags:
                     reassembled_pkt.extend(frag[1])
 
+                del self.reassemble_buffer[tag]
+
         return reassembled_pkt
 
-    def fragment(self, ip6_pkt):
+    def do_fragment(self, ip6_pkt):
         fragment_list = []
         original_length = len(ip6_pkt)
 

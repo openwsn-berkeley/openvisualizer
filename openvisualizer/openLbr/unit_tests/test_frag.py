@@ -73,7 +73,7 @@ def test_reassemble_fragments(random_6lwp_fragments):
     assembler = openFrag.OpenFrag()
 
     for frag in frag_list:
-        result = assembler.reassemble(frag)
+        result = assembler.do_reassemble(frag)
 
         if result is not None:
             assert result == ip_pkt
@@ -88,7 +88,7 @@ def test_fragment_packet(random_6lwp_fragments):
 
     log.debug("Original packet (len: {}) -- {}".format(len(ip_pkt), ip_pkt))
 
-    frags = [lo.SixLoWPAN("".join([chr(b) for b in f])) for f in fragmentor.fragment(ip_pkt)]
+    frags = [lo.SixLoWPAN("".join([chr(b) for b in f])) for f in fragmentor.do_fragment(ip_pkt)]
     log.debug(frags)
     reassembled = lo.sixlowpan_defragment(frags)
 

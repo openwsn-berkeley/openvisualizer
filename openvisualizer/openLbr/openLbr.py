@@ -8,6 +8,7 @@ import threading
 
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.eventBus import eventBusClient
+from openvisualizer.openLbr.openFrag import OpenFrag
 from openvisualizer.openTun import openTun
 
 log = logging.getLogger('openLbr')
@@ -155,6 +156,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         self.networkPrefix = None
         self.dagRootEui64 = None
         self.usePageZero = use_page_zero
+        self.lowpan_frag = OpenFrag()
 
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
@@ -265,11 +267,12 @@ class OpenLbr(eventBusClient.eventBusClient):
                 log.error(self._format_lowpan(lowpan, lowpan_bytes))
                 return
 
-            # dispatch
-            self.dispatch(
-                signal='bytesToMesh',
-                data=(lowpan['nextHop'], lowpan_bytes),
-            )
+            # dispatch fragments
+            for fragment in self.lowpan_frag.do_fragment(lowpan_bytes):
+                self.dispatch(
+                    signal='bytesToMesh',
+                    data=(lowpan['nextHop'], fragment),
+                )
 
         except (ValueError, NotImplementedError) as err:
             log.error(err)
@@ -283,6 +286,15 @@ class OpenLbr(eventBusClient.eventBusClient):
         port.
         """
         try:
+            # reassemble if 6LoWPAN was fragmented
+            address, payload = data
+            reassembled = self.lowpan_frag.do_reassemble(payload)
+
+            if reassembled is not None:
+                data = (address, reassembled)
+            else:
+                return
+
             # build lowpan dictionary from the data
             ipv6dic = self.lowpan_to_ipv6(data)
             dispatch_signal = None

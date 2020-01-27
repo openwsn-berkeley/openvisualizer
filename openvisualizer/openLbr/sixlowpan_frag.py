@@ -22,7 +22,7 @@ class ReassembleEntry(object):
         self.fragments = frag
 
 
-class OpenFrag(object):
+class Fragmentor(object):
     """
     Class which performs fragmentation and reassembly of 6LoWPAN packets for transport of IEEE 802.15.4 networks.
 
@@ -50,6 +50,7 @@ class OpenFrag(object):
 
         # parse fragmentation header
         dispatch = lowpan_pkt[0] & self.FRAG_DISPATCH_MASK
+        datagram_size = u.buf2int(lowpan_pkt[:2]) & self.FRAG_SIZE_MASK
 
         if dispatch not in [self.FRAG1_DISPATCH, self.FRAGN_DISPATCH]:
             return lowpan_pkt
@@ -69,7 +70,6 @@ class OpenFrag(object):
             entry.recvd_bytes += len(payload)
             entry.fragments.append((offset, payload))
         else:
-            datagram_size = u.buf2int(lowpan_pkt[:2]) & self.FRAG_SIZE_MASK
             new_entry = ReassembleEntry(datagram_size, len(payload), [(offset, payload)])
             self.reassemble_buffer[datagram_tag] = new_entry
 

@@ -65,7 +65,7 @@ class ParserInfoErrorCritical(Parser.Parser):
         else:
             self.errorinfo[(callingComponent, error_code)] = 1
 
-        if error_code == 28:
+        if error_code == 36:
             # replace args of sixtop command/return code id by string
             arg1 = StackDefines.sixtop_returncode[arg1]
             arg2 = StackDefines.sixtop_statemachine[arg2]

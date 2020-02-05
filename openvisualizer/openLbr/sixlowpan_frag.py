@@ -38,7 +38,12 @@ class Fragmentor(object):
     FRAG_DISPATCH_MASK = 0xF8
     FRAG_SIZE_MASK = 0x7FF
 
-    MAX_FRAGMENT_SIZE = 96
+    # If L2 security is not active in the network we can use up to 96 bytes of payload per fragment.
+    # Since openvisualizer is not aware of the security configuration of the network, we use by default a smaller
+    # fragment payload size.
+    MAX_FRAGMENT_SIZE = 80
+    FRAG1_HDR_SIZE = 4
+    FRAGN_HDR_SIZE = 5
 
     def __init__(self, tag=1):
         self.reassemble_buffer = dict()
@@ -91,7 +96,7 @@ class Fragmentor(object):
         fragment_list = []
         original_length = len(ip6_pkt)
 
-        if len(ip6_pkt) <= self.MAX_FRAGMENT_SIZE:
+        if len(ip6_pkt) <= self.MAX_FRAGMENT_SIZE + self.FRAGN_HDR_SIZE:
             return [ip6_pkt]
 
         while len(ip6_pkt) > 0:
@@ -113,7 +118,7 @@ class Fragmentor(object):
             else:
                 # subsequent fragment
                 dispatch_size = u.hex2buf("{:02x}".format((self.FRAGN_DISPATCH << 8) | original_length))
-                offset = [len(fragment_list) * 12]
+                offset = [len(fragment_list) * (self.MAX_FRAGMENT_SIZE / 8)]
                 frag_header.extend(dispatch_size)
                 frag_header.extend(datagram_tag)
                 frag_header.extend(offset)

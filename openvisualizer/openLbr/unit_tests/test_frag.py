@@ -14,7 +14,7 @@ here = sys.path[0]
 sys.path.insert(0, os.path.join(here, '..', '..', '..'))  # root/
 sys.path.insert(0, os.path.join(here, '..'))  # openLbr/
 
-import openFrag
+import sixlowpan_frag
 
 # ============================ logging =========================================
 
@@ -70,7 +70,7 @@ def test_reassemble_fragments(random_6lwp_fragments):
 
     log.debug("test_reassemble_fragments")
 
-    assembler = openFrag.OpenFrag()
+    assembler = sixlowpan_frag.Fragmentor()
 
     for frag in frag_list:
         result = assembler.do_reassemble(frag)
@@ -84,7 +84,7 @@ def test_fragment_packet(random_6lwp_fragments):
 
     log.debug("test_fragment_packet")
 
-    fragmentor = openFrag.OpenFrag()
+    fragmentor = sixlowpan_frag.Fragmentor()
 
     log.debug("Original packet (len: {}) -- {}".format(len(ip_pkt), ip_pkt))
 

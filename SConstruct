@@ -168,6 +168,11 @@ AddOption('--mqtt-broker-address',
     type      = 'string')
 runnerEnv['MQTT_BROKER_ADDRESS'] = GetOption('mqtt_broker_address')
 
+AddOption('--dagroot-port',
+    dest      = 'dagroot_port',
+    type      = 'string')
+runnerEnv['DAGROOT_PORT'] = GetOption('dagroot_port')
+
 AddOption('--opentun-null',
     dest      = 'opentun_null',
     default   = False,

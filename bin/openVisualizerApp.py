@@ -38,8 +38,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, testbedmotes, pathTopo, mqtt_broker_address, opentun_null):
-        
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, testbedmotes, pathTopo, mqtt_broker_address, dagroot_port, opentun_null):
         # store params
         self.confdir              = confdir
         self.datadir              = datadir
@@ -79,7 +78,6 @@ class OpenVisualizerApp(object):
                 app.close()
                 os.kill(os.getpid(), signal.SIGTERM)
 
-        
         # create a moteProbe for each mote
         if self.simulatorMode:
             # in "simulator" mode, motes are emulated
@@ -94,7 +92,6 @@ class OpenVisualizerApp(object):
                 self.moteProbes  += [moteProbe.moteProbe(mqtt_broker_address, emulatedMote=moteHandler)]
         elif self.iotlabmotes:
             # in "IoT-LAB" mode, motes are connected to TCP ports
-            
             self.moteProbes       = [
                 moteProbe.moteProbe(mqtt_broker_address, iotlabmote=p) for p in self.iotlabmotes.split(',')
             ]
@@ -107,7 +104,6 @@ class OpenVisualizerApp(object):
             
         else:
             # in "hardware" mode, motes are connected to the serial port
-
             self.moteProbes       = [
                 moteProbe.moteProbe(mqtt_broker_address, serialport=p) for p in moteProbe.findSerialPorts()
             ]
@@ -193,7 +189,20 @@ class OpenVisualizerApp(object):
                                 os.path.join(self.confdir,'trace.conf'),
                                 {'logDir': _forceSlashSep(self.logdir, self.debug)})
             OVtracer.OVtracer()
-        
+       
+       
+        # search for a mote that has to be dagroot
+        for mote in self.moteProbes:
+            index = -1
+            if ("null" != mote.portname) and (dagroot_port == mote.portname):
+                index = self.moteProbes.index(mote)
+                log.info("Port {0} has to be dagroot (index of the mote={1})".format(mote.portname, index))
+                  
+                #send a DAGROOT TRIGGER command to the corresponding mote
+                #self.moteStates[index].triggerAction(self.moteStates[index].TRIGGER_DAGROOT)
+                self.moteConnectors[index].forceDagRoot = True;
+                
+                
     #======================== public ==========================================
     
     def close(self):
@@ -358,6 +367,7 @@ def main(parser=None):
             )))
     log.info('sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path)))
         
+      
     return OpenVisualizerApp(
         confdir             = confdir,
         datadir             = datadir,
@@ -372,6 +382,7 @@ def main(parser=None):
         testbedmotes        = argspace.testbedmotes,
         pathTopo            = argspace.pathTopo,
         mqtt_broker_address = argspace.mqtt_broker_address,
+        dagroot_port        = argspace.dagroot_port,
         opentun_null        = argspace.opentun_null
     )
 
@@ -435,6 +446,12 @@ def _addParserArgs(parser):
         default    = 'argus.paris.inria.fr',
         action     = 'store',
         help       = 'MQTT broker address to use'
+    )
+    parser.add_argument('--dagroot-port',
+        dest       = 'dagroot_port',
+        default    = 'null',
+        action     = 'store',
+        help       = 'name of the (serial)port for the dagroot'
     )
     parser.add_argument('--opentun-null',
         dest       = 'opentun_null',

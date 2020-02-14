@@ -313,7 +313,7 @@ class StateIdManager(StateElem):
             self.data.append({})
         
         self.data[0]['isDAGroot']           = notif.isDAGroot
-        
+                
         if 'myPANID' not  in self.data[0]:
             self.data[0]['myPANID']         = typeAddr.typeAddr()
             self.data[0]['myPANID'].desc    = 'panId'
@@ -329,6 +329,12 @@ class StateIdManager(StateElem):
             notif.my16bID_0,
             notif.my16bID_1,
         ]
+        
+        #if the node bootstraps and is not a dagroot, forces a change
+        if (notif.isDAGroot == False) and (self.moteConnector.forceDagRoot == True):
+            log.info("The mote {0} has to be a dagroot, command sent".format(self.data[0]['my16bID'].addr))
+            self.eventBusClient.triggerAction(self.eventBusClient.TRIGGER_DAGROOT)
+
         
         if 'my64bID' not  in self.data[0]:
             self.data[0]['my64bID']         = typeAddr.typeAddr()
@@ -489,7 +495,7 @@ class moteState(eventBusClient.eventBusClient):
     ]
     
     def __init__(self,moteConnector):
-        
+                
         # log
         log.info("create instance")
         
@@ -501,7 +507,7 @@ class moteState(eventBusClient.eventBusClient):
         self.parserStatus                   = ParserStatus.ParserStatus()
         self.stateLock                      = threading.Lock()
         self.state                          = {}
-        
+ 
         self.state[self.ST_OUPUTBUFFER]     = StateOutputBuffer()
         self.state[self.ST_ASN]             = StateAsn()
         self.state[self.ST_JOINED]          = StateJoined()
@@ -551,11 +557,10 @@ class moteState(eventBusClient.eventBusClient):
         self.state[self.ST_ISSYNC]          = StateIsSync()
         self.state[self.ST_IDMANAGER]       = StateIdManager(
                                                 self,
-                                                self.moteConnector
+                                                self.moteConnector,
                                               )
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
         self.state[self.ST_KAPERIOD]        = StatekaPeriod()
-        
         self.notifHandlers = {
             self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
                 self.state[self.ST_OUPUTBUFFER].update,

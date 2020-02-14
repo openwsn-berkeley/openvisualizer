@@ -36,6 +36,8 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 BAUDRATE_LOCAL_BOARD  = 115200
 BAUDRATE_IOTLAB       = 500000
 
+
+
 #============================ functions =======================================
 
 def findSerialPorts(isIotMotes=False):
@@ -171,7 +173,8 @@ class moteProbe(threading.Thread):
     # XOFF            is transmitted as [XONXOFF_ESCAPE,           XOFF^XONXOFF_MASK]==[0x12,0x13^0x10]==[0x12,0x03]
     # XON             is transmitted as [XONXOFF_ESCAPE,            XON^XONXOFF_MASK]==[0x12,0x11^0x10]==[0x12,0x01]
     # XONXOFF_ESCAPE  is transmitted as [XONXOFF_ESCAPE, XONXOFF_ESCAPE^XONXOFF_MASK]==[0x12,0x12^0x10]==[0x12,0x02]
-    
+
+
     def __init__(self,mqtt_broker_address,serialport=None,emulatedMote=None,iotlabmote=None,testbedmote_eui64=None):
         
         # verify params

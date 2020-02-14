@@ -33,13 +33,14 @@ class moteConnector(eventBusClient.eventBusClient):
         self.moteProbe                 = moteProbe
         # store params
         self.serialport                = self.moteProbe.getPortName()
-        
+
         # local variables
         self.parser                    = OpenParser.OpenParser(moteProbe.mqtt_broker_address)
         self.stateLock                 = threading.Lock()
         self.networkPrefix             = None
         self._subcribedDataForDagRoot  = False
-              
+        self.forceDagRoot              = False;            # to be intialized as dagroot
+
         # give this thread a name
         self.name = 'moteConnector@{0}'.format(self.serialport)
        

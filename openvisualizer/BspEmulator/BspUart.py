@@ -75,16 +75,22 @@ class BspUart(BspModule.BspModule):
         '''
         Write a string of bytes to the mote.
         '''
-        
+
         assert len(bytesToWrite)
-        
+
+        if len(self.uartTxBuffer) != 0:
+            return 0
+
         with self.uartTxBufferLock:
             self.uartTxBuffer     = [ord(b) for b in bytesToWrite]
         
         self.engine.pause()
         self._scheduleNextTx()
         self.engine.resume()
-    
+
+        return len(bytesToWrite)
+
+
     def doneReading(self):
         self.waitForDoneReading.release()
     

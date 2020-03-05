@@ -12,6 +12,7 @@ import sys
 import os
 import logging
 import json
+import threading
 
 from openvisualizer.OVtracer import OVtracer
 
@@ -65,7 +66,10 @@ class OpenVisualizerApp(object):
         if self.simulatorMode:
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             
-            self.simengine        = SimEngine.SimEngine(simTopology)
+            # create semaphore  for reading the currentTime
+            self.currentTime_semaphore = threading.Semaphore()
+
+            self.simengine        = SimEngine.SimEngine(simTopology=simTopology, currentTime_semaphore=self.currentTime_semaphore)
             self.simengine.start()
         
         # import the number of motes from json file given by user (if the pathTopo option is enabled)
@@ -89,7 +93,7 @@ class OpenVisualizerApp(object):
             MoteHandler.readNotifIds(os.path.join(self.datadir, 'sim_files', 'openwsnmodule_obj.h'))
             self.moteProbes       = []
             for _ in range(self.numMotes):
-                moteHandler       = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
+                moteHandler       = MoteHandler.MoteHandler(oos_openwsn.OpenMote(), self.currentTime_semaphore)
                 self.simengine.indicateNewMote(moteHandler)
                 self.moteProbes  += [moteProbe.moteProbe(mqtt_broker_address, emulatedMote=moteHandler)]
         elif self.iotlabmotes:

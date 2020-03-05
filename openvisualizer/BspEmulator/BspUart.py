@@ -24,11 +24,12 @@ class BspUart(BspModule.BspModule):
     XONXOFF_ESCAPE  = 0x12
     XONXOFF_MASK    = 0x10
     
-    def __init__(self,motehandler):
+    def __init__(self,motehandler, currentTime_semaphore):
         
         # store params
         self.engine               = SimEngine.SimEngine()
         self.motehandler          = motehandler
+        self.ct_semaphore         = currentTime_semaphore
         
         # local variables
         self.timeline             = self.engine.timeline
@@ -363,9 +364,13 @@ class BspUart(BspModule.BspModule):
     #======================== private =========================================
     
     def _scheduleNextTx(self):
+
+        self.ct_semaphore.acquire()
         
         # calculate time at which byte will get out
         timeNextTx           = self.timeline.getCurrentTime()+float(1.0/float(self.BAUDRATE))
+
+        self.ct_semaphore.release()
         
         # schedule that event
         self.timeline.scheduleEvent(

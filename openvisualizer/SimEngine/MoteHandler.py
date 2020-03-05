@@ -56,11 +56,12 @@ def notifId(s):
 
 class MoteHandler(threading.Thread):
     
-    def __init__(self,mote):
+    def __init__(self,mote, currentTime_semaphore):
         
         # store params
-        self.engine          = SimEngine.SimEngine()
+        self.engine          = SimEngine.SimEngine(currentTime_semaphore)
         self.mote            = mote
+        self.ct_semaphore    = currentTime_semaphore
         
         #=== local variables
         self.loghandler      = self.engine.loghandler
@@ -81,7 +82,7 @@ class MoteHandler(threading.Thread):
         self.bspLeds         = BspLeds.BspLeds(self)
         self.bspSctimer      = BspSctimer.BspSctimer(self)
         self.bspRadio        = BspRadio.BspRadio(self)
-        self.bspUart         = BspUart.BspUart(self)
+        self.bspUart         = BspUart.BspUart(self, self.ct_semaphore)
         # status
         self.booted          = False
         self.cpuRunning      = threading.Lock()

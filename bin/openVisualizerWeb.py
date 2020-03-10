@@ -557,6 +557,14 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
     def emptyline(self):
         return
 
+    def cmdloop(self, intro=None):
+        try:
+            super(OpenVisualizerWeb, self).cmdloop(intro=intro)
+        except KeyboardInterrupt:
+            print("\nYou pressed Ctrl-C. Killing OpenVisualizer..\n")
+            self.app.close()
+            os.kill(os.getpid(), signal.SIGTERM)
+
 
 # ============================ main ============================================
 

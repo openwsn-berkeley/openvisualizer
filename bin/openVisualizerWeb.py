@@ -90,16 +90,16 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
 
         self._define_routes()
         # To find page templates
-        bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.datadir))
+        bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.data_dir))
 
         # initialize parent class
         eventBusClient.eventBusClient.__init__(self, name='OpenVisualizerWeb', registrations=[])
 
         # Set DAGroots imported
-        if app.DAGrootList:
+        if app.dagroot_list:
             # Wait the end of the mote threads creation
             time.sleep(1)
-            for moteid in app.DAGrootList:
+            for moteid in app.dagroot_list:
                 self._show_moteview(moteid)
                 self._get_mote_data(moteid)
                 self._toggle_dagroot(moteid)
@@ -136,26 +136,24 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         self.web_srv.route(path='/topology/route', method='GET', callback=self._topology_route_retrieve)
         self.web_srv.route(path='/static/<filepath:path>', callback=self._server_static)
 
-        # activate these routes only if remoteConnectorServer is available
+        # activate these routes only if remote_connector_server is available
         if self._is_rover_mode():
             self.web_srv.route(path='/rovers', callback=self._show_rovers)
             self.web_srv.route(path='/updateroverlist/:updatemsg', callback=self._update_rover_list)
             self.web_srv.route(path='/motesdiscovery/:srcip', callback=self._motes_discovery)
 
     def _is_rover_mode(self):
-        return self.app.remoteConnectorServer is not None
+        return self.app.remote_connector_server is not None
 
     @view('rovers.tmpl')
     def _show_rovers(self):
-        """
-        Handles the discovery and connection to remote motes using remoteConnectorServer component
-        """
+        """ Handles the discovery and connection to remote motes using remote_connector_server component. """
         my_if_dict = {}
         for myif in ni.interfaces():
             my_if_dict[myif] = ni.ifaddresses(myif)
         tmpl_data = {
-            'my_if_dict': my_if_dict,
-            'rover_motes': self.rover_motes,
+            'myifdict': my_if_dict,
+            'roverMotes': self.rover_motes,
             'roverMode': self._is_rover_mode()
         }
         return tmpl_data
@@ -181,8 +179,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         elif cmd == "disconn":
             for rover_ip in rover_data.split(','):
                 if rover_ip in self.rover_motes.keys():
-                    self.app.removeRoverMotes(rover_ip, self.rover_motes.pop(rover_ip))
-        mote_dict = self.app.getMoteDict()
+                    self.app.remove_rover_motes(rover_ip, self.rover_motes.pop(rover_ip))
+        mote_dict = self.app.get_mote_dict()
         for rover in self.rover_motes:
             for i, serial in enumerate(self.rover_motes[rover]):
                 for moteID, serial_conn in mote_dict.items():
@@ -206,7 +204,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
             coap_threads.append(t)
         for t in coap_threads:
             t.join()
-        self.app.refreshRoverMotes(self.rover_motes)
+        self.app.refresh_rover_motes(self.rover_motes)
         return json.dumps(self.rover_motes)
 
     def _get_coap_response(self, srcip, roverip):
@@ -233,7 +231,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         if log.isEnabledFor(logging.DEBUG):
             log.debug("moteview moteid parameter is {0}".format(moteid))
 
-        mote_list = self.app.getMoteDict().keys()
+        mote_list = self.app.get_mote_dict().keys()
 
         tmpl_data = {
             'motelist': mote_list,
@@ -243,8 +241,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         return tmpl_data
 
     def _server_static(self, filepath):
-        return bottle.static_file(filepath,
-                                  root='{0}/web_files/static/'.format(self.app.datadir))
+        return bottle.static_file(filepath, root='{0}/web_files/static/'.format(self.app.data_dir))
 
     def _toggle_dagroot(self, moteid):
         """
@@ -253,15 +250,15 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         """
 
         log.info('Toggle root status for moteid {0}'.format(moteid))
-        ms = self.app.getMoteState(moteid)
+        ms = self.app.get_mote_state(moteid)
         if ms:
             if log.isEnabledFor(logging.DEBUG):
-                log.debug('Found mote {0} in moteStates'.format(moteid))
+                log.debug('Found mote {0} in mote_states'.format(moteid))
             ms.triggerAction(ms.TRIGGER_DAGROOT)
             return '{"result" : "success"}'
         else:
             if log.isEnabledFor(logging.DEBUG):
-                log.debug('Mote {0} not found in moteStates'.format(moteid))
+                log.debug('Mote {0} not found in mote_states'.format(moteid))
             return '{"result" : "fail"}'
 
     def _get_mote_data(self, moteid):
@@ -272,10 +269,10 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
 
         if log.isEnabledFor(logging.DEBUG):
             log.debug('Get JSON data for moteid {0}'.format(moteid))
-        ms = self.app.getMoteState(moteid)
+        ms = self.app.get_mote_state(moteid)
         if ms:
             if log.isEnabledFor(logging.DEBUG):
-                log.debug('Found mote {0} in moteStates'.format(moteid))
+                log.debug('Found mote {0} in mote_states'.format(moteid))
             states = {
                 ms.ST_IDMANAGER: ms.getStateElem(ms.ST_IDMANAGER).toJson('data'),
                 ms.ST_ASN: ms.getStateElem(ms.ST_ASN).toJson('data'),
@@ -292,7 +289,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
             }
         else:
             if log.isEnabledFor(logging.DEBUG):
-                log.debug('Mote {0} not found in moteStates'.format(moteid))
+                log.debug('Mote {0} not found in mote_states'.format(moteid))
             states = {}
         return states
 
@@ -302,7 +299,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         :param enabled: 'true' if enabled; any other value considered false
         """
         log.info('Enable wireshark debug : {0}'.format(enabled))
-        self.app.eventBusMonitor.setWiresharkDebug(enabled == 'true')
+        self.app.ebm.setWiresharkDebug(enabled == 'true')
         return '{"result" : "success"}'
 
     def _set_gologic_debug(self, enabled):
@@ -326,7 +323,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         return {'roverMode': self._is_rover_mode()}
 
     def _show_motes_connectivity(self):
-        states, edges = self.app.getMotesConnectivity()
+        states, edges = self.app.get_motes_connectivity()
         return {'states': states, 'edges': edges}
 
     @view('routing.tmpl')
@@ -431,13 +428,13 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         """ Retrieve the topology data, in JSON format, and download it. """
         data = self._topology_data()
         now = datetime.datetime.now()
-        dag_root_list = []
+        dagroot_list = []
 
-        for ms in self.app.moteStates:
+        for ms in self.app.mote_states:
             if ms.getStateElem(moteState.moteState.ST_IDMANAGER).isDAGroot:
-                dag_root_list.append(ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()[1])
+                dagroot_list.append(ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()[1])
 
-        data['DAGrootList'] = dag_root_list
+        data['DAGrootList'] = dagroot_list
 
         response.headers['Content-disposition'] = 'attachement; filename=topology_data_' + now.strftime(
             "%d-%m-%y_%Hh%M") + '.json'
@@ -448,8 +445,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
 
     def _get_event_data(self):
         response = {
-            'isDebugPkts': 'true' if self.app.eventBusMonitor.wiresharkDebugEnabled else 'false',
-            'stats': self.app.eventBusMonitor.getStats(),
+            'isDebugPkts': 'true' if self.app.ebm.wiresharkDebugEnabled else 'false', 'stats': self.app.ebm.getStats()
         }
         return response
 
@@ -461,14 +457,14 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         Usage: state [state-name]
         """
         if not arg:
-            for ms in self.app.moteStates:
+            for ms in self.app.mote_states:
                 output = []
                 output += ['Available states:']
                 output += [' - {0}'.format(s) for s in ms.getStateElemNames()]
                 self.stdout.write('\n'.join(output))
             self.stdout.write('\n')
         else:
-            for ms in self.app.moteStates:
+            for ms in self.app.mote_states:
                 try:
                     self.stdout.write(str(ms.getStateElem(arg)))
                     self.stdout.write('\n')
@@ -487,14 +483,14 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         """
         if not arg:
             self.stdout.write('Available ports:')
-            if self.app.moteStates:
-                for ms in self.app.moteStates:
+            if self.app.mote_states:
+                for ms in self.app.mote_states:
                     self.stdout.write('  {0}'.format(ms.moteConnector.serialport))
             else:
                 self.stdout.write('  <none>')
             self.stdout.write('\n')
         else:
-            for ms in self.app.moteStates:
+            for ms in self.app.mote_states:
                 try:
                     if ms.moteConnector.serialport == arg:
                         ms.triggerAction(moteState.moteState.TRIGGER_DAGROOT)
@@ -506,8 +502,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         """ Sets mote with parameters. """
         if not arg:
             self.stdout.write('Available ports:')
-            if self.app.moteStates:
-                for ms in self.app.moteStates:
+            if self.app.mote_states:
+                for ms in self.app.mote_states:
                     self.stdout.write('  {0}'.format(ms.moteConnector.serialport))
             else:
                 self.stdout.write('  <none>')
@@ -515,7 +511,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         else:
             try:
                 [port, command, parameter] = arg.split(' ')
-                for ms in self.app.moteStates:
+                for ms in self.app.mote_states:
                     try:
                         if ms.moteConnector.serialport == port:
                             ms.triggerAction([moteState.moteState.SET_COMMAND, command, parameter])

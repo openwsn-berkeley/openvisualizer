@@ -12,7 +12,6 @@ import logging
 import os
 import re
 import signal
-import sys
 import threading
 import time
 from argparse import ArgumentParser
@@ -21,8 +20,15 @@ from cmd import Cmd
 import bottle
 import netifaces as ni
 from bottle import view, response
+from coap import coap
 
+import openVisualizerApp
 import pathHelper
+from openvisualizer import ovVersion
+from openvisualizer.BspEmulator import VcdLogger
+from openvisualizer.SimEngine import SimEngine
+from openvisualizer.eventBus.eventBusClient import eventBusClient
+from openvisualizer.motehandler.motestate.motestate import MoteState
 
 if __name__ == "__main__":
     # Update Python path if running in in-tree development mode
@@ -33,31 +39,11 @@ if __name__ == "__main__":
 
 log = logging.getLogger('openVisualizerWeb')
 
-try:
-    from openvisualizer.motehandler.motestate import motestate
-except ImportError:
-    # Debug failed lookup on first library import
-    print 'ImportError: cannot find openvisualizer.motestate module'
-    print 'sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path))
-
-# We want to import local module coap instead of the built-in one
-here = sys.path[0]
-openwsn_dir = os.path.dirname(os.path.dirname(here))
-coap_dir = os.path.join(openwsn_dir, 'coap')
-sys.path.insert(0, coap_dir)
-
-from coap import coap
-import openVisualizerApp
-from openvisualizer import ovVersion
-from openvisualizer.BspEmulator import VcdLogger
-from openvisualizer.SimEngine import SimEngine
-from openvisualizer.eventBus import eventBusClient
-
 # add default parameters to all bottle templates
 view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in ovVersion.VERSION])))
 
 
-class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
+class OpenVisualizerWeb(eventBusClient, Cmd):
     """
     Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web
     server.
@@ -75,8 +61,11 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         self.engine = SimEngine.SimEngine()
         self.web_srv = web_srv
 
-        # command support
+        # initialize parent classes
+        eventBusClient.__init__(self, name='OpenVisualizerWeb', registrations=[])
         Cmd.__init__(self)
+
+        # command support
         self.doc_header = 'Commands (type "help all" or "help <topic>"):'
         self.prompt = '> '
         self.intro = '\nOpenVisualizer  (type "help" for commands)'
@@ -91,9 +80,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         self._define_routes()
         # To find page templates
         bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.data_dir))
-
-        # initialize parent class
-        eventBusClient.eventBusClient.__init__(self, name='OpenVisualizerWeb', registrations=[])
 
         # Set DAGroots imported
         if app.dagroot_list:
@@ -431,8 +417,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         dagroot_list = []
 
         for ms in self.app.mote_states:
-            if ms.get_state_elem(motestate.MoteState.ST_IDMANAGER).isDAGroot:
-                dagroot_list.append(ms.get_state_elem(motestate.MoteState.ST_IDMANAGER).get_16b_addr()[1])
+            if ms.get_state_elem(MoteState.ST_IDMANAGER).isDAGroot:
+                dagroot_list.append(ms.get_state_elem(MoteState.ST_IDMANAGER).get_16b_addr()[1])
 
         data['DAGrootList'] = dagroot_list
 
@@ -493,7 +479,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
             for ms in self.app.mote_states:
                 try:
                     if ms.mote_connector.serialport == arg:
-                        ms.trigger_action(motestate.MoteState.TRIGGER_DAGROOT)
+                        ms.trigger_action(MoteState.TRIGGER_DAGROOT)
                 except ValueError as err:
                     self.stdout.write(str(err))
                     self.stdout.write('\n')
@@ -514,7 +500,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
                 for ms in self.app.mote_states:
                     try:
                         if ms.mote_connector.serialport == port:
-                            ms.trigger_action([motestate.MoteState.SET_COMMAND, command, parameter])
+                            ms.trigger_action([MoteState.SET_COMMAND, command, parameter])
                     except ValueError as err:
                         self.stdout.write(err)
                         self.stdout.write('\n')

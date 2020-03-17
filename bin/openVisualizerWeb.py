@@ -23,19 +23,11 @@ from bottle import view, response
 from coap import coap
 
 import openVisualizerApp
-import pathHelper
 from openvisualizer import ovVersion
 from openvisualizer.BspEmulator import VcdLogger
 from openvisualizer.SimEngine import SimEngine
 from openvisualizer.eventBus.eventBusClient import eventBusClient
 from openvisualizer.motehandler.motestate.motestate import MoteState
-
-if __name__ == "__main__":
-    # Update Python path if running in in-tree development mode
-    base_dir = os.path.dirname(__file__)
-    conf_file = os.path.join(base_dir, "openvisualizer.conf")
-    if os.path.exists(conf_file):
-        pathHelper.updatePath()
 
 log = logging.getLogger('openVisualizerWeb')
 
@@ -511,23 +503,23 @@ class OpenVisualizerWeb(eventBusClient, Cmd):
         """ Lists first line of help for all documented commands. """
         names = self.get_names()
         names.sort()
-        maxlen = 65
+        max_len = 65
         self.stdout.write(
-            'type "help <topic>" for topic details\n'.format(80 - maxlen - 3))
+            'type "help <topic>" for topic details\n'.format(80 - max_len - 3))
         for name in names:
             if name[:3] == 'do_':
                 try:
                     doc = getattr(self, name).__doc__
                     if doc:
                         # Handle multi-line doc comments and format for length.
-                        doclines = doc.splitlines()
-                        doc = doclines[0]
-                        if len(doc) == 0 and len(doclines) > 0:
-                            doc = doclines[1].strip()
-                        if len(doc) > maxlen:
-                            doc = doc[:maxlen] + '...'
+                        doc_lines = doc.splitlines()
+                        doc = doc_lines[0]
+                        if len(doc) == 0 and len(doc_lines) > 0:
+                            doc = doc_lines[1].strip()
+                        if len(doc) > max_len:
+                            doc = doc[:max_len] + '...'
                         self.stdout.write('{0} - {1}\n'.format(
-                            name[3:80 - maxlen], doc))
+                            name[3:80 - max_len], doc))
                 except AttributeError:
                     pass
 

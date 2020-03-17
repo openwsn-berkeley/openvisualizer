@@ -46,7 +46,7 @@ setup(
                         'openvisualizer.moteprobe', 'openvisualizer.motehandler.motestate',
                         'openvisualizer.openLbr', 'openvisualizer.openTun', 'openvisualizer.openUI',
                         'openvisualizer.RPL', 'openvisualizer.SimEngine', 
-                        'openvisualizer.JRC'],
+                        'openvisualizer.jrc'],
     package_dir      = {'': '.', 'openvisualizer': 'openvisualizer'},
     scripts          = appdirGlob('openVisualizer*.py'),
     # Copy simdata files by extension so don't copy .gitignore in that directory.

@@ -19,7 +19,7 @@ from argparse import ArgumentParser
 
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer import appdirs
-from openvisualizer.JRC import JRC
+from openvisualizer.jrc import jrc
 from openvisualizer.OVtracer import OVtracer
 from openvisualizer.RPL import RPL
 from openvisualizer.RPL import topology
@@ -62,7 +62,7 @@ class OpenVisualizerApp(object):
         self.ebm = eventBusMonitor.eventBusMonitor()
         self.open_lbr = openLbr.OpenLbr(use_page_zero)
         self.rpl = RPL.RPL()
-        self.jrc = JRC.JRC()
+        self.jrc = jrc.JRC()
         self.topology = topology.topology()
         self.dagroot_list = []
         # create openTun call last since indicates prefix

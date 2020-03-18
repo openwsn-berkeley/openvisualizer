@@ -1,7 +1,7 @@
 '''
 This is a functional test which verify the correct behavior of the OpenTun.
 The test involves 3 components:
-- the openTun element under test, which sits on the EvenBus
+- the opentun element under test, which sits on the EvenBus
 - the ReadThread, implemented in this test module, which listens for ICMPv6
   echo request packets, and answers with an echo reply packet.
 - the WriteThread, implemented in this test module, which periodically sends
@@ -264,7 +264,7 @@ def main():
     '''
     readThread.close()
     writeThread.close()
-    tunIf.close()
+    tun_if.close()
     '''
 
 if __name__ == '__main__':

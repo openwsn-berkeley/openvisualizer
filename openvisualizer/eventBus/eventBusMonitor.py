@@ -16,7 +16,7 @@ import binascii
 import openvisualizer.openvisualizer_utils as u
 
 from pydispatch import dispatcher
-from openvisualizer.openTun    import openTun
+from openvisualizer.opentun.opentun import OpenTun
 
 class eventBusMonitor(object):
     
@@ -239,8 +239,8 @@ class eventBusMonitor(object):
         
         # Common address for source and destination
         addr    = []
-        addr   += openTun.IPV6PREFIX
-        addr   += openTun.IPV6HOST
+        addr   += OpenTun.IPV6PREFIX
+        addr   += OpenTun.IPV6HOST
         
         # CRC See https://tools.ietf.org/html/rfc2460.
       

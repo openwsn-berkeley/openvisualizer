@@ -30,7 +30,7 @@ from openvisualizer.motehandler.moteconnector import moteconnector
 from openvisualizer.motehandler.moteprobe import moteprobe
 from openvisualizer.motehandler.motestate import motestate
 from openvisualizer.openLbr import openLbr
-from openvisualizer.openTun import openTun
+from openvisualizer.opentun.opentun import OpenTun
 from openvisualizer.remoteConnectorServer import remoteConnectorServer
 
 log = logging.getLogger('openVisualizerApp')
@@ -65,8 +65,8 @@ class OpenVisualizerApp(object):
         self.jrc = jrc.JRC()
         self.topology = topology.topology()
         self.dagroot_list = []
-        # create openTun call last since indicates prefix
-        self.opentun = openTun.create(opentun_null)
+        # create opentun call last since indicates prefix
+        self.opentun = OpenTun.create(opentun_null)
         if self.simulator_mode:
             self.simengine = SimEngine.SimEngine(sim_topology)
             self.simengine.start()

@@ -9,7 +9,7 @@ import threading
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.eventBus import eventBusClient
 from openvisualizer.openLbr.sixlowpan_frag import Fragmentor
-from openvisualizer.openTun import openTun
+from openvisualizer.opentun.opentun import OpenTun
 
 log = logging.getLogger('openLbr')
 log.setLevel(logging.ERROR)
@@ -567,8 +567,8 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         return_val += [self.PAGE_ONE_DISPATCH]
 
-        if lowpan['src_addr'][:8] != openTun.IPV6PREFIX:
-            compress_reference = openTun.IPV6PREFIX + openTun.IPV6HOST
+        if lowpan['src_addr'][:8] != OpenTun.IPV6PREFIX:
+            compress_reference = OpenTun.IPV6PREFIX + OpenTun.IPV6HOST
         else:
             compress_reference = lowpan['src_addr']
 
@@ -666,7 +666,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             return_val += [self.ELECTIVE_6LoRH | length, self.TYPE_6LoRH_IP_IN_IP]
             return_val += lowpan['hlim']
 
-            compress_reference = openTun.IPV6PREFIX + openTun.IPV6HOST
+            compress_reference = OpenTun.IPV6PREFIX + OpenTun.IPV6HOST
         else:
             compress_reference = lowpan['src_addr']
 
@@ -701,7 +701,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             sac = self.IPHC_SAC_STATELESS
             lowpan['src_addr'] = lowpan['src_addr'][8:]
         else:
-            if lowpan['src_addr'][:8] == openTun.IPV6PREFIX:
+            if lowpan['src_addr'][:8] == OpenTun.IPV6PREFIX:
                 sac = self.IPHC_SAC_STATEFUL
                 lowpan['src_addr'] = lowpan['src_addr'][8:]
             else:
@@ -723,7 +723,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             lowpan['dst_addr'] = lowpan['dst_addr'][8:]
         else:
 
-            if lowpan['dst_addr'][:8] == openTun.IPV6PREFIX:
+            if lowpan['dst_addr'][:8] == OpenTun.IPV6PREFIX:
                 dac = self.IPHC_DAC_STATEFUL
                 lowpan['dst_addr'] = lowpan['dst_addr'][8:]
             else:
@@ -803,7 +803,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     pkt_ipv6['hop_limit'] = pkt_lowpan[ptr + 2]
                     ptr += 3
                     if length == 1:
-                        pkt_ipv6['src_addr'] = openTun.IPV6PREFIX + openTun.IPV6HOST
+                        pkt_ipv6['src_addr'] = OpenTun.IPV6PREFIX + OpenTun.IPV6HOST
                     elif length == 9:
                         pkt_ipv6['src_addr'] = self.networkPrefix + pkt_lowpan[ptr:ptr + 8]
                         ptr += 8

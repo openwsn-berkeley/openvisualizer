@@ -20,15 +20,14 @@ import logging
 log = logging.getLogger('openVisualizerCli')
 
 try:
-    from openvisualizer.moteState import moteState
+    from openvisualizer.motehandler.motestate import motestate
 except ImportError:
     # Debug failed lookup on first library import
-    print 'ImportError: cannot find openvisualizer.moteState module'
+    print 'ImportError: cannot find openvisualizer.motestate module'
     print 'sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path))
 
 from   cmd         import Cmd
 import openVisualizerApp
-import openvisualizer.openvisualizer_utils as u
 
 
 class OpenVisualizerCli(Cmd):
@@ -59,13 +58,13 @@ class OpenVisualizerCli(Cmd):
             for ms in self.app.moteStates:
                 output  = []
                 output += ['Available states:']
-                output += [' - {0}'.format(s) for s in ms.getStateElemNames()]
+                output += [' - {0}'.format(s) for s in ms.get_state_elem_names()]
                 self.stdout.write('\n'.join(output))
             self.stdout.write('\n')
         else:
             for ms in self.app.moteStates:
                 try:
-                    self.stdout.write(str(ms.getStateElem(arg)))
+                    self.stdout.write(str(ms.get_state_elem(arg)))
                     self.stdout.write('\n')
                 except ValueError as err:
                     self.stdout.write(err)
@@ -91,7 +90,7 @@ class OpenVisualizerCli(Cmd):
             for ms in self.app.moteStates:
                 try:
                     if ms.moteConnector.serialport==arg:
-                        ms.triggerAction(moteState.moteState.TRIGGER_DAGROOT)
+                        ms.trigger_action(motestate.MoteState.TRIGGER_DAGROOT)
                 except ValueError as err:
                     self.stdout.write(err)
     
@@ -114,7 +113,7 @@ class OpenVisualizerCli(Cmd):
                 for ms in self.app.moteStates:
                     try:
                         if ms.moteConnector.serialport==port:
-                            ms.triggerAction([moteState.moteState.SET_COMMAND,command,parameter])
+                            ms.trigger_action([motestate.MoteState.SET_COMMAND, command, parameter])
                     except ValueError as err:
                         self.stdout.write(err)
             except ValueError as err:

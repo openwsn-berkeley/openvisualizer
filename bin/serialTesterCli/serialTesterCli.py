@@ -6,8 +6,8 @@ if __name__=='__main__':
     sys.path.insert(0, os.path.join(here, '..', '..'))                     # openvisualizer/
     sys.path.insert(0, os.path.join(here, '..', '..', '..', 'openCli'))    # openCli/
     
-from openvisualizer.moteProbe                    import moteProbe
-from openvisualizer.moteConnector.SerialTester   import SerialTester
+from openvisualizer.motehandler.moteprobe import moteprobe
+from openvisualizer.motehandler.moteconnector.SerialTester import SerialTester
 from OpenCli                                     import OpenCli
 
 class serialTesterCli(OpenCli):
@@ -127,18 +127,18 @@ def main():
         test_mode = raw_input('Serialport or OpenTestbed? (0: serialport, 1: opentestbed)')
         if test_mode == '0':
             serialportname = raw_input('Serial port to connect to (e.g. COM3, /dev/ttyUSB1): ')
-            serialport = (serialportname, moteProbe.BAUDRATE_LOCAL_BOARD)
-            # create a moteProbe from serial port
-            moteProbe_handler = moteProbe.moteProbe(mqtt_broker_address=mqtt_broker_address, serialport=serialport)
+            serialport = (serialportname, moteprobe.BAUDRATE_LOCAL_BOARD)
+            # create a MoteProbe from serial port
+            moteProbe_handler = moteprobe.MoteProbe(mqtt_broker_address=mqtt_broker_address, serial_port=serialport)
         elif test_mode == '1':
             testbedmote = raw_input('testbed mote to connect to (e.g. 00-12-4b-00-14-b5-b6-0b): ')
-            # create a moteProbe from opentestbed
-            moteProbe_handler = moteProbe.moteProbe(mqtt_broker_address=mqtt_broker_address,testbedmote_eui64=testbedmote)
+            # create a MoteProbe from opentestbed
+            moteProbe_handler = moteprobe.MoteProbe(mqtt_broker_address=mqtt_broker_address, testbedmote_eui64=testbedmote)
         else:
             raw_input("wrong input! Press Enter to quit..")
             return
         
-    # create a SerialTester to attached to the moteProbe
+    # create a SerialTester to attached to the MoteProbe
     moteConnector_handler = SerialTester(moteProbe_handler)
     
     # create an open CLI
@@ -146,7 +146,6 @@ def main():
     cli.start()
 
 #============================ application logging =============================
-import logging
 import logging.handlers
 logHandler = logging.handlers.RotatingFileHandler(
     'serialTesterCli.log',
@@ -157,7 +156,7 @@ logHandler = logging.handlers.RotatingFileHandler(
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
 for loggerName in [
         'SerialTester',
-        'moteProbe',
+        'moteprobe',
         'OpenHdlc',
     ]:
     temp = logging.getLogger(loggerName)

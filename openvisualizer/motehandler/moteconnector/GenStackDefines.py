@@ -27,8 +27,8 @@ import time
 
 # ============================ defines =========================================
 
-INPUT_FILE = os.path.join('..', '..', '..', 'openwsn-fw', 'inc', 'opendefs.h')
-INPUT_FILE_SIXTOP = os.path.join('..', '..', '..', 'openwsn-fw', 'openstack', '02b-MAChigh', 'sixtop.h')
+INPUT_FILE = os.path.join('../..', '..', '..', 'openwsn-fw', 'inc', 'opendefs.h')
+INPUT_FILE_SIXTOP = os.path.join('../..', '..', '..', 'openwsn-fw', 'openstack', '02b-MAChigh', 'sixtop.h')
 OUTPUT_FILE = 'StackDefines.py'
 
 

@@ -4,7 +4,7 @@ import os
 import sys
 here = sys.path[0]
 sys.path.insert(0, os.path.join(here, '..', '..', '..'))               # root/
-sys.path.insert(0, os.path.join(here, '..'))                           # moteProbe/
+sys.path.insert(0, os.path.join(here, '..'))                           # moteprobe/
 
 import random
 import json

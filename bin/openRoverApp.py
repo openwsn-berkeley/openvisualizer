@@ -14,7 +14,7 @@ if __name__=="__main__":
         pathHelper.updatePath()
 
 
-from openvisualizer.moteProbe     import moteProbe
+from openvisualizer.motehandler.moteprobe import moteprobe
 from openvisualizer.remoteConnectorRover import remoteConnectorRover
 
 
@@ -56,7 +56,7 @@ class OpenRoverApp(object):
             probe.close()
         # in "hardware" mode, motes are connected to the serial port
         self.moteProbes = [
-            moteProbe.moteProbe(serialport=p) for p in moteProbe.findSerialPorts(True)
+            moteprobe.MoteProbe(serial_port=p) for p in moteprobe.find_serial_ports(True)
         ]
 
         if self.remoteConnector :

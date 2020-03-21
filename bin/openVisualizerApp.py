@@ -26,9 +26,9 @@ from openvisualizer.RPL import topology
 from openvisualizer.SimEngine import SimEngine, MoteHandler
 from openvisualizer.eventBus import eventBusMonitor
 from openvisualizer.eventLogger import eventLogger
-from openvisualizer.moteConnector import moteConnector
-from openvisualizer.moteProbe import moteProbe
-from openvisualizer.moteState import moteState
+from openvisualizer.motehandler.moteconnector import moteconnector
+from openvisualizer.motehandler.moteprobe import moteprobe
+from openvisualizer.motehandler.motestate import motestate
 from openvisualizer.openLbr import openLbr
 from openvisualizer.openTun import openTun
 from openvisualizer.remoteConnectorServer import remoteConnectorServer
@@ -83,7 +83,7 @@ class OpenVisualizerApp(object):
                 self.close()
                 os.kill(os.getpid(), signal.SIGTERM)
 
-        # create a moteProbe for each mote
+        # create a moteprobe for each mote
         if self.simulator_mode:
             # in "simulator" mode, motes are emulated
             sys.path.append(os.path.join(self.data_dir, 'sim_files'))
@@ -94,17 +94,17 @@ class OpenVisualizerApp(object):
             for _ in range(self.num_motes):
                 mote_handler = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
                 self.simengine.indicateNewMote(mote_handler)
-                self.moteProbes += [moteProbe.moteProbe(mqtt_broker_address, emulatedMote=mote_handler)]
+                self.moteProbes += [moteprobe.MoteProbe(mqtt_broker_address, emulated_mote=mote_handler)]
         elif self.iotlab_motes:
             # in "IoT-LAB" mode, motes are connected to TCP ports
 
             self.moteProbes = [
-                moteProbe.moteProbe(mqtt_broker_address, iotlabmote=p) for p in self.iotlab_motes.split(',')
+                moteprobe.MoteProbe(mqtt_broker_address, iotlab_mote=p) for p in self.iotlab_motes.split(',')
             ]
         elif self.testbed_motes:
-            motes_finder = moteProbe.OpentestbedMoteFinder(mqtt_broker_address)
+            motes_finder = moteprobe.OpentestbedMoteFinder(mqtt_broker_address)
             self.moteProbes = [
-                moteProbe.moteProbe(mqtt_broker_address, testbedmote_eui64=p)
+                moteprobe.MoteProbe(mqtt_broker_address, testbedmote_eui64=p)
                 for p in motes_finder.get_opentestbed_motelist()
             ]
 
@@ -112,14 +112,14 @@ class OpenVisualizerApp(object):
             # in "hardware" mode, motes are connected to the serial port
 
             self.moteProbes = [
-                moteProbe.moteProbe(mqtt_broker_address, serialport=p) for p in moteProbe.findSerialPorts()
+                moteprobe.MoteProbe(mqtt_broker_address, serial_port=p) for p in moteprobe.find_serial_ports()
             ]
 
-        # create a moteConnector for each moteProbe
-        self.mote_connectors = [moteConnector.moteConnector(mp) for mp in self.moteProbes]
+        # create a MoteConnector for each MoteProbe
+        self.mote_connectors = [moteconnector.MoteConnector(mp) for mp in self.moteProbes]
 
-        # create a moteState for each moteConnector
-        self.mote_states = [moteState.moteState(mc) for mc in self.mote_connectors]
+        # create a MoteState for each MoteConnector
+        self.mote_states = [motestate.MoteState(mc) for mc in self.mote_connectors]
         self.eventLoggers = [eventLogger.eventLogger(ms) for ms in self.mote_states]
 
         if self.testbed_motes:
@@ -201,15 +201,15 @@ class OpenVisualizerApp(object):
 
     def get_mote_state(self, moteid):
         """
-        Returns the moteState object for the provided connected mote.
+        Returns the MoteState object for the provided connected mote.
         :param moteid: 16-bit ID of mote
-        :rtype:        moteState or None if not found
+        :rtype: MoteState or None if not found
         """
 
         for ms in self.mote_states:
-            id_manager = ms.getStateElem(ms.ST_IDMANAGER)
-            if id_manager and id_manager.get16bAddr():
-                addr = ''.join(['%02x' % b for b in id_manager.get16bAddr()])
+            id_manager = ms.get_state_elem(ms.ST_IDMANAGER)
+            if id_manager and id_manager.get_16b_addr():
+                addr = ''.join(['%02x' % b for b in id_manager.get_16b_addr()])
                 if addr == moteid:
                     return ms
         else:
@@ -222,11 +222,11 @@ class OpenVisualizerApp(object):
         src_s = None
 
         for ms in self.mote_states:
-            id_manager = ms.getStateElem(ms.ST_IDMANAGER)
-            if id_manager and id_manager.get16bAddr():
-                src_s = ''.join(['%02X' % b for b in id_manager.get16bAddr()])
+            id_manager = ms.get_state_elem(ms.ST_IDMANAGER)
+            if id_manager and id_manager.get_16b_addr():
+                src_s = ''.join(['%02X' % b for b in id_manager.get_16b_addr()])
                 motes.append(src_s)
-            neighbor_table = ms.getStateElem(ms.ST_NEIGHBORS)
+            neighbor_table = ms.get_state_elem(ms.ST_NEIGHBORS)
             for neighbor in neighbor_table.data:
                 if len(neighbor.data) == 0:
                     break
@@ -247,7 +247,7 @@ class OpenVisualizerApp(object):
         :param rover_motes list of the roverMotes to add
         """
 
-        # create a moteConnector for each roverMote
+        # create a MoteConnector for each roverMote
         for rover_ip, value in rover_motes.items():
             if not isinstance(value, str):
                 for rm in rover_motes[rover_ip]:
@@ -257,14 +257,14 @@ class OpenVisualizerApp(object):
                             exist = True
                             break
                     if not exist:
-                        moc = moteConnector.moteConnector(rm)
+                        moc = moteconnector.MoteConnector(rm)
                         self.mote_connectors += [moc]
-                        self.mote_states += [moteState.moteState(moc)]
+                        self.mote_states += [motestate.MoteState(moc)]
         self.remote_connector_server.initRoverConn(rover_motes)
 
     def remove_rover_motes(self, roverIP, moteList):
         """
-        Remove moteconnect and motestates from list (NOT implemented: quit()). Stop ZMQ connection
+        Remove MoteConnectors and MoteStates from list (NOT implemented: quit()). Stop ZMQ connection
         :param roverIP
         """
 
@@ -275,8 +275,8 @@ class OpenVisualizerApp(object):
                 self.mote_states.remove(ms)
             else:
                 for mss in self.mote_states:
-                    if moteid == mss.moteConnector.serialport:
-                        self.mote_connectors.remove(mss.moteConnector)
+                    if moteid == mss.mote_connector.serialport:
+                        self.mote_connectors.remove(mss.mote_connector)
                         self.mote_states.remove(mss)
         self.remote_connector_server.closeRoverConn(roverIP)
 
@@ -284,11 +284,11 @@ class OpenVisualizerApp(object):
         """ Returns a dictionary with key-value entry: (moteid: serialport) """
         mote_dict = {}
         for ms in self.mote_states:
-            addr = ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()
+            addr = ms.get_state_elem(motestate.MoteState.ST_IDMANAGER).get_16b_addr()
             if addr:
-                mote_dict[''.join(['%02x' % b for b in addr])] = ms.moteConnector.serialport
+                mote_dict[''.join(['%02x' % b for b in addr])] = ms.mote_connector.serialport
             else:
-                mote_dict[ms.moteConnector.serialport] = None
+                mote_dict[ms.mote_connector.serialport] = None
         return mote_dict
 
 

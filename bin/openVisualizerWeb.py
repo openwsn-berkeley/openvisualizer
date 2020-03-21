@@ -34,10 +34,10 @@ if __name__ == "__main__":
 log = logging.getLogger('openVisualizerWeb')
 
 try:
-    from openvisualizer.moteState import moteState
+    from openvisualizer.motehandler.motestate import motestate
 except ImportError:
     # Debug failed lookup on first library import
-    print 'ImportError: cannot find openvisualizer.moteState module'
+    print 'ImportError: cannot find openvisualizer.motestate module'
     print 'sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path))
 
 # We want to import local module coap instead of the built-in one
@@ -245,7 +245,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
 
     def _toggle_dagroot(self, moteid):
         """
-        Triggers toggle DAGroot state, via moteState. No real response. Page is updated when next retrieve mote data.
+        Triggers toggle DAGroot state, via MoteState. No real response. Page is updated when next retrieve mote data.
         :param moteid: 16-bit ID of mote
         """
 
@@ -254,7 +254,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         if ms:
             if log.isEnabledFor(logging.DEBUG):
                 log.debug('Found mote {0} in mote_states'.format(moteid))
-            ms.triggerAction(ms.TRIGGER_DAGROOT)
+            ms.trigger_action(ms.TRIGGER_DAGROOT)
             return '{"result" : "success"}'
         else:
             if log.isEnabledFor(logging.DEBUG):
@@ -274,18 +274,18 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
             if log.isEnabledFor(logging.DEBUG):
                 log.debug('Found mote {0} in mote_states'.format(moteid))
             states = {
-                ms.ST_IDMANAGER: ms.getStateElem(ms.ST_IDMANAGER).toJson('data'),
-                ms.ST_ASN: ms.getStateElem(ms.ST_ASN).toJson('data'),
-                ms.ST_ISSYNC: ms.getStateElem(ms.ST_ISSYNC).toJson('data'),
-                ms.ST_MYDAGRANK: ms.getStateElem(ms.ST_MYDAGRANK).toJson('data'),
-                ms.ST_KAPERIOD: ms.getStateElem(ms.ST_KAPERIOD).toJson('data'),
-                ms.ST_OUPUTBUFFER: ms.getStateElem(ms.ST_OUPUTBUFFER).toJson('data'),
-                ms.ST_BACKOFF: ms.getStateElem(ms.ST_BACKOFF).toJson('data'),
-                ms.ST_MACSTATS: ms.getStateElem(ms.ST_MACSTATS).toJson('data'),
-                ms.ST_SCHEDULE: ms.getStateElem(ms.ST_SCHEDULE).toJson('data'),
-                ms.ST_QUEUE: ms.getStateElem(ms.ST_QUEUE).toJson('data'),
-                ms.ST_NEIGHBORS: ms.getStateElem(ms.ST_NEIGHBORS).toJson('data'),
-                ms.ST_JOINED: ms.getStateElem(ms.ST_JOINED).toJson('data'),
+                ms.ST_IDMANAGER: ms.get_state_elem(ms.ST_IDMANAGER).to_json('data'),
+                ms.ST_ASN: ms.get_state_elem(ms.ST_ASN).to_json('data'),
+                ms.ST_ISSYNC: ms.get_state_elem(ms.ST_ISSYNC).to_json('data'),
+                ms.ST_MYDAGRANK: ms.get_state_elem(ms.ST_MYDAGRANK).to_json('data'),
+                ms.ST_KAPERIOD: ms.get_state_elem(ms.ST_KAPERIOD).to_json('data'),
+                ms.ST_OUPUTBUFFER: ms.get_state_elem(ms.ST_OUPUTBUFFER).to_json('data'),
+                ms.ST_BACKOFF: ms.get_state_elem(ms.ST_BACKOFF).to_json('data'),
+                ms.ST_MACSTATS: ms.get_state_elem(ms.ST_MACSTATS).to_json('data'),
+                ms.ST_SCHEDULE: ms.get_state_elem(ms.ST_SCHEDULE).to_json('data'),
+                ms.ST_QUEUE: ms.get_state_elem(ms.ST_QUEUE).to_json('data'),
+                ms.ST_NEIGHBORS: ms.get_state_elem(ms.ST_NEIGHBORS).to_json('data'),
+                ms.ST_JOINED: ms.get_state_elem(ms.ST_JOINED).to_json('data'),
             }
         else:
             if log.isEnabledFor(logging.DEBUG):
@@ -431,8 +431,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         dagroot_list = []
 
         for ms in self.app.mote_states:
-            if ms.getStateElem(moteState.moteState.ST_IDMANAGER).isDAGroot:
-                dagroot_list.append(ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()[1])
+            if ms.get_state_elem(motestate.MoteState.ST_IDMANAGER).isDAGroot:
+                dagroot_list.append(ms.get_state_elem(motestate.MoteState.ST_IDMANAGER).get_16b_addr()[1])
 
         data['DAGrootList'] = dagroot_list
 
@@ -460,13 +460,13 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
             for ms in self.app.mote_states:
                 output = []
                 output += ['Available states:']
-                output += [' - {0}'.format(s) for s in ms.getStateElemNames()]
+                output += [' - {0}'.format(s) for s in ms.get_state_elem_names()]
                 self.stdout.write('\n'.join(output))
             self.stdout.write('\n')
         else:
             for ms in self.app.mote_states:
                 try:
-                    self.stdout.write(str(ms.getStateElem(arg)))
+                    self.stdout.write(str(ms.get_state_elem(arg)))
                     self.stdout.write('\n')
                 except ValueError as err:
                     self.stdout.write(str(err))
@@ -485,15 +485,15 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
             self.stdout.write('Available ports:')
             if self.app.mote_states:
                 for ms in self.app.mote_states:
-                    self.stdout.write('  {0}'.format(ms.moteConnector.serialport))
+                    self.stdout.write('  {0}'.format(ms.mote_connector.serialport))
             else:
                 self.stdout.write('  <none>')
             self.stdout.write('\n')
         else:
             for ms in self.app.mote_states:
                 try:
-                    if ms.moteConnector.serialport == arg:
-                        ms.triggerAction(moteState.moteState.TRIGGER_DAGROOT)
+                    if ms.mote_connector.serialport == arg:
+                        ms.trigger_action(motestate.MoteState.TRIGGER_DAGROOT)
                 except ValueError as err:
                     self.stdout.write(str(err))
                     self.stdout.write('\n')
@@ -504,7 +504,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
             self.stdout.write('Available ports:')
             if self.app.mote_states:
                 for ms in self.app.mote_states:
-                    self.stdout.write('  {0}'.format(ms.moteConnector.serialport))
+                    self.stdout.write('  {0}'.format(ms.mote_connector.serialport))
             else:
                 self.stdout.write('  <none>')
             self.stdout.write('\n')
@@ -513,8 +513,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
                 [port, command, parameter] = arg.split(' ')
                 for ms in self.app.mote_states:
                     try:
-                        if ms.moteConnector.serialport == port:
-                            ms.triggerAction([moteState.moteState.SET_COMMAND, command, parameter])
+                        if ms.mote_connector.serialport == port:
+                            ms.trigger_action([motestate.MoteState.SET_COMMAND, command, parameter])
                     except ValueError as err:
                         self.stdout.write(err)
                         self.stdout.write('\n')

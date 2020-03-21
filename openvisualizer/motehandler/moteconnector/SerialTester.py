@@ -9,14 +9,10 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 import threading
-import socket
 import random
-import traceback
-import sys
-import openvisualizer.openvisualizer_utils as u
 
 from openvisualizer.eventBus      import eventBusClient
-from openvisualizer.moteConnector import OpenParser
+from openvisualizer.motehandler.moteconnector import OpenParser
 
 class SerialTester(eventBusClient.eventBusClient):
     
@@ -31,7 +27,7 @@ class SerialTester(eventBusClient.eventBusClient):
         
         # store params
         self.moteProbe            = moteProbe
-        self.moteProbeSerialPort  = self.moteProbe.getPortName()
+        self.moteProbeSerialPort  = self.moteProbe.portname
         
         # local variables
         self.dataLock             = threading.RLock()
@@ -49,7 +45,7 @@ class SerialTester(eventBusClient.eventBusClient):
         self.name = 'SerialTester@{0}'.format(self)
         
         # initialize parent 
-        self.moteProbe.sendToParser     = self._receiveDataFromMoteSerial
+        self.moteProbe.send_to_parser = self._receiveDataFromMoteSerial
         
     def quit(self):
         self.goOn = False

@@ -1,5 +1,5 @@
 # DO NOT EDIT DIRECTLY!
-# This file was generated automatically by GenStackDefines.py
+# This file was generated automatically by generate_defines.py
 # on Thu, 06 Feb 2020 18:00:03
 #
 

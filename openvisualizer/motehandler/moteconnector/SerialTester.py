@@ -12,7 +12,8 @@ import threading
 import random
 
 from openvisualizer.eventBus      import eventBusClient
-from openvisualizer.motehandler.moteconnector import OpenParser
+from openvisualizer.motehandler.moteconnector.openparser import openparser
+
 
 class SerialTester(eventBusClient.eventBusClient):
     
@@ -55,7 +56,7 @@ class SerialTester(eventBusClient.eventBusClient):
     def _receiveDataFromMoteSerial(self,data):
         
         # handle data
-        if chr(data[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA):
+        if chr(data[0])==chr(openparser.OpenParser.SERFRAME_MOTE2PC_DATA):
             # don't handle if I'm not testing
             with self.dataLock:
                 if not self.busyTesting:
@@ -134,7 +135,7 @@ class SerialTester(eventBusClient.eventBusClient):
             self.dispatch(
                 signal        = 'fromMoteConnector@'+self.moteProbeSerialPort,
                 data          = ''.join(
-                    [chr(OpenParser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)]+[chr(b) for b in packetToSend]
+                    [chr(openparser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)] + [chr(b) for b in packetToSend]
                 )
             )
             

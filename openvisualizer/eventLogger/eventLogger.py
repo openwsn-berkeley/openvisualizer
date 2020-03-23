@@ -48,10 +48,10 @@ class eventLogger(threading.Thread):
                     # json_output = json.dumps(self.output)
 
             with open(self.errorfile, 'a') as f:
-                f.write(str(self.motestate.mote_connector.parser.parserError.errorinfo)+'\n')
+                f.write(str(self.motestate.mote_connector.parser.parser_error.error_info)+'\n')
 
             with open(self.infofile, 'a') as f:
-                f.write(str(self.motestate.mote_connector.parser.parserInfo.errorinfo)+'\n')
+                f.write(str(self.motestate.mote_connector.parser.parser_info.error_info)+'\n')
                 
             time.sleep(2)
         '''

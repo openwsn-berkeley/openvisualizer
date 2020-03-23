@@ -5,11 +5,11 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
 """
-Standalone script to generate the StackDefines.py file.
+Standalone script to generate the defines.py file.
 
 This script extracts all the information it needs from the openwsn.h
 header file (part of the openwsn-fw repository), and generate the
-StackDefines.py file (part of the openwsn-sw repository).
+defines.py file (part of the openwsn-sw repository).
 
 To run it, just double-click on this file.
 
@@ -27,9 +27,9 @@ import time
 
 # ============================ defines =========================================
 
-INPUT_FILE = os.path.join('../..', '..', '..', 'openwsn-fw', 'inc', 'opendefs.h')
-INPUT_FILE_SIXTOP = os.path.join('../..', '..', '..', 'openwsn-fw', 'openstack', '02b-MAChigh', 'sixtop.h')
-OUTPUT_FILE = 'StackDefines.py'
+INPUT_FILE = os.path.join('../../..', '..', '..', 'openwsn-fw', 'inc', 'opendefs.h')
+INPUT_FILE_SIXTOP = os.path.join('../../..', '..', '..', 'openwsn-fw', 'openstack', '02b-MAChigh', 'sixtop.h')
+OUTPUT_FILE = 'defines.py'
 
 
 # ============================ helpers =========================================
@@ -135,7 +135,7 @@ def main():
         # gather the information
         output = []
         output += ["# DO NOT EDIT DIRECTLY!"]
-        output += ["# This file was generated automatically by GenStackDefines.py"]
+        output += ["# This file was generated automatically by generate_defines.py"]
         output += ["# on {0}".format(time.strftime("%a, %d %b %Y %H:%M:%S"))]
         output += ["#"]
         output += [""]

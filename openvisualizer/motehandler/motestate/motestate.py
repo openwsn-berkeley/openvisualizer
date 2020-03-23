@@ -15,7 +15,7 @@ import threading
 from elements import StateOutputBuffer, StateAsn, StateJoined, StateMacStats, StateTable, StateScheduleRow, \
     StateBackoff, StateQueue, StateNeighborsRow, StateIsSync, StateIdManager, StateMyDagRank, StateKaPeriod
 from openvisualizer.eventBus.eventBusClient import eventBusClient
-from openvisualizer.motehandler.moteconnector import ParserStatus
+from openvisualizer.motehandler.moteconnector.openparser import parserstatus
 
 log = logging.getLogger('MoteState')
 log.setLevel(logging.ERROR)
@@ -113,7 +113,7 @@ class MoteState(eventBusClient):
         self.mote_connector = mote_connector
 
         # local variables
-        self.parser_status = ParserStatus.ParserStatus()
+        self.parser_status = parserstatus.ParserStatus()
         self.state_lock = threading.Lock()
         self.state = {}
 

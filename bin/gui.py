@@ -26,7 +26,7 @@ except ImportError:
     print 'ImportError: cannot find openvisualizer.motestate module'
     print 'sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path))
 
-import openVisualizerApp
+import openvisualizer_app
 from openvisualizer.openUI import OpenWindow
 from openvisualizer.openUI import OpenFrameState
 from openvisualizer.openUI import OpenFrameButton
@@ -187,6 +187,6 @@ class OpenVisualizerGui(object):
 #============================ main ============================================
 
 if __name__=="__main__":
-    app = openVisualizerApp.main()
+    app = openvisualizer_app.main()
     gui = OpenVisualizerGui(app)
     gui.start()

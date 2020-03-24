@@ -82,10 +82,10 @@ class OpenTun(eventBusClient):
         return decorator
 
     @classmethod
-    def create(cls, opentun_null=False):
+    def create(cls, opentun=False):
         """ Module-based Factory method to create instance based on operating system. """
 
-        if opentun_null:
+        if not opentun:
             return cls.os_support['null']()
 
         elif sys.platform.startswith('win32'):

@@ -45,7 +45,7 @@ setup(
                         'openvisualizer.lbrClient', 'openvisualizer.motehandler.moteconnector',
                         'openvisualizer.moteprobe', 'openvisualizer.motehandler.motestate',
                         'openvisualizer.openLbr', 'openvisualizer.opentun', 'openvisualizer.openUI',
-                        'openvisualizer.RPL', 'openvisualizer.SimEngine', 
+                        'openvisualizer.rpl', 'openvisualizer.SimEngine',
                         'openvisualizer.jrc'],
     package_dir      = {'': '.', 'openvisualizer': 'openvisualizer'},
     scripts          = appdirGlob('openVisualizer*.py'),

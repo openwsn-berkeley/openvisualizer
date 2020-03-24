@@ -4,7 +4,7 @@ import os
 import sys
 here = sys.path[0]
 sys.path.insert(0, os.path.join(here, '..', '..', '..'))                       # root/
-sys.path.insert(0, os.path.join(here, '..'))                                   # RPL/
+sys.path.insert(0, os.path.join(here, '..'))                                   # rpl/
 sys.path.insert(0, os.path.join(here, '..', '..','eventBus','PyDispatcher-2.0.3'))   # PyDispatcher-2.0.3/
 
 import logging

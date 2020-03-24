@@ -30,7 +30,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     * *http://tools.ietf.org/html/rfc2460*
       Internet Protocol, Version 6 (IPv6) Specification
     * *http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03
-       The IPv6 Flow Label within a RPL domain
+       The IPv6 Flow Label within a rpl domain
     """
     # implementing http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03
 
@@ -125,7 +125,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
     MASK_LENGTH_6LoRH_IPINIP = 0x1F
 
-    # === RPL source routing header (RFC6554)
+    # === rpl source routing header (RFC6554)
     SR_FIR_TYPE = 0x03
 
     # === UDP Header compression (RFC6282)
@@ -427,7 +427,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
             # keep payload and app_payload in case we want to assemble the message later.
             # as source address is being retrieved from the IPHC header, the signal includes it in case
-            # receiver such as RPL DAO processing needs to know the source.
+            # receiver such as rpl DAO processing needs to know the source.
 
             success = self._dispatchProtocol(dispatch_signal, (ipv6dic['src_addr'], ipv6dic['app_payload']))
 
@@ -984,7 +984,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     pass
                 pkt_ipv6['hop_hdr_len'] = pkt_lowpan[ptr]
                 ptr = ptr + 1
-                # start of RPL Option
+                # start of rpl Option
                 pkt_ipv6['hop_optionType'] = pkt_lowpan[ptr]
                 ptr = ptr + 1
                 pkt_ipv6['hop_optionLen'] = pkt_lowpan[ptr]
@@ -995,7 +995,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ptr = ptr + 1
                 pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr + 1]) << 0)
                 ptr = ptr + 2
-                # end RPL option
+                # end rpl option
                 if (pkt_ipv6['hop_nhc'] & 0x01) == 1:
                     if ((pkt_lowpan[ptr] >> 1) & 0x07) == self.NHC_EID_IPV6:
                         pkt_ipv6['hop_next_header'] = self.IPV6_HEADER

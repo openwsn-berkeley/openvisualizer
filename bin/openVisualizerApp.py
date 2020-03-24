@@ -21,8 +21,8 @@ import openvisualizer.openvisualizer_utils as u
 from openvisualizer import appdirs
 from openvisualizer.jrc import jrc
 from openvisualizer.OVtracer import OVtracer
-from openvisualizer.RPL import RPL
-from openvisualizer.RPL import topology
+from openvisualizer.rpl import rpl
+from openvisualizer.rpl import topology
 from openvisualizer.SimEngine import SimEngine, MoteHandler
 from openvisualizer.eventBus import eventBusMonitor
 from openvisualizer.eventLogger import eventLogger
@@ -61,7 +61,7 @@ class OpenVisualizerApp(object):
         # local variables
         self.ebm = eventBusMonitor.eventBusMonitor()
         self.open_lbr = openLbr.OpenLbr(use_page_zero)
-        self.rpl = RPL.RPL()
+        self.rpl = rpl.RPL()
         self.jrc = jrc.JRC()
         self.topology = topology.topology()
         self.dagroot_list = []

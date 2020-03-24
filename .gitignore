@@ -1,0 +1,8 @@
+*.pyc
+*.idea
+venv/
+build/
+.sconsign.dblite
+bin/debugpins.vcd
+
+debugpins.vcd

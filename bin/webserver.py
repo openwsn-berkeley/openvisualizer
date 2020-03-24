@@ -9,20 +9,15 @@ import datetime
 import functools
 import json
 import logging
-import os
 import re
-import signal
 import threading
 import time
-from argparse import ArgumentParser
-from cmd import Cmd
 
 import bottle
 import netifaces as ni
 from bottle import view, response
 from coap import coap
 
-import openVisualizerApp
 from openvisualizer import ovVersion
 from openvisualizer.BspEmulator import VcdLogger
 from openvisualizer.SimEngine import SimEngine
@@ -35,7 +30,7 @@ log = logging.getLogger('openVisualizerWeb')
 view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in ovVersion.VERSION])))
 
 
-class OpenVisualizerWeb(eventBusClient, Cmd):
+class WebServer(eventBusClient, Cmd):
     """
     Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web
     server.
@@ -54,8 +49,7 @@ class OpenVisualizerWeb(eventBusClient, Cmd):
         self.web_srv = web_srv
 
         # initialize parent classes
-        eventBusClient.__init__(self, name='OpenVisualizerWeb', registrations=[])
-        Cmd.__init__(self)
+        super(WebServer, self).__init__(name='OpenVisualizerWeb', registrations=[])
 
         # command support
         self.doc_header = 'Commands (type "help all" or "help <topic>"):'
@@ -426,175 +420,3 @@ class OpenVisualizerWeb(eventBusClient, Cmd):
             'isDebugPkts': 'true' if self.app.ebm.wiresharkDebugEnabled else 'false', 'stats': self.app.ebm.getStats()
         }
         return response
-
-    # ===== callbacks
-
-    def do_state(self, arg):
-        """
-        Prints provided state, or lists states.
-        Usage: state [state-name]
-        """
-        if not arg:
-            for ms in self.app.mote_states:
-                output = []
-                output += ['Available states:']
-                output += [' - {0}'.format(s) for s in ms.get_state_elem_names()]
-                self.stdout.write('\n'.join(output))
-            self.stdout.write('\n')
-        else:
-            for ms in self.app.mote_states:
-                try:
-                    self.stdout.write(str(ms.get_state_elem(arg)))
-                    self.stdout.write('\n')
-                except ValueError as err:
-                    self.stdout.write(str(err))
-                    self.stdout.write('\n')
-
-    def do_list(self, arg):
-        """ List available states. (Obsolete; use 'state' without parameters.) """
-        self.do_state('')
-
-    def do_root(self, arg):
-        """
-        Sets dagroot to the provided mote, or lists motes
-        Usage: root [serial-port]
-        """
-        if not arg:
-            self.stdout.write('Available ports:')
-            if self.app.mote_states:
-                for ms in self.app.mote_states:
-                    self.stdout.write('  {0}'.format(ms.mote_connector.serialport))
-            else:
-                self.stdout.write('  <none>')
-            self.stdout.write('\n')
-        else:
-            for ms in self.app.mote_states:
-                try:
-                    if ms.mote_connector.serialport == arg:
-                        ms.trigger_action(MoteState.TRIGGER_DAGROOT)
-                except ValueError as err:
-                    self.stdout.write(str(err))
-                    self.stdout.write('\n')
-
-    def do_set(self, arg):
-        """ Sets mote with parameters. """
-        if not arg:
-            self.stdout.write('Available ports:')
-            if self.app.mote_states:
-                for ms in self.app.mote_states:
-                    self.stdout.write('  {0}'.format(ms.mote_connector.serialport))
-            else:
-                self.stdout.write('  <none>')
-            self.stdout.write('\n')
-        else:
-            try:
-                [port, command, parameter] = arg.split(' ')
-                for ms in self.app.mote_states:
-                    try:
-                        if ms.mote_connector.serialport == port:
-                            ms.trigger_action([MoteState.SET_COMMAND, command, parameter])
-                    except ValueError as err:
-                        self.stdout.write(err)
-                        self.stdout.write('\n')
-            except ValueError as err:
-                print "{0}:{1}".format(type(err), err)
-
-    def help_all(self):
-        """ Lists first line of help for all documented commands. """
-        names = self.get_names()
-        names.sort()
-        max_len = 65
-        self.stdout.write(
-            'type "help <topic>" for topic details\n'.format(80 - max_len - 3))
-        for name in names:
-            if name[:3] == 'do_':
-                try:
-                    doc = getattr(self, name).__doc__
-                    if doc:
-                        # Handle multi-line doc comments and format for length.
-                        doc_lines = doc.splitlines()
-                        doc = doc_lines[0]
-                        if len(doc) == 0 and len(doc_lines) > 0:
-                            doc = doc_lines[1].strip()
-                        if len(doc) > max_len:
-                            doc = doc[:max_len] + '...'
-                        self.stdout.write('{0} - {1}\n'.format(
-                            name[3:80 - max_len], doc))
-                except AttributeError:
-                    pass
-
-    def do_quit(self, arg):
-        self.app.close()
-        os.kill(os.getpid(), signal.SIGTERM)
-        return True
-
-    def emptyline(self):
-        return
-
-    def cmdloop(self, intro=None):
-        try:
-            super(OpenVisualizerWeb, self).cmdloop(intro=intro)
-        except KeyboardInterrupt:
-            print("\nYou pressed Ctrl-C. Killing OpenVisualizer..\n")
-            self.app.close()
-            os.kill(os.getpid(), signal.SIGTERM)
-
-
-# ============================ main ============================================
-
-def _add_parser_args(parser):
-    """ Adds arguments specific to web UI. """
-    parser.add_argument('-H', '--host', dest='host', default='0.0.0.0', action='store', help='host address')
-    parser.add_argument('-p', '--port', dest='port', default=8080, action='store', help='port number')
-
-
-webapp = None
-if __name__ == "__main__":
-    parser = ArgumentParser()
-    _add_parser_args(parser)
-    arg_space = parser.parse_known_args()[0]
-
-    # log
-    log.info(
-        'Initializing OpenVisualizerWeb with options: \n\t{0}'.format(
-            '\n    '.join(
-                [
-                    'host = {0}'.format(arg_space.host),
-                    'port = {0}'.format(arg_space.port)
-                ]
-            )
-        )
-    )
-
-    # ===== start the app
-    app = openVisualizerApp.main(parser)
-
-    # ===== add a web interface
-    websrv = bottle.Bottle()
-    webapp = OpenVisualizerWeb(app, websrv)
-
-    # start web interface in a separate thread
-    webthread = threading.Thread(
-        target=websrv.run,
-        kwargs={
-            'host': arg_space.host,
-            'port': arg_space.port,
-            'quiet': not app.debug,
-            'debug': app.debug,
-        }
-    )
-    webthread.start()
-
-    # ===== add a cli (minimal) interface
-
-    banner = []
-    banner += ['OpenVisualizer']
-    banner += ['web interface started at {0}:{1}'.format(arg_space.host, arg_space.port)]
-    banner += ['enter \'quit\' to exit']
-    banner = '\n'.join(banner)
-    print banner
-
-    arg_space = parser.parse_args()
-    webapp.do_root(arg_space.root)
-
-    webapp.cmdloop()

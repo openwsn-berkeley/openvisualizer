@@ -8,10 +8,10 @@ import threading
 
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.eventbus import eventbusclient
-from openvisualizer.openLbr.sixlowpan_frag import Fragmentor
+from openvisualizer.openlbr.sixlowpan_frag import Fragmentor
 from openvisualizer.opentun.opentun import OpenTun
 
-log = logging.getLogger('openLbr')
+log = logging.getLogger('openlbr')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
@@ -501,10 +501,9 @@ class OpenLbr(eventbusclient.EventBusClient):
 
         :param ipv6: [in] A disassembled IPv6 packet.
 
-        :raises: ValueError when some part of the process is not defined in
-            the standard.
-        :raises: NotImplementedError when some part of the process is defined in
-            the standard, but not implemented in this module.
+        :raises: ValueError when some part of the process is not defined in the standard.
+        :raises: NotImplementedError when some part of the process is defined in the standard, but not implemented in
+            this module.
 
         :returns: A disassembled 6LoWPAN packet.
         """
@@ -1034,17 +1033,13 @@ class OpenLbr(eventbusclient.EventBusClient):
         return return_val
 
     def _set_prefix_notif(self, sender, signal, data):
-        """
-        Record the network prefix.
-        """
+        """ Record the network prefix. """
         with self.stateLock:
             self.networkPrefix = data
             log.info('Set network prefix  {0}'.format(u.formatIPv6Addr(data)))
 
     def _info_dagroot_notif(self, sender, signal, data):
-        """
-        Record the DAGroot's EUI64 address.
-        """
+        """ Record the DAGroot's EUI64 address. """
         if data['isDAGroot'] == 1:
             with self.stateLock:
                 self.dagRootEui64 = data['eui64'][:]

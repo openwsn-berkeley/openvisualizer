@@ -11,14 +11,14 @@ import sys
 import time
 
 import openvisualizer.openvisualizer_utils as u
-from openvisualizer.eventBus.eventBusClient import eventBusClient
+from openvisualizer.eventbus.eventbusclient import EventBusClient
 
 log = logging.getLogger('OpenTun')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-class OpenTun(eventBusClient):
+class OpenTun(EventBusClient):
     """
     Class which interfaces between a TUN virtual interface and an EventBus.
     This class is abstract, with concrete subclasses based on operating system.

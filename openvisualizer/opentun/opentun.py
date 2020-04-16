@@ -119,7 +119,7 @@ class OpenTun(EventBusClient):
                     dst = self.IPV6PREFIX + self.IPV6HOST
                     dst[15] += 1
                     # Payload and destination port are arbitrary
-                    sock.sendto('stop', (u.formatIPv6Addr(dst), 18004))
+                    sock.sendto('stop', (u.format_ipv6_addr(dst), 18004))
                     # Give thread some time to exit
                     time.sleep(0.05)
                 except Exception as err:

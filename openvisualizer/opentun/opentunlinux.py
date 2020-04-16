@@ -59,7 +59,7 @@ class TunReadThread(threading.Thread):
                 p = [ord(b) for b in p]
 
                 # debug info
-                log.debug('packet captured on tun interface: {0}'.format(u.formatBuf(p)))
+                log.debug('packet captured on tun interface: {0}'.format(u.format_buf(p)))
 
                 # remove tun ID octets
                 p = p[4:]
@@ -75,7 +75,7 @@ class TunReadThread(threading.Thread):
                 # call the callback
                 self.callback(p)
         except Exception as err:
-            err_msg = u.formatCrashMessage(self.name, err)
+            err_msg = u.format_crash_message(self.name, err)
             log.critical(err_msg)
             sys.exit(1)
 
@@ -133,7 +133,7 @@ class OpenTunLinux(OpenTun):
             os.write(self.tun_if, data)
             log.debug("data dispatched to tun correctly {0}, {1}".format(signal, sender))
         except Exception as err:
-            err_msg = u.formatCriticalMessage(err)
+            err_msg = u.format_critical_message(err)
             log.critical(err_msg)
 
     def _create_tun_if(self):

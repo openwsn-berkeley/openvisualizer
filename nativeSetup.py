@@ -44,7 +44,7 @@ setup(
                         'openvisualizer.BspEmulator', 'openvisualizer.eventBus', 
                         'openvisualizer.lbrClient', 'openvisualizer.motehandler.moteconnector',
                         'openvisualizer.moteprobe', 'openvisualizer.motehandler.motestate',
-                        'openvisualizer.openLbr', 'openvisualizer.opentun', 'openvisualizer.openUI',
+                        'openvisualizer.openLbr', 'openvisualizer.opentun',
                         'openvisualizer.rpl', 'openvisualizer.SimEngine',
                         'openvisualizer.jrc'],
     package_dir      = {'': '.', 'openvisualizer': 'openvisualizer'},

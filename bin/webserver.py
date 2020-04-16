@@ -7,16 +7,12 @@
 
 import datetime
 import functools
-import json
 import logging
 import re
-import threading
 import time
 
 import bottle
-import netifaces as ni
 from bottle import view, response
-from coap import coap
 
 from openvisualizer import ovVersion
 from openvisualizer.BspEmulator import VcdLogger
@@ -55,13 +51,6 @@ class WebServer(eventBusClient, Cmd):
         self.doc_header = 'Commands (type "help all" or "help <topic>"):'
         self.prompt = '> '
         self.intro = '\nOpenVisualizer  (type "help" for commands)'
-
-        # used for remote motes :
-        self.rover_motes = {}
-        self.client = coap.coap(udpPort=9000)
-        self.client.respTimeout = 2
-        self.client.ackTimeout = 2
-        self.client.maxRetransmit = 1
 
         self._define_routes()
         # To find page templates
@@ -108,92 +97,6 @@ class WebServer(eventBusClient, Cmd):
         self.web_srv.route(path='/topology/route', method='GET', callback=self._topology_route_retrieve)
         self.web_srv.route(path='/static/<filepath:path>', callback=self._server_static)
 
-        # activate these routes only if remote_connector_server is available
-        if self._is_rover_mode():
-            self.web_srv.route(path='/rovers', callback=self._show_rovers)
-            self.web_srv.route(path='/updateroverlist/:updatemsg', callback=self._update_rover_list)
-            self.web_srv.route(path='/motesdiscovery/:srcip', callback=self._motes_discovery)
-
-    def _is_rover_mode(self):
-        return self.app.remote_connector_server is not None
-
-    @view('rovers.tmpl')
-    def _show_rovers(self):
-        """ Handles the discovery and connection to remote motes using remote_connector_server component. """
-        my_if_dict = {}
-        for myif in ni.interfaces():
-            my_if_dict[myif] = ni.ifaddresses(myif)
-        tmpl_data = {
-            'myifdict': my_if_dict,
-            'roverMotes': self.rover_motes,
-            'roverMode': self._is_rover_mode()
-        }
-        return tmpl_data
-
-    def _update_rover_list(self, updatemsg):
-        """
-        Handles the devices discovery
-        """
-
-        cmd, rover_data = updatemsg.split('@')
-        if cmd == "add":
-            if rover_data not in self.rover_motes.keys():
-                self.rover_motes[rover_data] = []
-        elif cmd == "del":
-            for rover_ip in rover_data.split(','):
-                if rover_ip in self.rover_motes.keys() and not self.rover_motes[rover_ip]:
-                    self.rover_motes.pop(rover_ip)
-        elif cmd == "upload":
-            new_rovers = rover_data.split(",")
-            for newRover in new_rovers:
-                if newRover not in self.rover_motes.keys():
-                    self.rover_motes[newRover] = []
-        elif cmd == "disconn":
-            for rover_ip in rover_data.split(','):
-                if rover_ip in self.rover_motes.keys():
-                    self.app.remove_rover_motes(rover_ip, self.rover_motes.pop(rover_ip))
-        mote_dict = self.app.get_mote_dict()
-        for rover in self.rover_motes:
-            for i, serial in enumerate(self.rover_motes[rover]):
-                for moteID, serial_conn in mote_dict.items():
-                    if serial == serial_conn:
-                        self.rover_motes[rover][i] = moteID
-
-        return json.dumps(self.rover_motes)
-
-    def _motes_discovery(self, srcip):
-        """
-        Collects the list of motes available on the rover and connects them to oV
-        Use connetest to first check service availability
-        :param srcip: IP of the rover
-        """
-
-        coap_threads = []
-        for rover_ip in self.rover_motes.keys():
-            t = threading.Thread(target=self._get_coap_response, args=(srcip, rover_ip))
-            t.setDaemon(True)
-            t.start()
-            coap_threads.append(t)
-        for t in coap_threads:
-            t.join()
-        self.app.refresh_rover_motes(self.rover_motes)
-        return json.dumps(self.rover_motes)
-
-    def _get_coap_response(self, srcip, roverip):
-        log.info("sending coap request to rover {0}".format(roverip))
-        try:
-            if ':' in roverip:
-                response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip),
-                                           payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
-            else:
-                response = self.client.PUT('coap://{0}/pcinfo'.format(roverip),
-                                           payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
-            payload = ''.join([chr(b) for b in response])
-            self.rover_motes[roverip] = json.loads(payload)
-            self.rover_motes[roverip] = [rm + '@' + roverip for rm in self.rover_motes[roverip]]
-        except Exception as err:
-            self.rover_motes[roverip] = str(err)
-
     @view('moteview.tmpl')
     def _show_moteview(self, moteid=None):
         """
@@ -208,7 +111,6 @@ class WebServer(eventBusClient, Cmd):
         tmpl_data = {
             'motelist': mote_list,
             'requested_mote': moteid if moteid else 'none',
-            'roverMode': self._is_rover_mode()
         }
         return tmpl_data
 
@@ -283,7 +185,6 @@ class WebServer(eventBusClient, Cmd):
     def _show_event_bus(self):
         """ Simple page; data for the page template is identical to the data for periodic updates of event list. """
         tmpl_data = self._get_event_data().copy()
-        tmpl_data['roverMode'] = self._is_rover_mode()
         return tmpl_data
 
     def _show_dag(self):
@@ -292,7 +193,7 @@ class WebServer(eventBusClient, Cmd):
 
     @view('connectivity.tmpl')
     def _show_connectivity(self):
-        return {'roverMode': self._is_rover_mode()}
+        return {}
 
     def _show_motes_connectivity(self):
         states, edges = self.app.get_motes_connectivity()
@@ -300,12 +201,12 @@ class WebServer(eventBusClient, Cmd):
 
     @view('routing.tmpl')
     def _show_routing(self):
-        return {'roverMode': self._is_rover_mode()}
+        return {}
 
     @view('topology.tmpl')
     def _topology_page(self):
         """ Retrieve the HTML/JS page. """
-        return {'roverMode': self._is_rover_mode()}
+        return {}
 
     def _topology_data(self):
         """ Retrieve the topology data, in JSON format. """

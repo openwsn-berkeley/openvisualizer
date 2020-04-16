@@ -13,13 +13,13 @@ import json
 import logging
 import logging.config
 import os
+
 import signal
 import sys
 
 import utils as u
 from openvisualizer.SimEngine import SimEngine, MoteHandler
 from openvisualizer.eventBus import eventBusMonitor
-from openvisualizer.eventLogger import eventLogger
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
 from openvisualizer.motehandler.moteprobe import moteprobe
@@ -118,14 +118,6 @@ class OpenVisualizerApp(object):
 
         # create a MoteState for each MoteConnector
         self.mote_states = [motestate.MoteState(mc) for mc in self.mote_connectors]
-        self.eventLoggers = [eventLogger.eventLogger(ms) for ms in self.mote_states]
-
-        if self.testbed_motes:
-            # at least, when we use OpenTestbed, we don't need Rover. Don't instantiate remoteConnectorServer which
-            # consumes a lot of CPU.
-            self.remote_connector_server = None
-        else:
-            self.remote_connector_server = remoteConnectorServer.remoteConnectorServer()
 
         # boot all emulated motes, if applicable
         if self.simulator_mode:
@@ -238,45 +230,6 @@ class OpenVisualizerApp(object):
             d = {'id': mote, 'value': {'label': mote}}
             states.append(d)
         return states, edges
-
-    def refresh_rover_motes(self, rover_motes):
-        """
-        Connect the list of roverMotes to openvisualiser.
-        :param rover_motes list of the roverMotes to add
-        """
-
-        # create a MoteConnector for each roverMote
-        for rover_ip, value in rover_motes.items():
-            if not isinstance(value, str):
-                for rm in rover_motes[rover_ip]:
-                    exist = False
-                    for mc in self.mote_connectors:
-                        if mc.serialport == rm:
-                            exist = True
-                            break
-                    if not exist:
-                        moc = moteconnector.MoteConnector(rm)
-                        self.mote_connectors += [moc]
-                        self.mote_states += [motestate.MoteState(moc)]
-        self.remote_connector_server.initRoverConn(rover_motes)
-
-    def remove_rover_motes(self, roverIP, moteList):
-        """
-        Remove MoteConnectors and MoteStates from list (NOT implemented: quit()). Stop ZMQ connection
-        :param roverIP
-        """
-
-        for moteid in moteList:
-            ms = self.get_mote_state(moteid)
-            if ms:
-                self.mote_connectors.remove(ms.moteConnector)
-                self.mote_states.remove(ms)
-            else:
-                for mss in self.mote_states:
-                    if moteid == mss.mote_connector.serialport:
-                        self.mote_connectors.remove(mss.mote_connector)
-                        self.mote_states.remove(mss)
-        self.remote_connector_server.closeRoverConn(roverIP)
 
     def get_mote_dict(self):
         """ Returns a dictionary with key-value entry: (mote_id: serialport) """

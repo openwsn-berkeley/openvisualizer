@@ -19,7 +19,7 @@ import sys
 
 import utils as u
 from openvisualizer.SimEngine import SimEngine, MoteHandler
-from openvisualizer.eventBus import eventBusMonitor
+from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
 from openvisualizer.motehandler.moteprobe import moteprobe
@@ -55,7 +55,7 @@ class OpenVisualizerApp(object):
         self.path_topo = path_topo
 
         # local variables
-        self.ebm = eventBusMonitor.eventBusMonitor()
+        self.ebm = eventbusmonitor.EventBusMonitor()
         self.open_lbr = openLbr.OpenLbr(use_page_zero)
         self.rpl = rpl.RPL()
         self.jrc = jrc.JRC()

@@ -11,11 +11,11 @@ import copy
 import random
 from math import radians, cos, sin, asin, sqrt, log10
 
-from openvisualizer.eventBus      import eventBusClient
+from openvisualizer.eventbus      import eventbusclient
 
 import SimEngine
 
-class Propagation(eventBusClient.eventBusClient):
+class Propagation(eventbusclient.EventBusClient):
     '''
     The propagation model of the engine.
     '''
@@ -40,7 +40,7 @@ class Propagation(eventBusClient.eventBusClient):
         self.log.addHandler(logging.NullHandler())
         
         # initialize parents class
-        eventBusClient.eventBusClient.__init__(
+        eventbusclient.EventBusClient.__init__(
             self,
             name                  = 'Propagation',
             registrations         =  [

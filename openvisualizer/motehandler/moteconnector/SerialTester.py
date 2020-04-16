@@ -11,11 +11,11 @@ log.addHandler(logging.NullHandler())
 import threading
 import random
 
-from openvisualizer.eventBus      import eventBusClient
+from openvisualizer.eventbus      import eventbusclient
 from openvisualizer.motehandler.moteconnector.openparser import openparser
 
 
-class SerialTester(eventBusClient.eventBusClient):
+class SerialTester(eventbusclient.EventBusClient):
     
     DFLT_TESTPKT_LENGTH = 10  ##< number of bytes in a test packet
     DFLT_NUM_TESTPKT    = 20  ##< number of test packets to send

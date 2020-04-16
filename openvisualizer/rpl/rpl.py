@@ -18,14 +18,14 @@ import threading
 
 import openvisualizer.openvisualizer_utils as u
 import sourcerouting
-from openvisualizer.eventBus import eventBusClient
+from openvisualizer.eventbus import eventbusclient
 
 log = logging.getLogger('RPL')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-class RPL(eventBusClient.eventBusClient):
+class RPL(eventbusclient.EventBusClient):
     _TARGET_INFORMATION_TYPE = 0x05
     _TRANSIT_INFORMATION_TYPE = 0x06
 
@@ -54,7 +54,7 @@ class RPL(eventBusClient.eventBusClient):
         log.debug("create instance")
 
         # initialize parent class
-        eventBusClient.eventBusClient.__init__(
+        eventbusclient.EventBusClient.__init__(
             self,
             name='rpl',
             registrations=[

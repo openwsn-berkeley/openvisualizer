@@ -21,9 +21,9 @@ import time
 from datetime import timedelta
 
 import openvisualizer.openvisualizer_utils as u
-from openvisualizer.eventBus import eventBusClient
+from openvisualizer.eventbus import eventbusclient
 
-class topology(eventBusClient.eventBusClient):
+class topology(eventbusclient.EventBusClient):
     
     def __init__(self):
         
@@ -33,7 +33,7 @@ class topology(eventBusClient.eventBusClient):
         self.parentsLastSeen = {}
         self.NODE_TIMEOUT_THRESHOLD = 900
         
-        eventBusClient.eventBusClient.__init__(
+        eventbusclient.EventBusClient.__init__(
             self,
             name                  = 'topology',
             registrations         =  [

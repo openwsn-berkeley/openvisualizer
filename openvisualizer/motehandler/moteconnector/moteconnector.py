@@ -19,7 +19,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-class MoteConnector(eventBusClient):
+class MoteConnector(EventBusClient):
 
     def __init__(self, mote_probe):
 
@@ -122,7 +122,7 @@ class MoteConnector(eventBusClient):
                 # retrieve the prefix of the network
                 with self.state_lock:
                     if not self.network_prefix:
-                        networkPrefix = self._dispatchAndGetResult(
+                        networkPrefix = self._dispatch_and_get_result(
                             signal='getNetworkPrefix',
                             data=[],
                         )
@@ -130,7 +130,7 @@ class MoteConnector(eventBusClient):
 
                 # retrieve the security key of the network
                 with self.state_lock:
-                    keyDict = self._dispatchAndGetResult(
+                    keyDict = self._dispatch_and_get_result(
                         signal='getL2SecurityKey',
                         data=[],
                     )

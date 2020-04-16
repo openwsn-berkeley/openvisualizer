@@ -182,7 +182,7 @@ class Propagation(eventbusclient.EventBusClient):
                     
                     # indicate start of transmission
                     mh = self.engine.getMoteHandlerById(toMote)
-                    mh.bspRadio.indicateTxStart(fromMote,packet,channel)
+                    mh.bspRadio.indicate_tx_start(fromMote, packet, channel)
                     
                     # remember to signal end of transmission
                     self.pendingTxEnd += [(fromMote,toMote)]
@@ -199,7 +199,7 @@ class Propagation(eventbusclient.EventBusClient):
                     pass
                 else:
                     mh = self.engine.getMoteHandlerById(toMote)
-                    mh.bspRadio.indicateTxEnd(fromMote)
+                    mh.bspRadio.indicate_tx_end(fromMote)
     
     #======================== private =========================================
     

@@ -6,3 +6,5 @@ build/
 bin/debugpins.vcd
 
 debugpins.vcd
+
+openvisualizer/motehandler/moteconnector/openparser/defines.py

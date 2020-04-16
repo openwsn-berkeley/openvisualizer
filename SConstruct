@@ -192,7 +192,7 @@ AddOption('--simhost',
 env['SIMHOSTOPT']       = GetOption('simhostOpt')
 runnerEnv['SIMHOSTOPT'] = env['SIMHOSTOPT']
 
-Alias('copy-simfw', sconsUtils.copySimfw(env, 'simcopy'))
+Alias('copy-simfw', sconsUtils.copy_simulation_fw(env, 'simcopy'))
 
 #===== runtui
 

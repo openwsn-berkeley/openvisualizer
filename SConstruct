@@ -31,7 +31,6 @@ Usage:
     scons [options] runtui
     scons copy-simfw
     scons <sdist|upload|sdist-native>
-    scons unittests
     scons docs
 
 Targets:

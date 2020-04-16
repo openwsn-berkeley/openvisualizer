@@ -117,7 +117,7 @@ class RPL(eventbusclient.EventBusClient):
         # register the DAGroot
         if data['isDAGroot'] == 1 and not same_dagroot:
             # log
-            log.info("registering DAGroot {0}".format(u.formatAddr(new_dagroot_eui64)))
+            log.info("registering DAGroot {0}".format(u.format_addr(new_dagroot_eui64)))
 
             # register
             self.register(
@@ -144,7 +144,7 @@ class RPL(eventbusclient.EventBusClient):
         # unregister the DAGroot
         if data['isDAGroot'] == 0 and same_dagroot:
             # log
-            log.info("unregistering DAGroot {0}".format(u.formatAddr(new_dagroot_eui64)))
+            log.info("unregistering DAGroot {0}".format(u.format_addr(new_dagroot_eui64)))
 
             # unregister from old DAGroot
             self.unregister(
@@ -199,8 +199,8 @@ class RPL(eventbusclient.EventBusClient):
         # log
         output = []
         output += ['received DAO:']
-        output += ['- source :      {0}'.format(u.formatAddr(source))]
-        output += ['- dao :         {0}'.format(u.formatBuf(dao))]
+        output += ['- source :      {0}'.format(u.format_addr(source))]
+        output += ['- dao :         {0}'.format(u.format_buf(dao))]
         output = '\n'.join(output)
         log.debug(output)
 
@@ -255,17 +255,17 @@ class RPL(eventbusclient.EventBusClient):
         # log
         output = []
         output += [
-            'received RPL DAO from {0}:{1}'.format(u.formatIPv6Addr(self.networkPrefix), u.formatIPv6Addr(source))]
+            'received RPL DAO from {0}:{1}'.format(u.format_ipv6_addr(self.networkPrefix), u.format_ipv6_addr(source))]
         output += ['- parents:']
         for p in parents:
-            output += ['   {0}:{1}'.format(u.formatIPv6Addr(self.networkPrefix), u.formatIPv6Addr(p))]
+            output += ['   {0}:{1}'.format(u.format_ipv6_addr(self.networkPrefix), u.format_ipv6_addr(p))]
         output += ['- children:']
         for p in children:
-            output += ['   {0}:{1}'.format(u.formatIPv6Addr(self.networkPrefix), u.formatIPv6Addr(p))]
+            output += ['   {0}:{1}'.format(u.format_ipv6_addr(self.networkPrefix), u.format_ipv6_addr(p))]
         output = '\n'.join(output)
         log.info(output)
 
-        node = u.formatIPv6Addr(source)
+        node = u.format_ipv6_addr(source)
         if not (node in self.parentsDaoSeq.keys()):
             self.parentsDaoSeq[node] = [dao_header['RPL_DAO_Sequence']]
         else:

@@ -296,7 +296,7 @@ class ParserStatus(parser.Parser):
                         "could not extract tuple {0} by applying {1} to {2}; error: {3}".format(
                             key.name,
                             key.structure,
-                            u.formatBuf(data),
+                            u.format_buf(data),
                             str(err)
                         )
                     )

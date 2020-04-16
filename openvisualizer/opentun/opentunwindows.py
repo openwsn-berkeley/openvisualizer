@@ -93,7 +93,7 @@ class TunReadThread(threading.Thread):
                     # call the callback
                     self.callback(p)
         except Exception as err:
-            err_msg = u.formatCrashMessage(self.name, err)
+            err_msg = u.format_crash_message(self.name, err)
             log.critical(err_msg)
             sys.exit(1)
 
@@ -159,7 +159,7 @@ class OpenTunWindows(OpenTun):
             self.overlappedTx.Offset = self.overlappedTx.Offset + len(data)
             log.debug("data dispatched to tun correctly {0}, {1}".format(signal, sender))
         except Exception as err:
-            err_msg = u.formatCriticalMessage(err)
+            err_msg = u.format_critical_message(err)
             log.critical(err_msg)
 
     def _create_tun_if(self):

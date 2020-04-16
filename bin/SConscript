@@ -97,12 +97,9 @@ def setup_tui_runner(env, ui_file, data_dirs):
     Sets up dependencies for data files required to run an OpenVisualizer
     UI. The data files are copied to the environment's BUILD_DIR.
 
-    * Copies simulation firmware to the sim_files data directory if running
-      a simulation.
-    * Creates commands to copy conf files unless they exist already. The
-      user may have edited them.
-    * Creates commands to copy the provided static data directories
-      unconditionally.
+    * Copies simulation firmware to the sim_files data directory if running a simulation.
+    * Creates commands to copy conf files unless they exist already. The user may have edited them.
+    * Creates commands to copy the provided static data directories unconditionally.
 
     :param env: contains the build environment
     :param ui_file: filename to run in openVisualizerApp directory
@@ -110,16 +107,19 @@ def setup_tui_runner(env, ui_file, data_dirs):
     :rtype: the targets reference for the Builder.
     """
 
-    # Create Builder to run GUI
+    # Create Builder to run OpenVisualizer
     env.Append(BUILDERS={'RunUi': Builder(action=tui_runner)})
 
     targets = env.RunUi(ui_file)
+
+    Depends(targets, 'defines.py')
+    Command('defines.py', '', 'python bin/generate_defines.py')
 
     if (env['SIMOPT'] or env['SIMCOUNT']) and env['SIMCOPYOPT']:
         # Appending ui_file to pseudo-target to make it unique.
         sim_fw_target = 'simui-{0}'.format(ui_file)
         Depends(targets, sim_fw_target)
-        sconsUtils.copySimfw(env, sim_fw_target)
+        sconsUtils.copy_simulation_fw(env, sim_fw_target)
 
     for node in (env['CONF_FILES'] + env['DATA_FILES']):
         bldNode = os.path.join(env['BUILD_DIR'], node)

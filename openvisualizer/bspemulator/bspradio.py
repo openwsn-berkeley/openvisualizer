@@ -7,7 +7,7 @@
 import logging
 
 from bspmodule import BspModule
-from openvisualizer.SimEngine import Propagation
+from openvisualizer.simengine import propagation
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 
 
@@ -42,12 +42,12 @@ class BspRadio(BspModule, EventBusClient):
 
         # initialize the parents
         BspModule.__init__(self, motehandler)
-        EventBusClient.__init__(self, name='BspRadio_{0}'.format(self.motehandler.getId()), registrations=[])
+        EventBusClient.__init__(self, name='BspRadio_{0}'.format(self.motehandler.get_id()), registrations=[])
 
         # local variables
         self.timeline = self.engine.timeline
         self.propagation = self.engine.propagation
-        self.sctimer = self.motehandler.bspSctimer
+        self.sctimer = self.motehandler.bsp_sctimer
 
         # local variables
         self.frequency = None  # frequency the radio is tuned to
@@ -135,7 +135,7 @@ class BspRadio(BspModule, EventBusClient):
         self._change_state(RadioState.RFOFF)
 
         # wiggle de debugpin
-        self.motehandler.bspDebugpins.cmd_radio_clr()
+        self.motehandler.bsp_debugpins.cmd_radio_clr()
 
     def cmd_load_packet(self, packet_to_load):
         """ Emulates: void radio_loadPacket(uint8_t* packet, uint8_t len) """
@@ -174,7 +174,7 @@ class BspRadio(BspModule, EventBusClient):
         self._change_state(RadioState.TX_ENABLED)
 
         # wiggle de debugpin
-        self.motehandler.bspDebugpins.cmd_radio_set()
+        self.motehandler.bsp_debugpins.cmd_radio_set()
 
     def cmd_tx_now(self):
         """ Emulates: void radio_txNow() """
@@ -187,16 +187,16 @@ class BspRadio(BspModule, EventBusClient):
         self._change_state(RadioState.TRANSMITTING)
 
         # get current time
-        current_time = self.timeline.getCurrentTime()
+        current_time = self.timeline.get_current_time()
 
         # calculate when the "start of frame" event will take place
         start_of_frame_time = current_time + self.delay_tx
 
         # schedule "start of frame" event
-        self.timeline.scheduleEvent(start_of_frame_time,
-                                    self.motehandler.getId(),
-                                    self.intr_start_of_frame_from_mote,
-                                    self.INTR_STARTOFFRAME_MOTE)
+        self.timeline.schedule_event(start_of_frame_time,
+                                     self.motehandler.get_id(),
+                                     self.intr_start_of_frame_from_mote,
+                                     self.INTR_STARTOFFRAME_MOTE)
 
     def cmd_rx_enable(self):
         """ Emulates: void radio_rxEnable() """
@@ -212,7 +212,7 @@ class BspRadio(BspModule, EventBusClient):
         self._change_state(RadioState.LISTENING)
 
         # wiggle de debugpin
-        self.motehandler.bspDebugpins.cmd_radio_set()
+        self.motehandler.bsp_debugpins.cmd_radio_set()
 
     def cmd_rx_now(self):
         """ Emulates: void radio_rxNow() """
@@ -253,16 +253,16 @@ class BspRadio(BspModule, EventBusClient):
 
         # indicate transmission starts on eventBus
         self.dispatch(
-            signal=Propagation.Propagation.SIGNAL_WIRELESSTXSTART,
-            data=(self.motehandler.getId(), self.tx_buf, self.frequency)
+            signal=propagation.Propagation.SIGNAL_WIRELESSTXSTART,
+            data=(self.motehandler.get_id(), self.tx_buf, self.frequency)
         )
 
         # schedule the "end of frame" event
-        current_time = self.timeline.getCurrentTime()
+        current_time = self.timeline.get_current_time()
         end_of_frame_time = current_time + BspRadio._packet_length_to_duration(len(self.tx_buf))
-        self.timeline.scheduleEvent(
+        self.timeline.schedule_event(
             end_of_frame_time,
-            self.motehandler.getId(),
+            self.motehandler.get_id(),
             self.intr_end_of_frame_from_mote,
             self.INTR_ENDOFFRAME_MOTE,
         )
@@ -291,8 +291,8 @@ class BspRadio(BspModule, EventBusClient):
 
         # indicate transmission ends on eventBus
         self.dispatch(
-            signal=Propagation.Propagation.SIGNAL_WIRELESSTXEND,
-            data=self.motehandler.getId(),
+            signal=propagation.Propagation.SIGNAL_WIRELESSTXEND,
+            data=self.motehandler.get_id(),
         )
 
         # signal end of frame to mote
@@ -337,9 +337,9 @@ class BspRadio(BspModule, EventBusClient):
                 self.log.debug('rx_buf={0}'.format(self.rx_buf))
 
             # schedule start of frame
-            self.timeline.scheduleEvent(
-                self.timeline.getCurrentTime(),
-                self.motehandler.getId(),
+            self.timeline.schedule_event(
+                self.timeline.get_current_time(),
+                self.motehandler.get_id(),
                 self.intr_start_of_frame_from_propagation,
                 self.INTR_STARTOFFRAME_PROPAGATION,
             )
@@ -353,9 +353,9 @@ class BspRadio(BspModule, EventBusClient):
             self._change_state(RadioState.LISTENING)
 
             # schedule end of frame
-            self.timeline.scheduleEvent(
-                self.timeline.getCurrentTime(),
-                self.motehandler.getId(),
+            self.timeline.schedule_event(
+                self.timeline.get_current_time(),
+                self.motehandler.get_id(),
                 self.intr_end_of_frame_from_propagation,
                 self.INTR_ENDOFFRAME_PROPAGATION,
             )

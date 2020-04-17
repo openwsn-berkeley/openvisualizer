@@ -6,7 +6,7 @@
 import logging
 from abc import ABCMeta
 
-from openvisualizer.SimEngine import SimEngine
+from openvisualizer.simengine import simengine
 
 
 class BspModule(object):
@@ -23,10 +23,10 @@ class BspModule(object):
 
         # local variables
         self.is_initialized = False
-        self.engine = SimEngine.SimEngine()
+        self.engine = simengine.SimEngine()
 
         # logging
-        self.log = logging.getLogger(self._name + '_' + str(self.motehandler.getId()))
+        self.log = logging.getLogger(self._name + '_' + str(self.motehandler.get_id()))
         self.log.setLevel(logging.INFO)
         self.log.addHandler(logging.NullHandler())
 

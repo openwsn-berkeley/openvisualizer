@@ -45,7 +45,7 @@ class HwCrystal(HwModule):
         """ Start the crystal. """
 
         # get the timestamp of a 
-        self.ts_tick = self.timeline.getCurrentTime()
+        self.ts_tick = self.timeline.get_current_time()
 
         # log
         if self.log.isEnabledFor(logging.DEBUG):
@@ -73,7 +73,7 @@ class HwCrystal(HwModule):
         # make sure crystal has been started
         assert self.ts_tick is not None
 
-        current_time = self.timeline.getCurrentTime()
+        current_time = self.timeline.get_current_time()
         time_since_last = current_time - self.ts_tick
 
         ticks_since_last = round(float(time_since_last) / float(self.period))
@@ -141,7 +141,7 @@ class HwCrystal(HwModule):
         assert self.ts_tick is not None
 
         # get the current time
-        current_time = self.timeline.getCurrentTime()
+        current_time = self.timeline.get_current_time()
 
         # make sure that event_time passed is in the past
         assert (event_time <= current_time)

@@ -39,7 +39,7 @@ class HwSupply(HwModule):
         self.mote_on = True
 
         # have the crystal start now
-        self.motehandler.hwCrystal.start()
+        self.motehandler.hw_crystal.start()
 
         # send command to mote
         self.motehandler.mote.supply_on()

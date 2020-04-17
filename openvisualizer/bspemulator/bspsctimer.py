@@ -27,7 +27,7 @@ class BspSctimer(bspmodule.BspModule):
 
         # local variables
         self.timeline = self.engine.timeline
-        self.hw_crystal = self.motehandler.hwCrystal
+        self.hw_crystal = self.motehandler.hw_crystal
         self.running = False
         self.compare_armed = False
         self.time_last_reset = None
@@ -56,9 +56,9 @@ class BspSctimer(bspmodule.BspModule):
         overflow_time = self.hw_crystal.get_time_in(self.ROLLOVER)
 
         # schedule overflow event
-        self.timeline.scheduleEvent(
-            atTime=overflow_time,
-            moteId=self.motehandler.getId(),
+        self.timeline.schedule_event(
+            at_time=overflow_time,
+            mote_id=self.motehandler.get_id(),
             cb=self.intr_overflow,
             desc=self.INTR_OVERFLOW,
         )
@@ -97,10 +97,10 @@ class BspSctimer(bspmodule.BspModule):
             compare_time = self.hw_crystal.get_time_in(ticks_before_event)
 
             # schedule compare event
-            self.timeline.scheduleEvent(compare_time,
-                                        self.motehandler.getId(),
-                                        self.intr_compare,
-                                        self.INTR_COMPARE)
+            self.timeline.schedule_event(compare_time,
+                                         self.motehandler.get_id(),
+                                         self.intr_compare,
+                                         self.INTR_COMPARE)
 
             # the compare is now scheduled
             self.compare_armed = True
@@ -147,16 +147,16 @@ class BspSctimer(bspmodule.BspModule):
 
         # cancel the compare event
         self.compare_armed = False
-        num_canceled = self.timeline.cancelEvent(
-            moteId=self.motehandler.getId(),
+        num_canceled = self.timeline.cancel_event(
+            mote_id=self.motehandler.get_id(),
             desc=self.INTR_COMPARE,
         )
         assert (num_canceled <= 1)
 
         # cancel the (internal) overflow event
         self.running = False
-        num_canceled = self.timeline.cancelEvent(
-            moteId=self.motehandler.getId(),
+        num_canceled = self.timeline.cancel_event(
+            mote_id=self.motehandler.get_id(),
             desc=self.INTR_OVERFLOW,
         )
         assert (num_canceled <= 1)
@@ -173,9 +173,9 @@ class BspSctimer(bspmodule.BspModule):
 
         # schedule overflow event
 
-        self.timeline.scheduleEvent(
-            atTime=overflow_time,
-            moteId=self.motehandler.getId(),
+        self.timeline.schedule_event(
+            at_time=overflow_time,
+            mote_id=self.motehandler.get_id(),
             cb=self.intr_overflow,
             desc=self.INTR_OVERFLOW,
         )
@@ -197,9 +197,9 @@ class BspSctimer(bspmodule.BspModule):
         # Note: the intr_overflow will fire every self.ROLLOVER
         next_overflow_time = self.hw_crystal.get_time_in(self.ROLLOVER)
         self.log.debug('next_overflow_time=' + str(next_overflow_time))
-        self.timeline.scheduleEvent(
-            atTime=next_overflow_time,
-            moteId=self.motehandler.getId(),
+        self.timeline.schedule_event(
+            at_time=next_overflow_time,
+            mote_id=self.motehandler.get_id(),
             cb=self.intr_overflow,
             desc=self.INTR_OVERFLOW,
         )

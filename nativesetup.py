@@ -40,7 +40,7 @@ setup(
     packages=['openvisualizer',
               'openvisualizer.bspemulator', 'openvisualizer.eventbus', 'openvisualizer.motehandler.moteconnector',
               'openvisualizer.moteprobe', 'openvisualizer.motehandler.motestate', 'openvisualizer.openlbr',
-              'openvisualizer.opentun', 'openvisualizer.rpl', 'openvisualizer.SimEngine', 'openvisualizer.jrc'],
+              'openvisualizer.opentun', 'openvisualizer.rpl', 'openvisualizer.simengine', 'openvisualizer.jrc'],
     package_dir={'': '.', 'openvisualizer': 'openvisualizer'},
     scripts=appdirGlob('opentui.py'),
     # Copy sim_data files by extension so don't copy .gitignore in that directory.

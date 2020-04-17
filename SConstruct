@@ -29,6 +29,7 @@ print '\n'.join(banner)
 Help('''
 Usage:
     scons [options] runtui
+    scons serialtest
     scons copy-simfw
     scons <sdist|upload|sdist-native>
     scons docs
@@ -54,6 +55,9 @@ Targets:
           --usePageZero Use page number 0 in page dispatch of 6lowpan packet (only works within one-hop).
           --opentun     Use a TUN inferface to route packets from the mesh network to the Internet. This option requires
                         superuser/administrator privileges since it access the networking capabilities of your computer.
+
+    serialtest:
+        Runs a serial test on a connected mote.
 
     copy-simfw:
         Copy files for the simulator, generated from an OpenWSN firmware build on this host. Assumes firmware top-level
@@ -210,7 +214,7 @@ runnerEnv['SIMHOSTOPT'] = env['SIMHOSTOPT']
 
 Alias('copy-simfw', sconsutils.copy_simulation_fw(env, 'simcopy'))
 
-#===== runtui
+#===== runtui, serialtest
 
 # Must define run targets below the copy-simfw target so SIMHOSTOPT is available. Run targets may copy simulation
 # firmware before starting.

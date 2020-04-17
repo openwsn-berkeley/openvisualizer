@@ -27,7 +27,7 @@ import Queue
 from pydispatch import dispatcher
 import openhdlc
 import openvisualizer.openvisualizer_utils as u
-from openvisualizer.motehandler.moteconnector.SerialTester import SerialTester
+from openvisualizer.motehandler.moteprobe.serialtester import SerialTester
 
 log = logging.getLogger('MoteProbe')
 log.setLevel(logging.ERROR)
@@ -85,10 +85,10 @@ def find_serial_ports(is_iot_motes=False):
             while not hasattr(probe, 'serial'):
                 pass
             tester = SerialTester(probe)
-            tester.setNumTestPkt(1)
-            tester.setTimeout(2)
+            tester.set_num_test_pkt(1)
+            tester.set_timeout(2)
             tester.test(blocking=True)
-            if tester.getStats()['numOk'] >= 1:
+            if tester.get_stats()['numOk'] >= 1:
                 mote_ports.append((port[0], BAUDRATE_LOCAL_BOARD))
             probe.close()
             probe.join()

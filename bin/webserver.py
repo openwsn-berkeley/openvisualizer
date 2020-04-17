@@ -16,11 +16,11 @@ from bottle import view, response
 
 from openvisualizer import version
 from openvisualizer.bspemulator import vcdlogger
-from openvisualizer.simengine import simengine
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.motehandler.motestate.motestate import MoteState
+from openvisualizer.simengine import simengine
 
-log = logging.getLogger('openVisualizerWeb')
+log = logging.getLogger('OVWebServer')
 
 # add default parameters to all bottle templates
 view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in version.VERSION])))
@@ -32,7 +32,7 @@ class WebServer(EventBusClient):
         :param app: OpenVisualizerApp
         :param web_srv: Web server
         """
-        log.info('Creating OpenVisualizerWeb')
+        log.debug('create instance')
 
         # store params
         self.app = app
@@ -41,11 +41,6 @@ class WebServer(EventBusClient):
 
         # initialize parent classes
         super(WebServer, self).__init__(name='OpenVisualizerWeb', registrations=[])
-
-        # command support
-        self.doc_header = 'Commands (type "help all" or "help <topic>"):'
-        self.prompt = '> '
-        self.intro = '\nOpenVisualizer  (type "help" for commands)'
 
         self._define_routes()
         # To find page templates
@@ -118,7 +113,7 @@ class WebServer(EventBusClient):
         :param moteid: 16-bit ID of mote
         """
 
-        log.info('Toggle root status for moteid {0}'.format(moteid))
+        log.debug('Toggle root status for moteid {0}'.format(moteid))
         ms = self.app.get_mote_state(moteid)
         if ms:
             if log.isEnabledFor(logging.DEBUG):
@@ -167,12 +162,12 @@ class WebServer(EventBusClient):
         Selects whether eventBus must export debug packets.
         :param enabled: 'true' if enabled; any other value considered false
         """
-        log.info('Enable wireshark debug : {0}'.format(enabled))
+        log.debug('Enable wireshark debug : {0}'.format(enabled))
         self.app.ebm.set_wireshark_debug(enabled == 'true')
         return '{"result" : "success"}'
 
     def _set_gologic_debug(self, enabled):
-        log.info('Enable GoLogic debug : {0}'.format(enabled))
+        log.debug('Enable GoLogic debug : {0}'.format(enabled))
         vcdlogger.VcdLogger().set_enabled(enabled == 'true')
         return '{"result" : "success"}'
 
@@ -313,6 +308,7 @@ class WebServer(EventBusClient):
 
     def _get_event_data(self):
         response = {
-            'isDebugPkts': 'true' if self.app.ebm.wireshark_debug_enabled else 'false', 'stats': self.app.ebm.get_stats()
+            'isDebugPkts': 'true' if self.app.ebm.wireshark_debug_enabled else 'false',
+            'stats': self.app.ebm.get_stats()
         }
         return response

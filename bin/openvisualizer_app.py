@@ -12,13 +12,10 @@ import json
 import logging
 import logging.config
 import os
-
 import signal
 import sys
 
 import utils as u
-from openvisualizer.ovtracer import OVtracer
-from openvisualizer.simengine import simengine, motehandler
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
@@ -28,8 +25,11 @@ from openvisualizer.openlbr import openlbr
 from openvisualizer.opentun.opentun import OpenTun
 from openvisualizer.ovtracer import OVtracer
 from openvisualizer.rpl import topology, rpl
+from openvisualizer.simengine import simengine, motehandler
 
-log = logging.getLogger('openVisualizerApp')
+log = logging.getLogger('OpenVisualizerApp')
+log.setLevel(logging.ERROR)
+log.addHandler(logging.NullHandler())
 
 
 class OpenVisualizerApp(object):
@@ -76,7 +76,7 @@ class OpenVisualizerApp(object):
                 topo = json.load(topo_config)
                 self.num_motes = len(topo['motes'])
             except Exception as err:
-                print err
+                log.error(err)
                 self.close()
                 os.kill(os.getpid(), signal.SIGTERM)
 
@@ -172,8 +172,7 @@ class OpenVisualizerApp(object):
         # start tracing threads
         if self.trace:
             logging.config.fileConfig(
-                os.path.join(self.conf_dir, 'trace.conf'), {'logDir': u.force_slash_sep(self.log_dir, self.debug)}
-            )
+                os.path.join(self.conf_dir, 'trace.conf'), {'logDir': u.force_slash_sep(self.log_dir, self.debug)})
             OVtracer()
 
     # ======================== public ==========================================
@@ -304,6 +303,6 @@ def main(parser, conf_dir, data_dir, log_dir, sim_motes):
         iotlab_motes=args.iotlab_motes,
         testbed_motes=args.testbed_motes,
         path_topo=args.path_topo,
-        mqtt_broker_address=args.mqtt_broker_address,
+        mqtt_broker_address=args.mqtt_broker,
         opentun=args.opentun
     )

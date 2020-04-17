@@ -79,14 +79,9 @@ class EventBusClient(object):
             'callback': callback,
             'numRx': 0,
         }
-<<<<<<< HEAD
 
         with self.data_lock:
             self.registrations += [new_registration]
-=======
-        with self.data_lock:
-            self.registrations += [newRegistration]
->>>>>>> 814bdee... Package: simengine
 
     def unregister(self, sender, signal, callback):
 

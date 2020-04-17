@@ -1,18 +1,18 @@
-RPL Package
-===========
+Package: rpl
+============
 
-:mod:`RPL` Module
+:mod:`rpl` Module
 -----------------
 
-.. automodule:: openvisualizer.RPL.RPL
+.. automodule:: openvisualizer.rpl.rpl
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`SourceRoute` Module
--------------------------
+:mod:`sourcerouting` Module
+---------------------------
 
-.. automodule:: openvisualizer.RPL.SourceRoute
+.. automodule:: openvisualizer.rpl.sourcerouting
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ RPL Package
 :mod:`topology` Module
 ----------------------
 
-.. automodule:: openvisualizer.RPL.topology
+.. automodule:: openvisualizer.rpl.topology
     :members:
     :undoc-members:
     :show-inheritance:

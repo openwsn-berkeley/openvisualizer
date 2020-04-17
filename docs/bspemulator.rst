@@ -1,90 +1,90 @@
-BspEmulator Package
-===================
+Package: bspemulator
+====================
 
-:mod:`BspBoard` Module
+:mod:`bspboard` Module
 ----------------------
 
-.. automodule:: openvisualizer.BspEmulator.BspBoard
+.. automodule:: openvisualizer.bspemulator.bspboard
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`BspDebugpins` Module
+:mod:`bspdebugpins` Module
 --------------------------
 
-.. automodule:: openvisualizer.BspEmulator.BspDebugpins
+.. automodule:: openvisualizer.bspemulator.bspdebugpins
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`BspEui64` Module
+:mod:`bspeui64` Module
 ----------------------
 
-.. automodule:: openvisualizer.BspEmulator.BspEui64
+.. automodule:: openvisualizer.bspemulator.bspeui64
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`BspLeds` Module
+:mod:`bspleds` Module
 ---------------------
 
-.. automodule:: openvisualizer.BspEmulator.BspLeds
+.. automodule:: openvisualizer.bspemulator.bspleds
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`BspModule` Module
+:mod:`bspmodule` Module
 -----------------------
 
-.. automodule:: openvisualizer.BspEmulator.BspModule
+.. automodule:: openvisualizer.bspemulator.bspmodule
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`BspRadio` Module
+:mod:`bspradio` Module
 ----------------------
 
-.. automodule:: openvisualizer.BspEmulator.BspRadio
+.. automodule:: openvisualizer.bspemulator.bspradio
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`BspSctimer` Module
+:mod:`bspsctimer` Module
 ---------------------------
 
-.. automodule:: openvisualizer.BspEmulator.BspSctimer
+.. automodule:: openvisualizer.bspemulator.bspsctimer
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`BspUart` Module
+:mod:`bspuart` Module
 ---------------------
 
-.. automodule:: openvisualizer.BspEmulator.BspUart
+.. automodule:: openvisualizer.bspemulator.bspuart
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`HwCrystal` Module
+:mod:`hwcrystal` Module
 -----------------------
 
-.. automodule:: openvisualizer.BspEmulator.HwCrystal
+.. automodule:: openvisualizer.bspemulator.hwcrystal
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`HwModule` Module
+:mod:`hwmodule` Module
 ----------------------
 
-.. automodule:: openvisualizer.BspEmulator.HwModule
+.. automodule:: openvisualizer.bspemulator.hwmodule
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`HwSupply` Module
+:mod:`hwsupply` Module
 ----------------------
 
-.. automodule:: openvisualizer.BspEmulator.HwSupply
+.. automodule:: openvisualizer.bspemulator.hwsupply
     :members:
     :undoc-members:
     :show-inheritance:

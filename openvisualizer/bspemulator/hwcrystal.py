@@ -55,6 +55,10 @@ class HwCrystal(HwModule):
         """
         Return the timestamp of the last tick.
 
+        :returns: The timestamp of the last tick.
+        """
+
+        '''
         self.ts_tick                current_time
           |                          |                   period
           V                          v                <---------->
@@ -67,8 +71,7 @@ class HwCrystal(HwModule):
                                 |
                            time_last_tick
 
-        :returns: The timestamp of the last tick.
-        """
+        '''
 
         # make sure crystal has been started
         assert self.ts_tick is not None
@@ -88,8 +91,10 @@ class HwCrystal(HwModule):
         Return the time it will be in a given number of ticks.
 
         :param num_ticks: The number of ticks of interest.
+        :returns: The time it will be in a given number of ticks.
+        """
 
-
+        '''
           called here
                |                                                    period
                V                                                 <---------->
@@ -103,9 +108,7 @@ class HwCrystal(HwModule):
           ^                                ^
           |                                |
         time_last_tick                returned value
-
-        :returns: The time it will be in a given number of ticks.
-        """
+        '''
 
         # make sure crystal has been started
         assert self.ts_tick is not None
@@ -120,7 +123,10 @@ class HwCrystal(HwModule):
         Return the number of ticks since some timestamp.
 
         :param event_time: The time of the event of interest.
+        :returns: The number of ticks since the time passed.
+        """
 
+        '''
            eventTime                                   current_time
                |                                           |        period
                V                                           V     <---------->
@@ -133,9 +139,7 @@ class HwCrystal(HwModule):
                      ^          ^          ^          ^
                      |          |          |          |
                      +----------+----------+----------+
-
-        :returns: The number of ticks since the time passed.
-        """
+        '''
 
         # make sure crystal has been started
         assert self.ts_tick is not None

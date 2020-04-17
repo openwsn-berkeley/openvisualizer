@@ -147,10 +147,10 @@ class BspUart(BspModule):
         self.tx_interrupt_flag = True
 
         # calculate the time at which the byte will have been sent
-        done_sending_time = self.timeline.getCurrentTime() + float(1.0 / float(self.BAUDRATE))
+        done_sending_time = self.timeline.get_current_time() + float(1.0 / float(self.BAUDRATE))
 
         # schedule uart TX interrupt in 1/BAUDRATE seconds
-        self.timeline.scheduleEvent(done_sending_time, self.motehandler.getId(), self.intr_tx, self.INTR_TX)
+        self.timeline.schedule_event(done_sending_time, self.motehandler.get_id(), self.intr_tx, self.INTR_TX)
 
         if byte_to_write == self.XON or byte_to_write == self.XOFF or byte_to_write == self.XONXOFF_ESCAPE:
             self.f_xon_xoff_escaping = True
@@ -180,10 +180,10 @@ class BspUart(BspModule):
         self.tx_interrupt_flag = True
 
         # calculate the time at which the byte will have been sent
-        done_sending_time = self.timeline.getCurrentTime() + float(1.0 / float(self.BAUDRATE))
+        done_sending_time = self.timeline.get_current_time() + float(1.0 / float(self.BAUDRATE))
 
         # schedule uart TX interrupt in 1/BAUDRATE seconds
-        self.timeline.scheduleEvent(done_sending_time, self.motehandler.getId(), self.intr_tx, self.INTR_TX)
+        self.timeline.schedule_event(done_sending_time, self.motehandler.get_id(), self.intr_tx, self.INTR_TX)
 
         # add to receive buffer
         with self.uart_rx_buffer_lock:
@@ -221,10 +221,10 @@ class BspUart(BspModule):
         self.tx_interrupt_flag = True
 
         # calculate the time at which the buffer will have been sent
-        done_sending_time = self.timeline.getCurrentTime() + float(float(len(buf)) / float(self.BAUDRATE))
+        done_sending_time = self.timeline.get_current_time() + float(float(len(buf)) / float(self.BAUDRATE))
 
         # schedule uart TX interrupt in len(buffer)/BAUDRATE seconds
-        self.timeline.scheduleEvent(done_sending_time, self.motehandler.getId(), self.intr_tx, self.INTR_TX)
+        self.timeline.schedule_event(done_sending_time, self.motehandler.get_id(), self.intr_tx, self.INTR_TX)
 
         # add to receive buffer
         with self.uart_rx_buffer_lock:
@@ -269,10 +269,10 @@ class BspUart(BspModule):
             self.tx_interrupt_flag = True
 
             # calculate the time at which the byte will have been sent
-            done_sending_time = self.timeline.getCurrentTime() + float(1.0 / float(self.BAUDRATE))
+            done_sending_time = self.timeline.get_current_time() + float(1.0 / float(self.BAUDRATE))
 
             # schedule uart TX interrupt in 1/BAUDRATE seconds
-            self.timeline.scheduleEvent(done_sending_time, self.motehandler.getId(), self.intr_tx, self.INTR_TX)
+            self.timeline.schedule_event(done_sending_time, self.motehandler.get_id(), self.intr_tx, self.INTR_TX)
 
             # add to receive buffer
             with self.uart_rx_buffer_lock:
@@ -321,12 +321,12 @@ class BspUart(BspModule):
     def _schedule_next_tx(self):
 
         # calculate time at which byte will get out
-        time_next_tx = self.timeline.getCurrentTime() + float(1.0 / float(self.BAUDRATE))
+        time_next_tx = self.timeline.get_current_time() + float(1.0 / float(self.BAUDRATE))
 
         # schedule that event
-        self.timeline.scheduleEvent(
+        self.timeline.schedule_event(
             time_next_tx,
-            self.motehandler.getId(),
+            self.motehandler.get_id(),
             self.intr_rx,
             self.INTR_RX
         )

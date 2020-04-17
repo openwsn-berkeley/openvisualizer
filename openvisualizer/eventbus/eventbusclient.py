@@ -37,7 +37,7 @@ class EventBusClient(object):
         log.info("create instance")
 
         # store params
-        self.dataLock = threading.RLock()
+        self.data_lock = threading.RLock()
         self.registrations = []
 
         # give this thread a name
@@ -61,7 +61,7 @@ class EventBusClient(object):
     def register(self, sender, signal, callback):
 
         # detect duplicate registrations
-        with self.dataLock:
+        with self.data_lock:
             for reg in self.registrations:
                 if reg['sender'] == sender and reg['signal'] == signal and reg['callback'] == callback:
                     raise SystemError(
@@ -79,13 +79,18 @@ class EventBusClient(object):
             'callback': callback,
             'numRx': 0,
         }
+<<<<<<< HEAD
 
         with self.data_lock:
             self.registrations += [new_registration]
+=======
+        with self.data_lock:
+            self.registrations += [newRegistration]
+>>>>>>> 814bdee... Package: simengine
 
     def unregister(self, sender, signal, callback):
 
-        with self.dataLock:
+        with self.data_lock:
             for reg in self.registrations:
                 if reg['sender'] == sender and self._signals_equivalent(reg['signal'], signal) and \
                         reg['callback'] == callback:
@@ -98,7 +103,7 @@ class EventBusClient(object):
         callback = None
 
         # find the callback
-        with self.dataLock:
+        with self.data_lock:
             for r in self.registrations:
                 if self._signals_equivalent(r['signal'], signal) and (
                         r['sender'] == sender or r['sender'] == self.WILDCARD):

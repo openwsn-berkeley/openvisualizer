@@ -205,7 +205,7 @@ class MoteProbe(threading.Thread):
             self._portname = self.serialport
         elif self.mode == self.MoteModes.MODE_EMULATED:
             self.emulatedMote = emulated_mote
-            self._portname = 'emulated{0}'.format(self.emulatedMote.getId())
+            self._portname = 'emulated{0}'.format(self.emulatedMote.get_id())
         elif self.mode == self.MoteModes.MODE_IOTLAB:
             self.iotlabmote = iotlab_mote
             self._portname = 'IoT-LAB{0}'.format(iotlab_mote)
@@ -272,7 +272,7 @@ class MoteProbe(threading.Thread):
                 self.serial = serial.Serial(self.serialport, self._baudrate, timeout=1, xonxoff=True, rtscts=False,
                                             dsrdtr=False)
             elif self.mode == self.MoteModes.MODE_EMULATED:
-                self.serial = self.emulatedMote.bspUart
+                self.serial = self.emulatedMote.bsp_uart
             elif self.mode == self.MoteModes.MODE_IOTLAB:
                 self.serial = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.serial.connect((self.iotlabmote, 20000))

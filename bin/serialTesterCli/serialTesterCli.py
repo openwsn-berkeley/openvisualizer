@@ -96,7 +96,7 @@ class serialTesterCli(OpenCli):
         self.moteConnector_handler.test(blocking=False)
     
     def _handle_stats(self,params):
-        stats = self.moteConnector_handler.getStats()
+        stats = self.moteConnector_handler.get_stats()
         output  = []
         for k in ['numSent','numOk','numCorrupted','numTimeout']:
             output += ['- {0:<15} : {1}'.format(k,stats[k])]

@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
+
 # Copyright (c) 2010-2013, Regents of the University of California. 
 # All rights reserved. 
 #  
@@ -16,11 +17,11 @@ from cmd import Cmd
 
 import bottle
 
+import openvisualizer_app
+import utils as u
 # do not remove line below, prevents PyCharm optimizing out the next import
 # noinspection PyUnresolvedReferences
 from helpers import build_python_path
-import openvisualizer_app
-import utils as u
 from openvisualizer.motehandler.motestate.motestate import MoteState
 from webserver import WebServer
 

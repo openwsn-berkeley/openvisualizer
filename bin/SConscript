@@ -94,6 +94,54 @@ def tui_runner(target, source, env):
 
     return result
 
+def test_runner(target, source, env):
+    """
+    Run a serial test on an attached mote.
+
+    :param env: contains the build environment
+    :param script: test script
+    """
+
+    # Include root directory
+    pypath = '.'
+    try:
+        env_path = os.environ['PYTHONPATH']
+        if env_path:
+            pypath = pypath + os.pathsep + env_path
+    except KeyError:
+        pass
+
+    sub_env = os.environ.copy()
+    sub_env['PYTHONPATH'] = pypath
+
+    arg_list = ['python', str(source[0])]
+
+    try:
+       p = subprocess.Popen(arg_list, env=sub_env)
+
+       if env['WAIT_ON_UI']:
+           # Must wait for a program that uses raw_input(); otherwise
+           # SCons exits and standard input is sent to shell.
+           result = p.wait()
+
+           if (os.name == 'posix' and result == -signal.SIGTERM) or (os.name != 'posix' and result == signal.SIGTERM):
+               # Likely from console; not an error
+               result = 0
+       else:
+           # Display PID to make it easier to kill if necessary.
+           print 'Child PID is {0}'.format(p.pid)
+    except ValueError or OSError:
+        result = 1
+
+    return result
+
+def setup_serial_test(env, ui_file):
+    # Create Builder to run OpenVisualizer
+    env.Append(BUILDERS={'RunTest': Builder(action=test_runner)})
+    targets = env.RunTest(ui_file)
+
+    return targets
+
 
 def setup_tui_runner(env, ui_file, data_dirs):
     """
@@ -168,3 +216,8 @@ env['DATA_FILES'] = []
 tuiEnv = env.Clone()
 tuiEnv['WAIT_ON_UI'] = True
 Alias('runtui', setup_tui_runner(tuiEnv, 'opentui.py', []))
+
+# Customize environment
+serialTestEnv = env.Clone()
+serialTestEnv['WAIT_ON_UI'] = True
+Alias('serialtest', setup_serial_test(serialTestEnv, 'serialtestercli.py'))

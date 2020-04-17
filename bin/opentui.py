@@ -18,7 +18,7 @@ import bottle
 
 # do not remove line below, prevents PyCharm optimizing out the next import
 # noinspection PyUnresolvedReferences
-import build_python_path
+from helpers import build_python_path
 import openvisualizer_app
 import utils as u
 from openvisualizer.motehandler.motestate.motestate import MoteState
@@ -145,8 +145,7 @@ class OpenTui(Cmd):
         names = self.get_names()
         names.sort()
         max_len = 65
-        self.stdout.write(
-            'type "help <topic>" for topic details\n'.format(80 - max_len - 3))
+        self.stdout.write('type "help <topic>" for topic details\n')
         for name in names:
             if name[:3] == 'do_':
                 try:
@@ -251,9 +250,9 @@ def _add_parser_args(parser):
     )
 
     parser.add_argument(
-        '--mqtt-broker-address',
-        dest='mqtt_broker_address',
-        default='argus.paris.inria.fr',
+        '--mqtt-broker',
+        dest='mqtt_broker',
+        default=None,
         action='store',
         help='MQTT broker address to use'
     )

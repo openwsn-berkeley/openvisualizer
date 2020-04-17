@@ -44,7 +44,10 @@ Targets:
           --pathTopo    Run in simulator mode with data imported from a previous topology saved in a json file.
           --host        Specify host to deploy webserver. Default is 'localhost'.
           --port        Specify port on which webserver will listen.
-          --simTopology=<linear|fully-meshed>
+          --trace       Profile OpenVisualizer
+          --mqtt-broker Specifies the address of the MQTT server, e.g., argus.paris.inria.fr, used by openvisualizer to
+                        send logging information.
+          --simTopo=<linear|fully-meshed>
                         Force a certain topology for simulation.
           --nosimcopy   Skips copying simulation firmware at startup from the openwsn-fw directory.
           --ovdebug     Enable debug mode; more detailed logging
@@ -75,6 +78,12 @@ Targets:
         Linux only Generate a standard Python source distribution archive (for setup.py) in build{0}dist directory.
         Installs to native directories for the OS on which this command is run. This command *must* be run on a Linux
         host to generate a Linux target archive. Installs data files to /usr/local/share.
+
+    serialtest:
+        Runs a serial test on a connected mote.
+
+    unittest:
+        Runs unittests of the openvisualizer package.
 
     docs:
         Generate source documentation in build{0}html directory
@@ -125,7 +134,13 @@ AddOption('--port',
     type      = 'int')
 runnerEnv['PORT'] = GetOption('port')
 
-AddOption('--simTopology',
+AddOption('--trace',
+    dest      = 'traceOpt',
+    default   = False,
+    action    = 'store_true')
+runnerEnv['TRACE'] = GetOption('traceOpt')
+
+AddOption('--simTopo',
     dest      = 'simTopology',
     default   = '',
     type      = 'string')
@@ -149,10 +164,11 @@ AddOption('--opentestbed',
     action    = 'store_true')
 runnerEnv['OPENTESTBED'] = GetOption('opentestbed')
 
-AddOption('--mqtt-broker-address',
-    dest      = 'mqtt_broker_address',
-    type      = 'string')
-runnerEnv['MQTT_BROKER_ADDRESS'] = GetOption('mqtt_broker_address')
+AddOption('--mqtt-broker',
+          dest='mqtt_broker',
+          default='',
+          type='string')
+runnerEnv['MQTT_BROKER'] = GetOption('mqtt_broker')
 
 AddOption('--opentun',
     dest      = 'opentun',

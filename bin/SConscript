@@ -59,11 +59,14 @@ def tui_runner(target, source, env):
     if env['DEBUGOPT']:
         arg_list.append('--debug')
 
+    if env['TRACE']:
+        arg_list.append('--trace')
+
     if env['OPENTESTBED']:
         arg_list.append('--opentestbed')
 
-    if env['MQTT_BROKER_ADDRESS']:
-        arg_list.append('--mqtt-broker-address=' + '{0}'.format(env['MQTT_BROKER_ADDRESS']))
+    if env['MQTT_BROKER']:
+        arg_list.append('--mqtt-broker={0}'.format(env['MQTT_BROKER']))
 
     if env['OPENTUN']:
         arg_list.append('--opentun')
@@ -113,7 +116,7 @@ def setup_tui_runner(env, ui_file, data_dirs):
     targets = env.RunUi(ui_file)
 
     Depends(targets, 'defines.py')
-    Command('defines.py', '', 'python bin/generate_defines.py')
+    Command('defines.py', '', 'python bin/helpers/generate_defines.py')
 
     if (env['SIMOPT'] or env['SIMCOUNT']) and env['SIMCOPYOPT']:
         # Appending ui_file to pseudo-target to make it unique.

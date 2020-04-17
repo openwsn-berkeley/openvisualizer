@@ -20,8 +20,7 @@ log.addHandler(logging.NullHandler())
 
 class OpenLbr(eventbusclient.EventBusClient):
     """
-    Class which is responsible for translating between 6LoWPAN and IPv6
-    headers.
+    Class which is responsible for translating between 6LoWPAN and IPv6 headers.
 
     This class implements the following RFCs:
 
@@ -29,9 +28,10 @@ class OpenLbr(eventbusclient.EventBusClient):
       Compression Format for IPv6 Datagrams over IEEE 802.15.4-Based Networks.
     * *http://tools.ietf.org/html/rfc2460*
       Internet Protocol, Version 6 (IPv6) Specification
-    * *http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03
+    * *http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03*
        The IPv6 Flow Label within a rpl domain
     """
+
     # implementing http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03
 
     # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml

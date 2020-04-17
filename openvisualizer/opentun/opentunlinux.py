@@ -23,8 +23,8 @@ log.addHandler(logging.NullHandler())
 
 class TunReadThread(threading.Thread):
     """
-    Thread which continuously reads input from a TUN interface.
-    When data is received from the interface, it calls a callback configured during instantiation.
+    Thread which continuously reads input from a TUN interface. When data is received from the interface, it calls a
+    callback configured during instantiation.
     """
 
     ETHERNET_MTU = 1500

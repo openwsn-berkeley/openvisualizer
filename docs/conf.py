@@ -68,12 +68,6 @@ release = '1.6'
 # directories to ignore when looking for source files.
 exclude_patterns = ['build']
 
-# Avoids an import error from reading wrong file for platform.
-if os.name == 'nt':
-    exclude_patterns += ['openTunLinux.rst']
-elif os.name == 'posix':
-    exclude_patterns += ['openTunWindows.rst']
-
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
 

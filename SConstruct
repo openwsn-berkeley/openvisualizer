@@ -29,9 +29,10 @@ print '\n'.join(banner)
 Help('''
 Usage:
     scons [options] runtui
-    scons serialtest
     scons copy-simfw
     scons <sdist|upload|sdist-native>
+    scons serialtest
+    scons unittest
     scons docs
 
 Targets:
@@ -55,9 +56,6 @@ Targets:
           --usePageZero Use page number 0 in page dispatch of 6lowpan packet (only works within one-hop).
           --opentun     Use a TUN inferface to route packets from the mesh network to the Internet. This option requires
                         superuser/administrator privileges since it access the networking capabilities of your computer.
-
-    serialtest:
-        Runs a serial test on a connected mote.
 
     copy-simfw:
         Copy files for the simulator, generated from an OpenWSN firmware build on this host. Assumes firmware top-level
@@ -220,15 +218,17 @@ Alias('copy-simfw', sconsutils.copy_simulation_fw(env, 'simcopy'))
 # firmware before starting.
 
 app_dir = os.path.join('bin')
-SConscript(
-    os.path.join(app_dir, 'SConscript'),
-    exports = {"env": runnerEnv},
-)
+SConscript(os.path.join(app_dir, 'SConscript'), exports = {"env": runnerEnv})
 
 # Copy variables for data files out of runner environment, to be used in
 # dist targets below.
 env['CONF_FILES'] = runnerEnv['CONF_FILES']
 env['DATA_DIRS']  = runnerEnv['DATA_DIRS']
+
+#===== unittest and functest
+
+test_dir = os.path.join('tests')
+SConscript(os.path.join(test_dir, 'SConscript'), exports = {"env": runnerEnv})
 
 #===== sdist
 

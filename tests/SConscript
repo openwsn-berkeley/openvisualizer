@@ -1,0 +1,44 @@
+"""
+SConscript to run the unittests.
+"""
+
+import os
+import subprocess
+
+Import('env')
+
+
+def test_runner(target, source, env):
+    pypath = '.'
+    try:
+        env_path = os.environ['PYTHONPATH']
+        if env_path:
+            pypath = pypath + os.pathsep + env_path
+    except KeyError:
+        pass
+
+    subEnv = os.environ.copy()
+    subEnv['PYTHONPATH'] = pypath
+
+    arg_list = ['python', str(source[0])]
+    arg_list.append('--test_dir={}'.format('tests/unittests'))
+
+
+    try:
+        print arg_list
+        p = subprocess.Popen(arg_list, env=subEnv)
+        p.wait()
+    except Exception:
+        return 1
+
+    return 0
+
+def setup_test_runner(env, test_file):
+    env.Append(BUILDERS={'Tests': Builder(action=test_runner)})
+    targets = env.Tests(test_file)
+
+    return targets
+
+unittest_env = env.Clone()
+Alias('unittest', setup_test_runner(unittest_env, 'test_runner.py'))
+

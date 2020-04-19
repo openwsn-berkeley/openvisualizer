@@ -10,9 +10,8 @@ import threading
 
 from pydispatch import dispatcher
 
-import OpenParser
-import ParserException
-from openvisualizer.eventBus.eventBusClient import eventBusClient
+from openvisualizer.eventbus.eventbusclient import EventBusClient
+from openvisualizer.motehandler.moteconnector.openparser import parserexception, openparser
 from openvisualizer.motehandler.motestate.motestate import MoteState
 
 log = logging.getLogger('MoteConnector')
@@ -25,7 +24,7 @@ class MoteConnector(eventBusClient):
     def __init__(self, mote_probe):
 
         # log
-        log.info("create instance")
+        log.debug("create instance")
 
         self.mote_probe = mote_probe
         # store params
@@ -155,11 +154,8 @@ class MoteConnector(eventBusClient):
                 if not success:
                     return
 
-                # print dataToSend
                 # send command to GD image
-                self._send_to_mote_probe(
-                    dataToSend=dataToSend,
-                )
+                self._send_to_mote_probe(dataToSend=dataToSend)
             else:
                 raise SystemError('unexpected action={0}'.format(data['action']))
 

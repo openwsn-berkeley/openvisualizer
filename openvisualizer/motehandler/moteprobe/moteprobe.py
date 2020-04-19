@@ -29,7 +29,7 @@ import openhdlc
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.motehandler.moteconnector.SerialTester import SerialTester
 
-log = logging.getLogger('moteprobe')
+log = logging.getLogger('MoteProbe')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
@@ -94,7 +94,7 @@ def find_serial_ports(is_iot_motes=False):
             probe.join()
 
     # log
-    log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0], s[1]) for s in mote_ports]))
+    log.debug("discovered following serial port(s): {0}".format(['{0}@{1}'.format(s[0], s[1]) for s in mote_ports]))
 
     return mote_ports
 
@@ -220,7 +220,7 @@ class MoteProbe(threading.Thread):
         self.mqtt_broker_address = mqtt_broker_address
 
         # log
-        log.info("creating MoteProbe attaching to {0}".format(self._portname))
+        log.debug("creating MoteProbe attaching to {0}".format(self._portname))
 
         # local variables
         self.hdlc = openhdlc.OpenHdlc()
@@ -265,8 +265,8 @@ class MoteProbe(threading.Thread):
     def run(self):
         try:
             # log
-            log.info("start running")
-            log.info("open port {0}".format(self._portname))
+            log.debug("start running")
+            log.debug("open port {0}".format(self._portname))
 
             if self.mode == self.MoteModes.MODE_SERIAL:
                 self.serial = serial.Serial(self.serialport, self._baudrate, timeout=1, xonxoff=True, rtscts=False,
@@ -417,9 +417,9 @@ class MoteProbe(threading.Thread):
         try:
             serial_bytes = json.loads(message.payload)['serialbytes']
         except:
-            print "Error: failed to parse message payload {0}".format(message.payload)
+            log.error("failed to parse message payload {0}".format(message.payload))
         else:
             try:
                 self.serialbytes_queue.put(serial_bytes, block=False)
             except:
-                print "queue overflow"
+                log.error("queue overflow")

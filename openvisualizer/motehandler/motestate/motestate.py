@@ -107,7 +107,7 @@ class MoteState(eventBusClient):
     def __init__(self, mote_connector):
 
         # log
-        log.info("create instance")
+        log.debug("create instance")
 
         # store params
         self.mote_connector = mote_connector

@@ -58,7 +58,7 @@ class OpenVisualizerApp(object):
         self.open_lbr = openlbr.OpenLbr(use_page_zero)
         self.rpl = rpl.RPL()
         self.jrc = jrc.JRC()
-        self.topology = topology.topology()
+        self.topology = topology.Topology()
         self.dagroot_list = []
         self.mote_probes = []
 

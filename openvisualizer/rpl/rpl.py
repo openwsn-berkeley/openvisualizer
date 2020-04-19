@@ -54,8 +54,7 @@ class RPL(eventbusclient.EventBusClient):
         log.debug("create instance")
 
         # initialize parent class
-        eventbusclient.EventBusClient.__init__(
-            self,
+        super(RPL, self).__init__(
             name='rpl',
             registrations=[
                 {
@@ -77,13 +76,13 @@ class RPL(eventbusclient.EventBusClient):
         )
 
         # local variables
-        self.stateLock = threading.Lock()
+        self.state_lock = threading.Lock()
         self.state = {}
-        self.networkPrefix = None
-        self.dagRootEui64 = None
-        self.sourceRoute = sourcerouting.SourceRoute()
-        self.latencyStats = {}
-        self.parentsDaoSeq = {}
+        self.network_prefix = None
+        self.dagroot_eui64 = None
+        self.source_route = sourcerouting.SourceRoute()
+        self.latency_stats = {}
+        self.parents_dao_seq = {}
 
     # ======================== public ==========================================
 
@@ -98,21 +97,21 @@ class RPL(eventbusclient.EventBusClient):
     def _network_prefix_notif(self, sender, signal, data):
         """ Record the network prefix. """
         # store
-        with self.stateLock:
-            self.networkPrefix = data[:]
+        with self.state_lock:
+            self.network_prefix = data[:]
 
     def _info_dagroot_notif(self, sender, signal, data):
         """ Record the DAGroot's EUI64 address. """
 
-        # stop of we don't have a networkPrefix assigned yet
-        if not self.networkPrefix:
+        # stop of we don't have a network_prefix assigned yet
+        if not self.network_prefix:
             log.error("infoDagRoot signal received while not have been assigned a networkPrefix yet")
             return
 
         new_dagroot_eui64 = data['eui64'][:]
 
-        with self.stateLock:
-            same_dagroot = (self.dagRootEui64 == new_dagroot_eui64)
+        with self.state_lock:
+            same_dagroot = (self.dagroot_eui64 == new_dagroot_eui64)
 
         # register the DAGroot
         if data['isDAGroot'] == 1 and not same_dagroot:
@@ -123,7 +122,7 @@ class RPL(eventbusclient.EventBusClient):
             self.register(
                 sender=self.WILDCARD,
                 signal=(
-                    tuple(self.networkPrefix + new_dagroot_eui64),
+                    tuple(self.network_prefix + new_dagroot_eui64),
                     self.PROTO_ICMPv6,
                     self.IANA_ICMPv6_RPL_TYPE
                 ),
@@ -133,13 +132,13 @@ class RPL(eventbusclient.EventBusClient):
             # announce new DAG root
             self.dispatch(
                 signal='registerDagRoot',
-                data={'prefix': self.networkPrefix,
+                data={'prefix': self.network_prefix,
                       'host': new_dagroot_eui64}
             )
 
             # store DAGroot
-            with self.stateLock:
-                self.dagRootEui64 = new_dagroot_eui64
+            with self.state_lock:
+                self.dagroot_eui64 = new_dagroot_eui64
 
         # unregister the DAGroot
         if data['isDAGroot'] == 0 and same_dagroot:
@@ -150,7 +149,7 @@ class RPL(eventbusclient.EventBusClient):
             self.unregister(
                 sender=self.WILDCARD,
                 signal=(
-                    tuple(self.networkPrefix + new_dagroot_eui64),
+                    tuple(self.network_prefix + new_dagroot_eui64),
                     self.PROTO_ICMPv6,
                     self.IANA_ICMPv6_RPL_TYPE
                 ),
@@ -160,13 +159,13 @@ class RPL(eventbusclient.EventBusClient):
             # announce that node is no longer DAG root
             self.dispatch(
                 signal='unregisterDagRoot',
-                data={'prefix': self.networkPrefix,
-                      'host': self.dagRootEui64}
+                data={'prefix': self.network_prefix,
+                      'host': self.dagroot_eui64}
             )
 
             # clear DAGroot
-            with self.stateLock:
-                self.dagRootEui64 = None
+            with self.state_lock:
+                self.dagroot_eui64 = None
 
     def _from_mote_data_local_notif(self, sender, signal, data):
         """ Called when receiving fromMote.data.local, probably a DAO. """
@@ -176,7 +175,7 @@ class RPL(eventbusclient.EventBusClient):
 
     def _get_source_route_notif(self, sender, signal, data):
         destination = data
-        return self.sourceRoute.getSourceRoute(destination)
+        return self.source_route.getSourceRoute(destination)
 
     # ===== receive DAO
 
@@ -255,24 +254,24 @@ class RPL(eventbusclient.EventBusClient):
         # log
         output = []
         output += [
-            'received RPL DAO from {0}:{1}'.format(u.format_ipv6_addr(self.networkPrefix), u.format_ipv6_addr(source))]
+            'received RPL DAO from {0}:{1}'.format(u.format_ipv6_addr(self.network_prefix), u.format_ipv6_addr(source))]
         output += ['- parents:']
         for p in parents:
-            output += ['   {0}:{1}'.format(u.format_ipv6_addr(self.networkPrefix), u.format_ipv6_addr(p))]
+            output += ['   {0}:{1}'.format(u.format_ipv6_addr(self.network_prefix), u.format_ipv6_addr(p))]
         output += ['- children:']
         for p in children:
-            output += ['   {0}:{1}'.format(u.format_ipv6_addr(self.networkPrefix), u.format_ipv6_addr(p))]
+            output += ['   {0}:{1}'.format(u.format_ipv6_addr(self.network_prefix), u.format_ipv6_addr(p))]
         output = '\n'.join(output)
         log.info(output)
 
         node = u.format_ipv6_addr(source)
-        if not (node in self.parentsDaoSeq.keys()):
-            self.parentsDaoSeq[node] = [dao_header['RPL_DAO_Sequence']]
+        if not (node in self.parents_dao_seq.keys()):
+            self.parents_dao_seq[node] = [dao_header['RPL_DAO_Sequence']]
         else:
-            self.parentsDaoSeq[node].append(dao_header['RPL_DAO_Sequence'])
+            self.parents_dao_seq[node].append(dao_header['RPL_DAO_Sequence'])
 
         with open('dao_sequence.txt', 'a') as f:
-            f.write(str(self.parentsDaoSeq) + '\n')
+            f.write(str(self.parents_dao_seq) + '\n')
 
         # if you get here, the DAO was parsed correctly
 

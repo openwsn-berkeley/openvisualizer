@@ -8,10 +8,10 @@ import sys
 import threading
 
 if sys.platform.startswith("win32"):
-    import _winreg as reg
-    import win32file
-    import win32event
-    import pywintypes
+    import _winreg as reg  # pylint: disable=import-error
+    import win32file  # pylint: disable=import-error
+    import win32event  # pylint: disable=import-error
+    import pywintypes  # pylint: disable=import-error
 
 import openvisualizer.openvisualizer_utils as u
 from opentun import OpenTun

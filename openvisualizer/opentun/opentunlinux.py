@@ -9,7 +9,7 @@ import os
 import struct
 import sys
 import threading
-from fcntl import ioctl
+from fcntl import ioctl  # pylint: disable=import-error
 
 import openvisualizer.openvisualizer_utils as u
 from opentun import OpenTun

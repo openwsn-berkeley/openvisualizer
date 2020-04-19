@@ -11,7 +11,7 @@ from openvisualizer.eventbus import eventbusclient
 from openvisualizer.openlbr.sixlowpan_frag import Fragmentor
 from openvisualizer.opentun.opentun import OpenTun
 
-log = logging.getLogger('openlbr')
+log = logging.getLogger('OpenLbr')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
@@ -337,7 +337,6 @@ class OpenLbr(eventbusclient.EventBusClient):
                 # icmp header
                 if len(ipv6dic['payload']) < 5:
                     log.critical("wrong payload lenght on ICMPv6 packet {0}".format(",".join(str(c) for c in data)))
-                    print "wrong payload lenght on ICMPv6 packet {0}".format(",".join(str(c) for c in data))
                     return
 
                 ipv6dic['icmpv6_type'] = ipv6dic['payload'][0]
@@ -352,7 +351,6 @@ class OpenLbr(eventbusclient.EventBusClient):
                 # udp header -- can be compressed.. assume first it is not compressed.
                 if len(ipv6dic['payload']) < 5:
                     log.critical("wrong payload length on UDP packet {0}".format(",".join(str(c) for c in data)))
-                    print "wrong payload length on UDP packet {0}".format(",".join(str(c) for c in data))
                     return
 
                 if ipv6dic['payload'][0] & self.NHC_UDP_MASK == self.NHC_UDP_ID:
@@ -552,7 +550,7 @@ class OpenLbr(eventbusclient.EventBusClient):
         return_val = []
 
         if self.usePageZero:
-            print 'Page dispatch page number zero is not supported!\n'
+            log.error('Page dispatch page number zero is not supported!')
             raise SystemError()
 
         # the 6lowpan packet contains 4 parts
@@ -852,7 +850,6 @@ class OpenLbr(eventbusclient.EventBusClient):
                             output += ['org_time is {0}'.format(u.format_addr(o_time))]
                         output = '\n'.join(output)
                         log.error(output)
-                        print output
 
                     ptr += length + 1
             else:

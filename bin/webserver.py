@@ -178,7 +178,7 @@ class WebServer(EventBusClient):
         return tmpl_data
 
     def _show_dag(self):
-        states, edges = self.app.topology.getDAG()
+        states, edges = self.app.topology.get_dag()
         return {'states': states, 'edges': edges}
 
     @view('connectivity.tmpl')

@@ -62,7 +62,7 @@ def test_source_route(expected_source_route):
     source_route = SourceRoute()
 
     # instantiate topology module (otherwise the dispatch calls will fail)
-    _ = topology.topology()
+    _ = topology.Topology()
 
     source_route.dispatch(
         signal='updateParents',

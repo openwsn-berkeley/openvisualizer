@@ -102,6 +102,7 @@ env = Environment(
 
 # Must define with absolute path since SCons construction may occur in a subdirectory via SConscript.
 env['ROOT_BUILD_DIR'] = os.path.join(os.getcwd(), 'build')
+env['ROOT_PROJECT_DIR'] = os.path.join(os.getcwd())
 
 # External openwsn-fw repository directory. An environment variable makes it easy to change since it depends on the host
 # running this script.

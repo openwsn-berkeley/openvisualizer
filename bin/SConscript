@@ -200,11 +200,14 @@ def setup_tui_runner(env, ui_file, data_dirs):
         )
         AlwaysBuild(bldNode)
 
+    Clean(targets, env['ROOT_BUILD_DIR'])
+    Clean(targets, env['CLEAN_UP'])
     return targets
 
 
 # Prepare the environment to create builders for data files and directoires, as well as a builder to run the app itself.
 env['BUILD_DIR'] = os.path.join(env['ROOT_BUILD_DIR'], 'runui')
+env['CLEAN_UP'] = os.path.join(env['ROOT_PROJECT_DIR'], 'debugpins.vcd')
 env['WAIT_ON_UI'] = False
 
 # Must create the entries for use here and by parent SConstruct to identify these kinds of files for other use.

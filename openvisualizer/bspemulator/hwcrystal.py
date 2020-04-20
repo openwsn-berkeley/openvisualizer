@@ -29,7 +29,7 @@ class HwCrystal(HwModule):
         self.max_drift = self.MAXDRIFT
 
         # local variables
-        self.drift = float(random.uniform(0, self.max_drift))
+        self.drift = float(random.uniform(-self.max_drift, self.max_drift))
 
         # the duration of one tick. Since it is constant, it is only calculated once by _getPeriod(). Therefore, do not
         # use directly, rather use property period

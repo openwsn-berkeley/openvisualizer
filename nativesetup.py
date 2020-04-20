@@ -1,7 +1,9 @@
-from distutils.core import setup
 import glob
-from openvisualizer import version
+
+from distutils.core import setup
+
 from openvisualizer import appdirs
+from openvisualizer import version
 
 '''
 This implementation of the traditional setup.py uses the application-level data_files parameter to store data files, 
@@ -18,16 +20,16 @@ Use of the legacy distutils package also accommodates existing Linux packaging t
 '''
 
 VERSION = '.'.join([str(v) for v in version.VERSION])
-datadir = appdirs.site_data_dir('openvisualizer', 'OpenWSN')
-confdir = appdirs.site_config_dir('openvisualizer', 'OpenWSN')
-webstatic = 'web_files/static'
-webtmpl = 'web_files/templates'
-simdata = 'sim_files'
+data_dir = appdirs.site_data_dir('openvisualizer', 'OpenWSN')
+conf_dir = appdirs.site_config_dir('openvisualizer', 'OpenWSN')
+web_static = 'web_files/static'
+web_tmpl = 'web_files/templates'
+sim_data = 'sim_files'
 with open('README.txt') as f:
     LONG_DESCRIPTION = f.read()
 
 
-def appdirGlob(globstr, subdir=''):
+def app_dir_glob(globstr, subdir=''):
     appdir = 'bin'
     if subdir == '':
         return glob.glob('/'.join([appdir, globstr]))
@@ -42,22 +44,22 @@ setup(
               'openvisualizer.moteprobe', 'openvisualizer.motehandler.motestate', 'openvisualizer.openlbr',
               'openvisualizer.opentun', 'openvisualizer.rpl', 'openvisualizer.simengine', 'openvisualizer.jrc'],
     package_dir={'': '.', 'openvisualizer': 'openvisualizer'},
-    scripts=appdirGlob('opentui.py'),
+    scripts=[app_dir_glob('openvisualizer_*.py'), app_dir_glob('webserver.py'), app_dir_glob('helpers')],
     # Copy sim_data files by extension so don't copy .gitignore in that directory.
-    data_files=[(confdir, appdirGlob('*.conf')),
-                ('/'.join([datadir, webstatic, 'css']), appdirGlob('*', '/'.join([webstatic, 'css']))),
-                ('/'.join([datadir, webstatic, 'font-awesome', 'css']),
-                 appdirGlob('*', '/'.join([webstatic, 'font-awesome', 'css']))),
-                ('/'.join([datadir, webstatic, 'font-awesome', 'fonts']),
-                 appdirGlob('*', '/'.join([webstatic, 'font-awesome', 'fonts']))),
-                ('/'.join([datadir, webstatic, 'images']), appdirGlob('*', '/'.join([webstatic, 'images']))),
-                ('/'.join([datadir, webstatic, 'js']), appdirGlob('*.js', '/'.join([webstatic, 'js']))),
-                ('/'.join([datadir, webstatic, 'js', 'plugins', 'metisMenu']),
-                 appdirGlob('*', '/'.join([webstatic, 'js', 'plugins', 'metisMenu']))),
-                ('/'.join([datadir, webtmpl]), appdirGlob('*', webtmpl)),
-                ('/'.join([datadir, simdata]), appdirGlob('*.so', simdata)),
-                ('/'.join([datadir, simdata]), appdirGlob('*.py', simdata)),
-                ('/'.join([datadir, simdata]), appdirGlob('*.h', simdata))],
+    data_files=[(conf_dir, app_dir_glob('*.conf')),
+                ('/'.join([data_dir, web_static, 'css']), app_dir_glob('*', '/'.join([web_static, 'css']))),
+                ('/'.join([data_dir, web_static, 'font-awesome', 'css']),
+                 app_dir_glob('*', '/'.join([web_static, 'font-awesome', 'css']))),
+                ('/'.join([data_dir, web_static, 'font-awesome', 'fonts']),
+                 app_dir_glob('*', '/'.join([web_static, 'font-awesome', 'fonts']))),
+                ('/'.join([data_dir, web_static, 'images']), app_dir_glob('*', '/'.join([web_static, 'images']))),
+                ('/'.join([data_dir, web_static, 'js']), app_dir_glob('*.js', '/'.join([web_static, 'js']))),
+                ('/'.join([data_dir, web_static, 'js', 'plugins', 'metisMenu']),
+                 app_dir_glob('*', '/'.join([web_static, 'js', 'plugins', 'metisMenu']))),
+                ('/'.join([data_dir, web_tmpl]), app_dir_glob('*', web_tmpl)),
+                ('/'.join([data_dir, sim_data]), app_dir_glob('*.so', sim_data)),
+                ('/'.join([data_dir, sim_data]), app_dir_glob('*.py', sim_data)),
+                ('/'.join([data_dir, sim_data]), app_dir_glob('*.h', sim_data))],
     version=VERSION,
     author='Thomas Watteyne',
     author_email='watteyne@eecs.berkeley.edu',

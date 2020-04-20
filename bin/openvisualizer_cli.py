@@ -25,10 +25,10 @@ from helpers import build_python_path
 from openvisualizer.motehandler.motestate.motestate import MoteState
 from webserver import WebServer
 
-log = logging.getLogger('OpenTui')
+log = logging.getLogger('OpenVisualizerCli')
 
 
-class OpenTui(Cmd):
+class OpenVisualizerCli(Cmd):
 
     def __init__(self, app):
         log.debug('create instance')
@@ -325,7 +325,7 @@ def main():
 
     # initialize openvisualizer application
     app = openvisualizer_app.main(parser, conf_dir, data_dir, log_dir, DEFAULT_MOTE_COUNT)
-    cli = OpenTui(app)
+    cli = OpenVisualizerCli(app)
 
     log.debug('Using external dirs:\n    {}'.format(
         '\n    '.join(['conf     = {0}'.format(conf_dir),

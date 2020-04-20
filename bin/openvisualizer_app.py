@@ -278,15 +278,15 @@ def main(parser, conf_dir, data_dir, log_dir, sim_motes):
 
     log.info('Initializing OpenVisualizerApp with options:\n\t- {0}'.format(
         '\n\t- '.join(['appdir          = {0}'.format(args.appdir),
-                      'sim             = {0}'.format(args.simulator_mode),
-                      'simCount        = {0}'.format(args.num_motes),
-                      'simTopology     = {0}'.format(topo),
-                      'trace           = {0}'.format(args.trace),
-                      'debug           = {0}'.format(args.debug),
-                      'mqtt-broker     = {0}'.format(args.mqtt_broker),
-                      'testbed_motes   = {0}'.format(args.testbed_motes),
-                      'use_page_zero   = {0}'.format(args.use_page_zero)],
-                     )))
+                       'sim             = {0}'.format(args.simulator_mode),
+                       'simCount        = {0}'.format(args.num_motes),
+                       'simTopology     = {0}'.format(topo),
+                       'trace           = {0}'.format(args.trace),
+                       'debug           = {0}'.format(args.debug),
+                       'mqtt-broker     = {0}'.format(args.mqtt_broker),
+                       'testbed_motes   = {0}'.format(args.testbed_motes),
+                       'use_page_zero   = {0}\n'.format(args.use_page_zero)],
+                      )))
 
     log.debug('sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path)))
 

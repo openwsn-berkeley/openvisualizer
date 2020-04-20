@@ -4,7 +4,7 @@
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
-""" SCons script to run the application within the source repository. Provides the runtui target. """
+""" SCons script to run the application within the source repository. Provides the runov target. """
 
 import os
 import signal
@@ -15,7 +15,7 @@ import sconsutils
 Import('env')
 
 
-def tui_runner(target, source, env):
+def cli_runner(target, source, env):
     """
     Builder to run OpenVisualizerApp as subprocess in current directory.
     Note: Although this SCons task is constructed in the bin directory, it is executed from the root OpenVisualizer
@@ -143,7 +143,7 @@ def setup_serial_test(env, ui_file):
     return targets
 
 
-def setup_tui_runner(env, ui_file, data_dirs):
+def setup_cli_runner(env, ui_file, data_dirs):
     """
     Sets up dependencies for data files required to run an OpenVisualizer
     UI. The data files are copied to the environment's BUILD_DIR.
@@ -159,7 +159,7 @@ def setup_tui_runner(env, ui_file, data_dirs):
     """
 
     # Create Builder to run OpenVisualizer
-    env.Append(BUILDERS={'RunUi': Builder(action=tui_runner)})
+    env.Append(BUILDERS={'RunUi': Builder(action=cli_runner)})
 
     targets = env.RunUi(ui_file)
 
@@ -214,9 +214,9 @@ env['DATA_DIRS'] = ['web_files', 'sim_files']
 env['DATA_FILES'] = []
 
 # Customize environment for each target. Must remove 'host' and 'port'
-tuiEnv = env.Clone()
-tuiEnv['WAIT_ON_UI'] = True
-Alias('runtui', setup_tui_runner(tuiEnv, 'opentui.py', []))
+cliEnv = env.Clone()
+cliEnv['WAIT_ON_UI'] = True
+Alias('runov', setup_cli_runner(cliEnv, 'openvisualizer_cli.py', []))
 
 # Customize environment
 serialTestEnv = env.Clone()

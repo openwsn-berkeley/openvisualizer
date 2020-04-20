@@ -28,7 +28,7 @@ print '\n'.join(banner)
 
 Help('''
 Usage:
-    scons [options] runtui
+    scons [options] runov
     scons copy-simfw
     scons <sdist|upload|sdist-native>
     scons serialtest
@@ -37,8 +37,8 @@ Usage:
     scons docs
 
 Targets:
-    runtui:
-        Runs the OpenVisualizer terminal user interface. The application is run in the build/runui/ directory. By
+    runov:
+        Runs the OpenVisualizer command line interface. The application is run in the build/runui/ directory. By
         default it does not require superuser/administrator privileges.
 
         Options
@@ -218,7 +218,7 @@ runnerEnv['SIMHOSTOPT'] = env['SIMHOSTOPT']
 
 Alias('copy-simfw', sconsutils.copy_simulation_fw(env, 'simcopy'))
 
-# ===== runtui, serialtest
+# ===== runov, serialtest
 
 # Must define run targets below the copy-simfw target so SIMHOSTOPT is available. Run targets may copy simulation
 # firmware before starting.
@@ -252,7 +252,7 @@ modules = ['openvisualizer/' + d for d in ['bspemulator',
                                            'openvisualizer_utils.py']] + \
           ['bin/' + d for d in ['helpers',
                                 'opencli.py',
-                                'opentui.py',
+                                'openvisualizer_cli.py',
                                 'openvisualizer_app.py',
                                 'serialtestercli.py',
                                 #'webserver.py'

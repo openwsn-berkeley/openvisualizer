@@ -179,13 +179,17 @@ class OpenVisualizerApp(object):
 
     def close(self):
         """ Closes all thread-based components. """
-        log.info('Closing OpenVisualizer')
+        log.info('Closing OpenVisualizer and cleaning-up...')
 
         self.opentun.close()
         self.rpl.close()
         self.jrc.close()
         for probe in self.mote_probes:
             probe.close()
+
+        sim_file = os.path.join(os.getcwd(), 'debugpins.vcd')
+        if os.path.exists(sim_file):
+            os.remove(sim_file)
 
     def get_mote_state(self, mote_id):
         """

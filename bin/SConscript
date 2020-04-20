@@ -200,6 +200,7 @@ def setup_tui_runner(env, ui_file, data_dirs):
         )
         AlwaysBuild(bldNode)
 
+    Clean(targets, env['ROOT_BUILD_DIR'])
     return targets
 
 

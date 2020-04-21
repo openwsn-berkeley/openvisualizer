@@ -13,3 +13,6 @@ hkdf
 paho-mqtt
 scapy
 pytest
+colorama
+coloredlogs
+verboselogs

@@ -15,10 +15,13 @@ Module which coordinates rpl DIO and DAO messages.
 
 import logging
 import threading
+import verboselogs
 
 import openvisualizer.openvisualizer_utils as u
 import sourcerouting
 from openvisualizer.eventbus import eventbusclient
+
+verboselogs.install()
 
 log = logging.getLogger('RPL')
 log.setLevel(logging.ERROR)
@@ -116,7 +119,7 @@ class RPL(eventbusclient.EventBusClient):
         # register the DAGroot
         if data['isDAGroot'] == 1 and not same_dagroot:
             # log
-            log.info("registering DAGroot {0}".format(u.format_addr(new_dagroot_eui64)))
+            log.success("registering DAGroot {0}".format(u.format_addr(new_dagroot_eui64)))
 
             # register
             self.register(
@@ -255,12 +258,12 @@ class RPL(eventbusclient.EventBusClient):
         output = []
         output += [
             'received RPL DAO from {0}:{1}'.format(u.format_ipv6_addr(self.network_prefix), u.format_ipv6_addr(source))]
-        output += ['- parents:']
+        output += ['\t\t- parents:']
         for p in parents:
-            output += ['   {0}:{1}'.format(u.format_ipv6_addr(self.network_prefix), u.format_ipv6_addr(p))]
-        output += ['- children:']
+            output += ['\t\t   {0}:{1}'.format(u.format_ipv6_addr(self.network_prefix), u.format_ipv6_addr(p))]
+        output += ['\t\t- children:']
         for p in children:
-            output += ['   {0}:{1}'.format(u.format_ipv6_addr(self.network_prefix), u.format_ipv6_addr(p))]
+            output += ['\t\t   {0}:{1}'.format(u.format_ipv6_addr(self.network_prefix), u.format_ipv6_addr(p))]
         output = '\n'.join(output)
         log.info(output)
 

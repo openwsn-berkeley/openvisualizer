@@ -16,6 +16,8 @@ from argparse import ArgumentParser
 from cmd import Cmd
 
 import bottle
+import coloredlogs
+import verboselogs
 
 import openvisualizer_app
 import utils as u
@@ -25,7 +27,16 @@ from helpers import build_python_path
 from openvisualizer.motehandler.motestate.motestate import MoteState
 from webserver import WebServer
 
+verboselogs.install()
 log = logging.getLogger('OpenVisualizerCli')
+
+coloredlogs.DEFAULT_FIELD_STYLES = {'asctime': {'color': 35}, 'hostname': {}, 'levelname': {'bold': True, 'color': 31},
+                                    'name': {}, 'programname': {}, 'username': {}}
+
+coloredlogs.DEFAULT_LEVEL_STYLES = {'critical': {'bold': True, 'color': 'red'}, 'debug': {'color': 'white'},
+                                    'error': {'color': 'red'}, 'info': {}, 'notice': {'color': 178}, 'spam': {},
+                                    'success': {'color': 83}, 'verbose': {},
+                                    'warning': {'color': 166}}
 
 
 class OpenVisualizerCli(Cmd):
@@ -46,8 +57,8 @@ class OpenVisualizerCli(Cmd):
 
     def start_webserver(self, args):
         log.info(
-            'Initializing webserver with options: \n\t{0}'.format(
-                '\n\t'.join(
+            'Initializing webserver with options: \n\t\t{0}'.format(
+                '\n\t\t'.join(
                     ['host: {0}'.format(args.host), 'port: {0}'.format(args.port)]
                 )
             )

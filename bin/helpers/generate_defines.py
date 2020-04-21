@@ -1,4 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
+#!/usr/bin/env python2
+
+# Copyright (c) 2010-2013, Regents of the University of California.
 # All rights reserved. 
 #  
 # Released under the BSD 3-Clause license as published at the link below.
@@ -129,7 +131,6 @@ def gen_sixtop_state_machine():
 # ============================ main ============================================
 
 def main():
-    print os.getcwd()
     # check if we can access the opendefs.h and sixtop file
     if os.path.exists(INPUT_FILE) and os.path.exists(INPUT_FILE_SIXTOP):
 

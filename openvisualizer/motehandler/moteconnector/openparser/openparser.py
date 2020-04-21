@@ -22,7 +22,11 @@ class OpenParser(parser.Parser):
 
     SERFRAME_MOTE2PC_DATA = ord('D')
     SERFRAME_MOTE2PC_STATUS = ord('S')
+    SERFRAME_MOTE2PC_DEBUG = ParserInfoErrorCritical.LogSeverity.SEVERITY_DEBUG
     SERFRAME_MOTE2PC_INFO = ParserInfoErrorCritical.LogSeverity.SEVERITY_INFO
+    SERFRAME_MOTE2PC_NOTICE = ParserInfoErrorCritical.LogSeverity.SEVERITY_NOTICE
+    SERFRAME_MOTE2PC_WARNING = ParserInfoErrorCritical.LogSeverity.SEVERITY_WARNING
+    SERFRAME_MOTE2PC_SUCCESS = ParserInfoErrorCritical.LogSeverity.SEVERITY_SUCCESS
     SERFRAME_MOTE2PC_ERROR = ParserInfoErrorCritical.LogSeverity.SEVERITY_ERROR
     SERFRAME_MOTE2PC_CRITICAL = ParserInfoErrorCritical.LogSeverity.SEVERITY_CRITICAL
     SERFRAME_MOTE2PC_SNIFFED_PACKET = ord('P')
@@ -46,7 +50,11 @@ class OpenParser(parser.Parser):
 
         # subparser objects
         self.parser_status = parserstatus.ParserStatus()
+        self.parser_debug = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_DEBUG)
         self.parser_info = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_INFO)
+        self.parser_notice = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_NOTICE)
+        self.parser_warning = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_WARNING)
+        self.parser_success = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_SUCCESS)
         self.parser_error = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_ERROR)
         self.parser_critical = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_CRITICAL)
         self.parser_data = parserdata.ParserData(mqtt_broker_address)
@@ -66,8 +74,28 @@ class OpenParser(parser.Parser):
         )
         self._add_sub_parser(
             index=0,
+            val=self.SERFRAME_MOTE2PC_DEBUG,
+            parser=self.parser_debug,
+        )
+        self._add_sub_parser(
+            index=0,
             val=self.SERFRAME_MOTE2PC_INFO,
             parser=self.parser_info,
+        )
+        self._add_sub_parser(
+            index=0,
+            val=self.SERFRAME_MOTE2PC_NOTICE,
+            parser=self.parser_notice,
+        )
+        self._add_sub_parser(
+            index=0,
+            val=self.SERFRAME_MOTE2PC_WARNING,
+            parser=self.parser_warning,
+        )
+        self._add_sub_parser(
+            index=0,
+            val=self.SERFRAME_MOTE2PC_SUCCESS,
+            parser=self.parser_success,
         )
         self._add_sub_parser(
             index=0,

@@ -1,15 +1,16 @@
 #!/usr/bin/env python2
 
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
-
+import ctypes
 import logging
 import logging.config
 import os
 import signal
+import sys
 import threading
 import time
 from argparse import ArgumentParser
@@ -27,9 +28,16 @@ from helpers import build_python_path
 from openvisualizer.motehandler.motestate.motestate import MoteState
 from webserver import WebServer
 
+# Some terminals on Windows do not by default activate processing of ansi escape code. Do it manually.
+if sys.platform.startswith("win32"):
+    kernel32 = ctypes.windll.kernel32
+    kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+
+# Use verbose logging levels
 verboselogs.install()
 log = logging.getLogger('OpenVisualizerCli')
 
+# set up color scheme for logs
 coloredlogs.DEFAULT_FIELD_STYLES = {'asctime': {'color': 35}, 'hostname': {}, 'levelname': {'bold': True, 'color': 31},
                                     'name': {}, 'programname': {}, 'username': {}}
 

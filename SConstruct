@@ -319,22 +319,13 @@ Alias('sdist-native', makeNativeSdist(env))
 dirs = [
     os.path.join('openvisualizer', 'motehandler', 'moteprobe'),
     os.path.join('openvisualizer', 'openLbr'),
-    os.path.join('openvisualizer', 'RPL'),
+    os.path.join('openvisualizer', 'rpl'),
 ]
-for d in dirs:
-    SConscript(
-        os.path.join(d, 'SConscript'),
-        exports = {"env": env},
-    )
 
-Alias(
-    'unittests',
-    [
-        'unittests_moteProbe',
-        'unittests_openLbr',
-        'unittests_RPL',
-    ]
-)
+for d in dirs:
+    SConscript(os.path.join(d, 'SConscript'), exports = {"env": env})
+
+Alias('unittests', ['unittests_moteProbe', 'unittests_openLbr', 'unittests_RPL'])
 
 #===== docs
 

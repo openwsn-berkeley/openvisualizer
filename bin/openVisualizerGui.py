@@ -20,10 +20,10 @@ import logging
 log = logging.getLogger('openVisualizerGui')
 
 try:
-    from openvisualizer.moteState import moteState
+    from openvisualizer.motehandler.motestate import motestate
 except ImportError:
     # Debug failed lookup on first library import
-    print 'ImportError: cannot find openvisualizer.moteState module'
+    print 'ImportError: cannot find openvisualizer.motestate module'
     print 'sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path))
 
 import openVisualizerApp
@@ -31,7 +31,6 @@ from openvisualizer.openUI import OpenWindow
 from openvisualizer.openUI import OpenFrameState
 from openvisualizer.openUI import OpenFrameButton
 from openvisualizer.openUI import OpenFrameEventBus
-import openvisualizer.openvisualizer_utils as u
 
 import Tkinter
 
@@ -45,7 +44,7 @@ class MenuUpdateFrame(Tkinter.Frame):
         self.menuList        = menuList
     
     def updateMenuLabel(self,indexToUpdate):
-        rawLabel  = self.ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()
+        rawLabel  = self.ms.get_state_elem(motestate.MoteState.ST_IDMANAGER).get_16b_addr()
         if rawLabel:
             menuLabel = ''.join(['%02x'%b for b in rawLabel])
             self.menuList.entryconfig(
@@ -78,26 +77,26 @@ class OpenVisualizerGui(object):
             thisFrame.setMoteStateHandler(ms)
             frameOrganization = [
                 [
-                    moteState.moteState.ST_ISSYNC,
-                    moteState.moteState.ST_ASN,
-                    moteState.moteState.ST_MYDAGRANK,
-                    moteState.moteState.ST_KAPERIOD,
-                    moteState.moteState.ST_OUPUTBUFFER,
-                    moteState.moteState.ST_BACKOFF,
+                    motestate.MoteState.ST_ISSYNC,
+                    motestate.MoteState.ST_ASN,
+                    motestate.MoteState.ST_MYDAGRANK,
+                    motestate.MoteState.ST_KAPERIOD,
+                    motestate.MoteState.ST_OUPUTBUFFER,
+                    motestate.MoteState.ST_BACKOFF,
                 ],
                 [
-                    moteState.moteState.TRIGGER_DAGROOT,
-                    moteState.moteState.ST_IDMANAGER,
+                    motestate.MoteState.TRIGGER_DAGROOT,
+                    motestate.MoteState.ST_IDMANAGER,
                 ],
                 [
-                    moteState.moteState.ST_MACSTATS,
+                    motestate.MoteState.ST_MACSTATS,
                 ],
                 [
-                    moteState.moteState.ST_SCHEDULE,
-                    moteState.moteState.ST_QUEUE,
+                    motestate.MoteState.ST_SCHEDULE,
+                    motestate.MoteState.ST_QUEUE,
                 ],
                 [
-                    moteState.moteState.ST_NEIGHBORS,
+                    motestate.MoteState.ST_NEIGHBORS,
                 ],
             ]
             for row in range(len(frameOrganization)):
@@ -105,7 +104,7 @@ class OpenVisualizerGui(object):
                 tempRowFrame.grid(row=row)
                 for column in range(len(frameOrganization[row])):
                     stateOrTrigger = frameOrganization[row][column]
-                    if   stateOrTrigger in moteState.moteState.ST_ALL:
+                    if   stateOrTrigger in motestate.MoteState.ST_ALL:
                         tempFrameState = OpenFrameState.OpenFrameState(
                             guiParent       = tempRowFrame,
                             frameName       = stateOrTrigger,
@@ -114,13 +113,13 @@ class OpenVisualizerGui(object):
                         )
                         tempFrameState.startAutoUpdate(
                             updatePeriod    = self.GUI_UPDATE_PERIOD,
-                            updateFunc      = ms.getStateElem,
+                            updateFunc      = ms.get_state_elem,
                             updateParams    = (stateOrTrigger,),
                         )
                         tempFrameState.show()
-                    elif stateOrTrigger in moteState.moteState.TRIGGER_ALL:
+                    elif stateOrTrigger in motestate.MoteState.TRIGGER_ALL:
                         tempFrameButton = OpenFrameButton.OpenFrameButton(
-                            callfunction    = ms.triggerAction,
+                            callfunction    = ms.trigger_action,
                             callparams      = (stateOrTrigger,),
                             guiParent       = tempRowFrame,
                             frameName       = stateOrTrigger,

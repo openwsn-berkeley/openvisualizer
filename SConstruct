@@ -319,7 +319,7 @@ Alias('sdist-native', makeNativeSdist(env))
 
 # scan for SConscript contains unit tests
 dirs = [
-    os.path.join('openvisualizer', 'moteProbe'),
+    os.path.join('openvisualizer', 'motehandler', 'moteprobe'),
     os.path.join('openvisualizer', 'openLbr'),
     os.path.join('openvisualizer', 'RPL'),
 ]

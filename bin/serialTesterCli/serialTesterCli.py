@@ -6,8 +6,7 @@ if __name__=='__main__':
     sys.path.insert(0, os.path.join(here, '..', '..'))                     # openvisualizer/
     sys.path.insert(0, os.path.join(here, '..', '..', '..', 'openCli'))    # openCli/
     
-from openvisualizer.moteProbe                    import moteProbe
-from openvisualizer.moteConnector.SerialTester   import SerialTester
+from openvisualizer.motehandler.moteprobe import moteprobe, serialtester
 from OpenCli                                     import OpenCli
 
 class serialTesterCli(OpenCli):
@@ -78,25 +77,25 @@ class serialTesterCli(OpenCli):
     #===== CLI command handlers
     
     def _handle_pklen(self,params):
-        self.moteConnector_handler.setTestPktLength(int(params[0]))
+        self.moteConnector_handler.set_test_pkt_length(int(params[0]))
     
     def _handle_numpk(self,params):
-        self.moteConnector_handler.setNumTestPkt(int(params[0]))
+        self.moteConnector_handler.set_num_test_pkt(int(params[0]))
     
     def _handle_timeout(self,params):
-        self.moteConnector_handler.setTimeout(int(params[0]))
+        self.moteConnector_handler.set_timeout(int(params[0]))
     
     def _handle_trace(self,params):
         if params[0] in [1,'on','yes']:
-            self.moteConnector_handler.setTrace(self._indicate_trace)
+            self.moteConnector_handler.set_trace(self._indicate_trace)
         else:
-            self.moteConnector_handler.setTrace(None)
+            self.moteConnector_handler.set_trace(None)
     
     def _handle_testserial(self,params):
         self.moteConnector_handler.test(blocking=False)
     
     def _handle_stats(self,params):
-        stats = self.moteConnector_handler.getStats()
+        stats = self.moteConnector_handler.get_stats()
         output  = []
         for k in ['numSent','numOk','numCorrupted','numTimeout']:
             output += ['- {0:<15} : {1}'.format(k,stats[k])]
@@ -127,26 +126,25 @@ def main():
         test_mode = raw_input('Serialport or OpenTestbed? (0: serialport, 1: opentestbed)')
         if test_mode == '0':
             serialportname = raw_input('Serial port to connect to (e.g. COM3, /dev/ttyUSB1): ')
-            serialport = (serialportname, moteProbe.BAUDRATE_LOCAL_BOARD)
-            # create a moteProbe from serial port
-            moteProbe_handler = moteProbe.moteProbe(mqtt_broker_address=mqtt_broker_address, serialport=serialport)
+            serialport = (serialportname, moteprobe.BAUDRATE_LOCAL_BOARD)
+            # create a MoteProbe from serial port
+            moteProbe_handler = moteprobe.MoteProbe(mqtt_broker_address=mqtt_broker_address, serial_port=serialport)
         elif test_mode == '1':
             testbedmote = raw_input('testbed mote to connect to (e.g. 00-12-4b-00-14-b5-b6-0b): ')
-            # create a moteProbe from opentestbed
-            moteProbe_handler = moteProbe.moteProbe(mqtt_broker_address=mqtt_broker_address,testbedmote_eui64=testbedmote)
+            # create a MoteProbe from opentestbed
+            moteProbe_handler = moteprobe.MoteProbe(mqtt_broker_address=mqtt_broker_address, testbedmote_eui64=testbedmote)
         else:
             raw_input("wrong input! Press Enter to quit..")
             return
         
-    # create a SerialTester to attached to the moteProbe
-    moteConnector_handler = SerialTester(moteProbe_handler)
+    # create a SerialTester to attached to the MoteProbe
+    moteConnector_handler = serialtester.SerialTester(moteProbe_handler)
     
     # create an open CLI
     cli = serialTesterCli(moteProbe_handler,moteConnector_handler)
     cli.start()
 
 #============================ application logging =============================
-import logging
 import logging.handlers
 logHandler = logging.handlers.RotatingFileHandler(
     'serialTesterCli.log',
@@ -157,7 +155,7 @@ logHandler = logging.handlers.RotatingFileHandler(
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
 for loggerName in [
         'SerialTester',
-        'moteProbe',
+        'moteprobe',
         'OpenHdlc',
     ]:
     temp = logging.getLogger(loggerName)

@@ -3,18 +3,31 @@
 #  
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
-import logging
 
-log = logging.getLogger('typeCellType')
-log.setLevel(logging.ERROR)
-log.addHandler(logging.NullHandler())
-
-import openType
+from abc import ABCMeta
 
 
-class typeComponent(openType.openType):
+class OpenType(object):
+    __metaclass__ = ABCMeta
+
+
+class TypeRssi(OpenType):
+    def __init__(self):
+        super(TypeRssi, self).__init__()
+
+    def __str__(self):
+        return '{0} dBm'.format(self.rssi)
+
+    # ======================== public ==========================================
+
+    def update(self, rssi):
+        self.rssi = rssi
+
+
+class TypeComponent(OpenType):
     COMPONENT_NULL = 0x00
     COMPONENT_OPENWSN = 0x01
+
     # cross-layers
     COMPONENT_IDMANAGER = 0x02
     COMPONENT_OPENQUEUE = 0x03
@@ -69,11 +82,7 @@ class typeComponent(openType.openType):
     COMPONENT_CINFRARED = 0x2a
 
     def __init__(self):
-        # log
-        log.info("creating object")
-
-        # initialize parent class
-        openType.openType.__init__(self)
+        super(TypeComponent, self).__init__()
 
     def __str__(self):
         return '{0} ({1})'.format(self.type, self.desc)
@@ -186,4 +195,125 @@ class typeComponent(openType.openType):
             self.desc = 'unknown'
             self.addr = None
 
-    # ======================== private =========================================
+
+class TypeCellType(OpenType):
+    CELLTYPE_OFF = 0
+    CELLTYPE_TX = 1
+    CELLTYPE_RX = 2
+    CELLTYPE_TXRX = 3
+    CELLTYPE_SERIALRX = 4
+    CELLTYPE_MORESERIALRX = 5
+
+    def __init__(self):
+        super(TypeCellType, self).__init__()
+
+    def __str__(self):
+        return '{0} ({1})'.format(self.type, self.desc)
+
+    # ======================== public ==========================================
+
+    def update(self, type):
+        self.type = type
+        if type == self.CELLTYPE_OFF:
+            self.desc = 'OFF'
+        elif type == self.CELLTYPE_TX:
+            self.desc = 'TX'
+        elif type == self.CELLTYPE_RX:
+            self.desc = 'RX'
+        elif type == self.CELLTYPE_TXRX:
+            self.desc = 'TXRX'
+        elif type == self.CELLTYPE_SERIALRX:
+            self.desc = 'SERIALRX'
+        elif type == self.CELLTYPE_MORESERIALRX:
+            self.desc = 'MORESERIALRX'
+        else:
+            self.desc = 'unknown'
+            self.addr = None
+
+
+class TypeAsn(OpenType):
+    def __init__(self):
+        super(TypeAsn, self).__init__()
+
+    def __str__(self):
+        return '0x{0}'.format(''.join(["%.2x" % b for b in self.asn]))
+
+    # ======================== public ==========================================
+
+    def update(self, byte0_1, byte2_3, byte4):
+        self.asn = [
+            byte4,
+            byte2_3 >> 8,
+            byte2_3 % 256,
+            byte0_1 >> 8,
+            byte0_1 % 256,
+        ]
+
+
+class TypeAddr(OpenType):
+    ADDR_NONE = 0
+    ADDR_16B = 1
+    ADDR_64B = 2
+    ADDR_128B = 3
+    ADDR_PANID = 4
+    ADDR_PREFIX = 5
+    ADDR_ANYCAST = 6
+
+    def __init__(self):
+        super(TypeAddr, self).__init__()
+
+    def __str__(self):
+        output = []
+        if self.addr:
+            output += ['-'.join(["%.2x" % b for b in self.addr])]
+
+        output += [' ({0})'.format(self.desc)]
+        return ''.join(output)
+
+    # ======================== public ==========================================
+
+    def update(self, type, body_h, body_l):
+        full_addr = [
+            body_h >> (8 * 0) & 0xff,
+            body_h >> (8 * 1) & 0xff,
+            body_h >> (8 * 2) & 0xff,
+            body_h >> (8 * 3) & 0xff,
+            body_h >> (8 * 4) & 0xff,
+            body_h >> (8 * 5) & 0xff,
+            body_h >> (8 * 6) & 0xff,
+            body_h >> (8 * 7) & 0xff,
+            body_l >> (8 * 0) & 0xff,
+            body_l >> (8 * 1) & 0xff,
+            body_l >> (8 * 2) & 0xff,
+            body_l >> (8 * 3) & 0xff,
+            body_l >> (8 * 4) & 0xff,
+            body_l >> (8 * 5) & 0xff,
+            body_l >> (8 * 6) & 0xff,
+            body_l >> (8 * 7) & 0xff,
+        ]
+
+        self.type = type
+        if type == self.ADDR_NONE:
+            self.desc = 'None'
+            self.addr = None
+        elif type == self.ADDR_16B:
+            self.desc = '16b'
+            self.addr = full_addr[:2]
+        elif type == self.ADDR_64B:
+            self.desc = '64b'
+            self.addr = full_addr[:8]
+        elif type == self.ADDR_128B:
+            self.desc = '128b'
+            self.addr = full_addr
+        elif type == self.ADDR_PANID:
+            self.desc = 'panId'
+            self.addr = full_addr[:2]
+        elif type == self.ADDR_PREFIX:
+            self.desc = 'prefix'
+            self.addr = full_addr[:8]
+        elif type == self.ADDR_ANYCAST:
+            self.desc = 'anycast'
+            self.addr = None
+        else:
+            self.desc = 'unknown'
+            self.addr = None

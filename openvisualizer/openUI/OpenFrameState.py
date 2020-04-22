@@ -68,7 +68,7 @@ class OpenFrameState(OpenFrame.OpenFrame):
     
     def _cb_autoUpdate(self):
         
-        self.update(json.loads(self.updateFunc(*self.updateParams).toJson()))
+        self.update(json.loads(self.updateFunc(*self.updateParams).to_json()))
         
         if self.updatePeriod:
             self.after(self.updatePeriod,self._cb_autoUpdate)

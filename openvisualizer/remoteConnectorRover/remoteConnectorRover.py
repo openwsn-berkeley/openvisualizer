@@ -58,7 +58,7 @@ class remoteConnectorRover():
             # subscribe to dispatcher
             dispatcher.connect(
                 self._sendToRemote_handler,
-                signal = 'fromMoteProbe@'+mote.getPortName(),
+                signal = 'fromMoteProbe@'+mote.portname,
             )
 
         self.t = threading.Thread(target=self._recvdFromRemote)

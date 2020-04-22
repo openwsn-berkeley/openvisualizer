@@ -152,7 +152,9 @@ def setupUiRunner(env, uiFile, dataDirs):
             ]
         )
         AlwaysBuild(bldNode)
-    
+
+    Clean(targets, env['ROOT_BUILD_DIR'])
+    Clean(targets, env['CLEAN_UP'])
     return targets
 
 # Prepare the environment to create builders for data files and directoires,
@@ -165,13 +167,10 @@ env['CONF_FILES']  = ['openvisualizer.conf', 'logging.conf', 'trace.conf']
 env['DATA_DIRS']   = ['web_files', 'sim_files']
 env['DATA_FILES']  = []
 
-# Customize environment for each target. Must remove 'host' and 'port' 
-# options for GUI and CLI because they are not defined in those scripts.
-guiEnv             = env.Clone()
-guiEnv['HOSTOPT']  = None
-guiEnv['PORTOPT']  = None
-guiEnv['ROVEROPT']    = None
-Alias('rungui', setupUiRunner(guiEnv, 'openVisualizerGui.py', []))
+# Prepare the environment to create builders for data files and directoires, as well as a builder to run the app itself.
+env['BUILD_DIR'] = os.path.join(env['ROOT_BUILD_DIR'], 'runui')
+env['CLEAN_UP'] = os.path.join(env['ROOT_PROJECT_DIR'], 'debugpins.vcd')
+env['WAIT_ON_UI'] = False
 
 cliEnv               = env.Clone()
 cliEnv['WAIT_ON_UI'] = True

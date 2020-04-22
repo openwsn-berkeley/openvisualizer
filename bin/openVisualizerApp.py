@@ -30,7 +30,7 @@ from openvisualizer.motehandler.moteconnector import moteconnector
 from openvisualizer.motehandler.moteprobe import moteprobe
 from openvisualizer.motehandler.motestate import motestate
 from openvisualizer.openLbr import openLbr
-from openvisualizer.openTun import openTun
+from openvisualizer.opentun.opentun import OpenTun
 from openvisualizer.remoteConnectorServer import remoteConnectorServer
 
 log = logging.getLogger('openVisualizerApp')
@@ -43,7 +43,7 @@ class OpenVisualizerApp(object):
     """
 
     def __init__(self, conf_dir, data_dir, log_dir, simulator_mode, num_motes, trace, debug, use_page_zero,
-                 sim_topology, iotlab_motes, testbed_motes, path_topo, mqtt_broker_address, opentun_null):
+                 sim_topology, iotlab_motes, testbed_motes, path_topo, mqtt_broker_address, opentun):
 
         # store params
         self.conf_dir = conf_dir
@@ -65,8 +65,8 @@ class OpenVisualizerApp(object):
         self.jrc = jrc.JRC()
         self.topology = topology.topology()
         self.dagroot_list = []
-        # create openTun call last since indicates prefix
-        self.opentun = openTun.create(opentun_null)
+        # create opentun call last since indicates prefix
+        self.opentun = OpenTun.create(opentun)
         if self.simulator_mode:
             self.simengine = SimEngine.SimEngine(sim_topology)
             self.simengine.start()
@@ -360,7 +360,7 @@ def main(parser=None):
         testbed_motes=arg_space.testbed_motes,
         path_topo=arg_space.path_topo,
         mqtt_broker_address=arg_space.mqtt_broker_address,
-        opentun_null=arg_space.opentun_null
+        opentun=arg_space.opentun
     )
 
 
@@ -425,11 +425,11 @@ def _add_parser_args(parser):
                         action='store',
                         help='MQTT broker address to use'
                         )
-    parser.add_argument('--opentun-null',
-                        dest='opentun_null',
+    parser.add_argument('--opentun',
+                        dest='opentun',
                         default=False,
                         action='store_true',
-                        help='don\'t use TUN device'
+                        help='Use TUN device to route to the Internet (requires superuser privileges, e.g., sudo)'
                         )
     parser.add_argument('-i', '--pathTopo',
                         dest='path_topo',

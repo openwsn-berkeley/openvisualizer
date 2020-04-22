@@ -36,18 +36,15 @@ Usage:
    
 Targets:
     rungui/runcli/runweb/runrover:
-        Run OpenVisualizer with GUI, command line, or web interface,
-        respectively.
-        The application is run in the build/runui/ directory. Since it accesses
-        your computer's network interfaces, it must be run as
-        superuser/administrator.
-        runrover runs a minimal version of OpenVisualizer that should run on remote rovers.
+        Run OpenVisualizer with GUI, command line, or web interface, respectively. The application is run in the
+        build/runui/ directory. By default it does not need any superuser privileges. The runrover target runs a minimal
+        version of OpenVisualizer that should run on remote rovers.
         
         Options
           --sim         Run in simulator mode with default count of motes.
           --simCount=n  Run in simulator mode with 'n' motes.
-          --pathTopo  Run in simulator mode with data imported from a previous
-            topology saved in a json file.
+          --pathTopo    Run in simulator mode with data imported from a previous topology saved in a json file.
+          --opentun     Use TUN device to route to the Internet (requires superuser privileges, e.g., sudo).
           --simTopology=<linear|fully-meshed>
                         Force a certain topology for simulation.
           --nosimcopy   Skips copying simulation firmware at startup from the
@@ -168,11 +165,11 @@ AddOption('--mqtt-broker-address',
     type      = 'string')
 runnerEnv['MQTT_BROKER_ADDRESS'] = GetOption('mqtt_broker_address')
 
-AddOption('--opentun-null',
-    dest      = 'opentun_null',
+AddOption('--opentun',
+    dest      = 'opentun',
     default   = False,
     action    = 'store_true')
-runnerEnv['OPENTUN_NULL'] = GetOption('opentun_null')
+runnerEnv['OPENTUN'] = GetOption('opentun')
 
 AddOption('--ovdebug',
     dest      = 'debugOpt',

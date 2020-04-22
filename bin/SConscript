@@ -62,8 +62,8 @@ def uiRunner(target, source, env):
     if env['MQTT_BROKER_ADDRESS']:
         argList.append('--mqtt-broker-address='
                        + '{0}'.format(env['MQTT_BROKER_ADDRESS']))
-    if env['OPENTUN_NULL']:
-        argList.append('--opentun-null')
+    if env['OPENTUN']:
+        argList.append('--opentun')
 
     if env['USEPAGEZERO']:
         argList.append('--usePageZero')

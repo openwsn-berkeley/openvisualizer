@@ -75,7 +75,7 @@ class build_py(_build_py):
 setup(
     name='openVisualizer',
     packages=['openvisualizer',
-              'openvisualizer.BspEmulator', 'openvisualizer.eventbus', 'openvisualizer.motehandler.moteconnector',
+              'openvisualizer.bspemulator', 'openvisualizer.eventbus', 'openvisualizer.motehandler.moteconnector',
               'openvisualizer.motehandler.moteprobe', 'openvisualizer.motehandler.motestate',
               'openvisualizer.openlbr', 'openvisualizer.opentun',
               'openvisualizer.rpl', 'openvisualizer.SimEngine', 'openvisualizer.jrc'],

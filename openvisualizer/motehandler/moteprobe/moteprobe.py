@@ -308,11 +308,12 @@ class MoteProbe(threading.Thread):
                     for rx_byte in rx_bytes:
                         if not self.is_receiving and self.last_rx_byte == self.hdlc.HDLC_FLAG and rx_byte != self.hdlc.HDLC_FLAG:
                             # start of frame
-                            log.debug("{0}: start of hdlc frame {1} {2}".format(
-                                self.name,
-                                u.format_string_buf(self.hdlc.HDLC_FLAG),
-                                u.format_string_buf(rx_byte))
-                            )
+                            if log.isEnabledFor(logging.DEBUG):
+                                log.debug("{0}: start of hdlc frame {1} {2}".format(
+                                    self.name,
+                                    u.format_string_buf(self.hdlc.HDLC_FLAG),
+                                    u.format_string_buf(rx_byte))
+                                )
 
                             self.is_receiving = True
                             self.xonxoff_escaping = False
@@ -323,16 +324,18 @@ class MoteProbe(threading.Thread):
                             self._add_to_input_buf(rx_byte)
                         elif self.is_receiving and rx_byte == self.hdlc.HDLC_FLAG:
                             # end of frame
-                            log.debug("{0}: end of hdlc frame {1} ".format(self.name, u.format_string_buf(rx_byte)))
+                            if log.isEnabledFor(logging.DEBUG):
+                                log.debug("{0}: end of hdlc frame {1} ".format(self.name, u.format_string_buf(rx_byte)))
+
                             self.is_receiving = False
                             self._add_to_input_buf(rx_byte)
                             temp_buf = self.input_buf
                             try:
                                 self.input_buf = self.hdlc.dehdlcify(self.input_buf)
-                                log.debug("{0}: {2} dehdlcized input: {1}".format(
-                                    self.name, u.format_string_buf(self.input_buf),
-                                    u.format_string_buf(temp_buf))
-                                )
+
+                                if log.isEnabledFor(logging.DEBUG):
+                                    log.debug("{0}: {2} dehdlcized input: {1}".format(
+                                        self.name, u.format_string_buf(self.input_buf), u.format_string_buf(temp_buf)))
 
                             except openhdlc.HdlcException as err:
                                 log.warning('{0}: invalid serial frame: {2} {1}'.format(
@@ -346,10 +349,10 @@ class MoteProbe(threading.Thread):
                         self.last_rx_byte = rx_byte
 
                 if self.mode == self.MoteModes.MODE_EMULATED:
-                    self.serial.doneReading()
+                    self.serial.done_reading()
         except Exception as err:
-            errMsg = u.format_crash_message(self.name, err)
-            log.critical(errMsg)
+            err_msg = u.format_crash_message(self.name, err)
+            log.critical(err_msg)
             sys.exit(-1)
         finally:
             if self.mode == self.MoteModes.MODE_SERIAL and self.serial is not None:

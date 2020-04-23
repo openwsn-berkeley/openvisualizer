@@ -15,7 +15,7 @@ import bottle
 from bottle import view, response
 
 from openvisualizer import ovVersion
-from openvisualizer.BspEmulator import VcdLogger
+from openvisualizer.bspemulator import vcdlogger
 from openvisualizer.SimEngine import SimEngine
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.motehandler.motestate.motestate import MoteState
@@ -170,7 +170,7 @@ class WebServer(EventBusClient):
 
     def _set_gologic_debug(self, enabled):
         log.info('Enable GoLogic debug : {0}'.format(enabled))
-        VcdLogger.VcdLogger().setEnabled(enabled == 'true')
+        vcdlogger.VcdLogger().set_enabled(enabled == 'true')
         return '{"result" : "success"}'
 
     @view('eventBus.tmpl')

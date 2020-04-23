@@ -13,15 +13,15 @@ import time
 import binascii
 
 from openvisualizer.SimEngine   import SimEngine
-from openvisualizer.BspEmulator import BspBoard
-from openvisualizer.BspEmulator import BspDebugpins
-from openvisualizer.BspEmulator import BspEui64
-from openvisualizer.BspEmulator import BspLeds
-from openvisualizer.BspEmulator import BspRadio
-from openvisualizer.BspEmulator import BspSctimer
-from openvisualizer.BspEmulator import BspUart
-from openvisualizer.BspEmulator import HwSupply
-from openvisualizer.BspEmulator import HwCrystal
+from openvisualizer.bspemulator import bspboard
+from openvisualizer.bspemulator import bspdebugpins
+from openvisualizer.bspemulator import bspeui64
+from openvisualizer.bspemulator import bspleds
+from openvisualizer.bspemulator import bspradio
+from openvisualizer.bspemulator import bspsctimer
+from openvisualizer.bspemulator import bspuart
+from openvisualizer.bspemulator import hwsupply
+from openvisualizer.bspemulator import hwcrystal
 
 #============================ get notification IDs ============================
 # Contains the list of notifIds used in the following functions.
@@ -72,16 +72,16 @@ class MoteHandler(threading.Thread):
         self.numRxCommands   = 0
         self.numTxCommands   = 0
         # hw
-        self.hwSupply        = HwSupply.HwSupply(self)
-        self.hwCrystal       = HwCrystal.HwCrystal(self)
+        self.hwSupply        = hwsupply.HwSupply(self)
+        self.hwCrystal       = hwcrystal.HwCrystal(self)
         # bsp
-        self.bspBoard        = BspBoard.BspBoard(self)
-        self.bspDebugpins    = BspDebugpins.BspDebugpins(self)
-        self.bspEui64        = BspEui64.BspEui64(self)
-        self.bspLeds         = BspLeds.BspLeds(self)
-        self.bspSctimer      = BspSctimer.BspSctimer(self)
-        self.bspRadio        = BspRadio.BspRadio(self)
-        self.bspUart         = BspUart.BspUart(self)
+        self.bspBoard        = bspboard.BspBoard(self)
+        self.bspDebugpins    = bspdebugpins.BspDebugPins(self)
+        self.bspEui64        = bspeui64.BspEui64(self)
+        self.bspLeds         = bspleds.BspLeds(self)
+        self.bspSctimer      = bspsctimer.BspSctimer(self)
+        self.bspRadio        = bspradio.BspRadio(self)
+        self.bspUart         = bspuart.BspUart(self)
         # status
         self.booted          = False
         self.cpuRunning      = threading.Lock()
@@ -115,10 +115,10 @@ class MoteHandler(threading.Thread):
         mote.set_callback(notifId('debugpins_radio_set'),                 self.bspDebugpins.cmd_radio_set)
         mote.set_callback(notifId('debugpins_ka_clr'),                    self.bspDebugpins.cmd_ka_clr)
         mote.set_callback(notifId('debugpins_ka_set'),                    self.bspDebugpins.cmd_ka_set)
-        mote.set_callback(notifId('debugpins_syncPacket_clr'),            self.bspDebugpins.cmd_syncPacket_clr)
-        mote.set_callback(notifId('debugpins_syncPacket_set'),            self.bspDebugpins.cmd_syncPacket_set)
-        mote.set_callback(notifId('debugpins_syncAck_clr'),               self.bspDebugpins.cmd_syncAck_clr)
-        mote.set_callback(notifId('debugpins_syncAck_set'),               self.bspDebugpins.cmd_syncAck_set)
+        mote.set_callback(notifId('debugpins_syncPacket_clr'), self.bspDebugpins.cmd_sync_packet_clr)
+        mote.set_callback(notifId('debugpins_syncPacket_set'), self.bspDebugpins.cmd_sync_packet_set)
+        mote.set_callback(notifId('debugpins_syncAck_clr'), self.bspDebugpins.cmd_sync_ack_clr)
+        mote.set_callback(notifId('debugpins_syncAck_set'), self.bspDebugpins.cmd_sync_ack_set)
         mote.set_callback(notifId('debugpins_debug_clr'),                 self.bspDebugpins.cmd_debug_clr)
         mote.set_callback(notifId('debugpins_debug_set'),                 self.bspDebugpins.cmd_debug_set)
         # eui64
@@ -128,19 +128,19 @@ class MoteHandler(threading.Thread):
         mote.set_callback(notifId('leds_error_on'),                       self.bspLeds.cmd_error_on)
         mote.set_callback(notifId('leds_error_off'),                      self.bspLeds.cmd_error_off)
         mote.set_callback(notifId('leds_error_toggle'),                   self.bspLeds.cmd_error_toggle)
-        mote.set_callback(notifId('leds_error_isOn'),                     self.bspLeds.cmd_error_isOn)
+        mote.set_callback(notifId('leds_error_isOn'), self.bspLeds.cmd_error_is_on)
         mote.set_callback(notifId('leds_radio_on'),                       self.bspLeds.cmd_radio_on)
         mote.set_callback(notifId('leds_radio_off'),                      self.bspLeds.cmd_radio_off)
         mote.set_callback(notifId('leds_radio_toggle'),                   self.bspLeds.cmd_radio_toggle)
-        mote.set_callback(notifId('leds_radio_isOn'),                     self.bspLeds.cmd_radio_isOn)
+        mote.set_callback(notifId('leds_radio_isOn'), self.bspLeds.cmd_radio_is_on)
         mote.set_callback(notifId('leds_sync_on'),                        self.bspLeds.cmd_sync_on)
         mote.set_callback(notifId('leds_sync_off'),                       self.bspLeds.cmd_sync_off)
         mote.set_callback(notifId('leds_sync_toggle'),                    self.bspLeds.cmd_sync_toggle)
-        mote.set_callback(notifId('leds_sync_isOn'),                      self.bspLeds.cmd_sync_isOn)
+        mote.set_callback(notifId('leds_sync_isOn'), self.bspLeds.cmd_sync_is_on)
         mote.set_callback(notifId('leds_debug_on'),                       self.bspLeds.cmd_debug_on)
         mote.set_callback(notifId('leds_debug_off'),                      self.bspLeds.cmd_debug_off)
         mote.set_callback(notifId('leds_debug_toggle'),                   self.bspLeds.cmd_debug_toggle)
-        mote.set_callback(notifId('leds_debug_isOn'),                     self.bspLeds.cmd_debug_isOn)
+        mote.set_callback(notifId('leds_debug_isOn'), self.bspLeds.cmd_debug_is_on)
         mote.set_callback(notifId('leds_all_on'),                         self.bspLeds.cmd_all_on)
         mote.set_callback(notifId('leds_all_off'),                        self.bspLeds.cmd_all_off)
         mote.set_callback(notifId('leds_all_toggle'),                     self.bspLeds.cmd_all_toggle)
@@ -149,32 +149,32 @@ class MoteHandler(threading.Thread):
         # radio
         mote.set_callback(notifId('radio_init'),                          self.bspRadio.cmd_init)
         mote.set_callback(notifId('radio_reset'),                         self.bspRadio.cmd_reset)
-        mote.set_callback(notifId('radio_setFrequency'),                  self.bspRadio.cmd_setFrequency)
-        mote.set_callback(notifId('radio_rfOn'),                          self.bspRadio.cmd_rfOn)
-        mote.set_callback(notifId('radio_rfOff'),                         self.bspRadio.cmd_rfOff)
-        mote.set_callback(notifId('radio_loadPacket'),                    self.bspRadio.cmd_loadPacket)
-        mote.set_callback(notifId('radio_txEnable'),                      self.bspRadio.cmd_txEnable)
-        mote.set_callback(notifId('radio_txNow'),                         self.bspRadio.cmd_txNow)
-        mote.set_callback(notifId('radio_rxEnable'),                      self.bspRadio.cmd_rxEnable)
-        mote.set_callback(notifId('radio_rxNow'),                         self.bspRadio.cmd_rxNow)
-        mote.set_callback(notifId('radio_getReceivedFrame'),              self.bspRadio.cmd_getReceivedFrame)
+        mote.set_callback(notifId('radio_setFrequency'), self.bspRadio.cmd_set_frequency)
+        mote.set_callback(notifId('radio_rfOn'), self.bspRadio.cmd_rf_on)
+        mote.set_callback(notifId('radio_rfOff'), self.bspRadio.cmd_rf_off)
+        mote.set_callback(notifId('radio_loadPacket'), self.bspRadio.cmd_load_packet)
+        mote.set_callback(notifId('radio_txEnable'), self.bspRadio.cmd_tx_enable)
+        mote.set_callback(notifId('radio_txNow'), self.bspRadio.cmd_tx_now)
+        mote.set_callback(notifId('radio_rxEnable'), self.bspRadio.cmd_rx_enable)
+        mote.set_callback(notifId('radio_rxNow'), self.bspRadio.cmd_rx_now)
+        mote.set_callback(notifId('radio_getReceivedFrame'), self.bspRadio.cmd_get_received_frame)
         # sctimer
         mote.set_callback(notifId('sctimer_init'),                        self.bspSctimer.cmd_init)
-        mote.set_callback(notifId('sctimer_setCompare'),                  self.bspSctimer.cmd_setCompare)
-        mote.set_callback(notifId('sctimer_readCounter'),                 self.bspSctimer.cmd_readCounter)
+        mote.set_callback(notifId('sctimer_setCompare'), self.bspSctimer.cmd_set_compare)
+        mote.set_callback(notifId('sctimer_readCounter'), self.bspSctimer.cmd_read_counter)
         mote.set_callback(notifId('sctimer_enable'),                      self.bspSctimer.cmd_enable)
         mote.set_callback(notifId('sctimer_disable'),                     self.bspSctimer.cmd_disable)
         # uart
         mote.set_callback(notifId('uart_init'),                           self.bspUart.cmd_init)
-        mote.set_callback(notifId('uart_enableInterrupts'),               self.bspUart.cmd_enableInterrupts)
-        mote.set_callback(notifId('uart_disableInterrupts'),              self.bspUart.cmd_disableInterrupts)
-        mote.set_callback(notifId('uart_clearRxInterrupts'),              self.bspUart.cmd_clearRxInterrupts)
-        mote.set_callback(notifId('uart_clearTxInterrupts'),              self.bspUart.cmd_clearTxInterrupts)
-        mote.set_callback(notifId('uart_writeByte'),                      self.bspUart.cmd_writeByte)
-        mote.set_callback(notifId('uart_writeCircularBuffer_FASTSIM'),    self.bspUart.cmd_writeCircularBuffer_FASTSIM)
-        mote.set_callback(notifId('uart_writeBufferByLen_FASTSIM'),       self.bspUart.uart_writeBufferByLen_FASTSIM)
-        mote.set_callback(notifId('uart_readByte'),                       self.bspUart.cmd_readByte)
-        mote.set_callback(notifId('uart_setCTS'),                         self.bspUart.cmd_setCTS)
+        mote.set_callback(notifId('uart_enableInterrupts'), self.bspUart.cmd_enable_interrupts)
+        mote.set_callback(notifId('uart_disableInterrupts'), self.bspUart.cmd_disable_interrupts)
+        mote.set_callback(notifId('uart_clearRxInterrupts'), self.bspUart.cmd_clear_rx_interrupts)
+        mote.set_callback(notifId('uart_clearTxInterrupts'), self.bspUart.cmd_clear_tx_interrupts)
+        mote.set_callback(notifId('uart_writeByte'), self.bspUart.cmd_write_byte)
+        mote.set_callback(notifId('uart_writeCircularBuffer_FASTSIM'), self.bspUart.cmd_write_circular_buffer_fastsim)
+        mote.set_callback(notifId('uart_writeBufferByLen_FASTSIM'), self.bspUart.uart_write_buffer_by_len_fastsim)
+        mote.set_callback(notifId('uart_readByte'), self.bspUart.cmd_read_byte)
+        mote.set_callback(notifId('uart_setCTS'), self.bspUart.cmd_set_cts)
         
         # logging this module
         self.log             = logging.getLogger('MoteHandler_'+str(self.id))
@@ -218,7 +218,7 @@ class MoteHandler(threading.Thread):
         self.log.info('thread starting')
         
         # switch on the mote
-        self.hwSupply.switchOn()
+        self.hwSupply.switch_on()
         
         assert 0
         
@@ -237,7 +237,7 @@ class MoteHandler(threading.Thread):
         
         if not self.booted:
             
-            assert functionToCall==self.hwSupply.switchOn
+            assert functionToCall==self.hwSupply.switch_on
             
             # I'm not booted
             self.booted = True

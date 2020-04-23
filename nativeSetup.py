@@ -41,9 +41,8 @@ def appdirGlob(globstr, subdir=''):
 setup(
     name             = 'openVisualizer',
     packages         = ['openvisualizer', 
-                        'openvisualizer.BspEmulator', 'openvisualizer.eventbus',
-                        'openvisualizer.motehandler.moteconnector',
-                        'openvisualizer.moteprobe', 'openvisualizer.motehandler.motestate',
+                        'openvisualizer.bspemulator', 'openvisualizer.eventbus',
+                        'openvisualizer.motehandler.moteconnector', 'openvisualizer.moteprobe',
                         'openvisualizer.openlbr', 'openvisualizer.opentun',
                         'openvisualizer.rpl', 'openvisualizer.SimEngine',
                         'openvisualizer.jrc'],

@@ -128,7 +128,7 @@ class OpenVisualizerApp(object):
                 self.simengine.timeline.scheduleEvent(
                     now,
                     mote_handler.getId(),
-                    mote_handler.hwSupply.switchOn,
+                    mote_handler.hwSupply.switch_on,
                     mote_handler.hwSupply.INTR_SWITCHON
                 )
             self.simengine.resume()

@@ -10,7 +10,7 @@ import os
 import signal
 import subprocess
 
-import sconsUtils
+import sconsutils
 
 Import('env')
 
@@ -122,7 +122,7 @@ def setup_ov_runner(env, ui_file, data_dirs):
         # Appending ui_file to pseudo-target to make it unique.
         sim_fw_target = 'simui-{0}'.format(ui_file)
         Depends(targets, sim_fw_target)
-        sconsUtils.copySimfw(env, sim_fw_target)
+        sconsutils.copy_simulation_fw(env, sim_fw_target)
 
     for node in (env['CONF_FILES'] + env['DATA_FILES']):
         bld_node = os.path.join(env['BUILD_DIR'], node)

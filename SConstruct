@@ -8,7 +8,7 @@ import os
 import platform
 
 import SCons
-import sconsUtils
+import sconsutils
 
 #============================ banner ==========================================
 
@@ -203,11 +203,11 @@ AddOption('--simhost',
     type      = 'choice',
     choices   = simhosts)
 
-# Must copy SIMHOSTOPT to runner environment since it also reads sconsUtils.py.
+# Must copy SIMHOSTOPT to runner environment since it also reads sconsutils.py.
 env['SIMHOSTOPT']       = GetOption('simhostOpt')
 runnerEnv['SIMHOSTOPT'] = env['SIMHOSTOPT']
 
-Alias('copy-simfw', sconsUtils.copySimfw(env, 'simcopy'))
+Alias('copy-simfw', sconsutils.copy_simulation_fw(env, 'simcopy'))
 
 #===== runov
 

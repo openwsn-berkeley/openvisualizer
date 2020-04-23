@@ -29,7 +29,7 @@ from openvisualizer.eventLogger import eventLogger
 from openvisualizer.motehandler.moteconnector import moteconnector
 from openvisualizer.motehandler.moteprobe import moteprobe
 from openvisualizer.motehandler.motestate import motestate
-from openvisualizer.openLbr import openLbr
+from openvisualizer.openlbr import openlbr
 from openvisualizer.opentun.opentun import OpenTun
 from openvisualizer.remoteConnectorServer import remoteConnectorServer
 
@@ -60,7 +60,7 @@ class OpenVisualizerApp(object):
 
         # local variables
         self.ebm = eventBusMonitor.eventBusMonitor()
-        self.open_lbr = openLbr.OpenLbr(use_page_zero)
+        self.openlbr = openlbr.OpenLbr(use_page_zero)
         self.rpl = rpl.RPL()
         self.jrc = jrc.JRC()
         self.topology = topology.Topology()

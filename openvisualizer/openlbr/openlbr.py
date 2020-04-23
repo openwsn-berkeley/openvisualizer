@@ -3,22 +3,24 @@
 #
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
+
 import logging
 import threading
 
 import openvisualizer.openvisualizer_utils as u
-from openvisualizer.eventBus import eventBusClient
-from openvisualizer.openLbr.sixlowpan_frag import Fragmentor
+from openvisualizer.eventBus.eventBusClient import eventBusClient
+from openvisualizer.openlbr.sixlowpan_frag import Fragmentor
 from openvisualizer.opentun.opentun import OpenTun
 
-log = logging.getLogger('openLbr')
+log = logging.getLogger('OpenLbr')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
 # ============================ parameters ======================================
 
-class OpenLbr(eventBusClient.eventBusClient):
+
+class OpenLbr(eventBusClient):
     """
     Class which is responsible for translating between 6LoWPAN and IPv6
     headers.
@@ -30,7 +32,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     * *http://tools.ietf.org/html/rfc2460*
       Internet Protocol, Version 6 (IPv6) Specification
     * *http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03
-       The IPv6 Flow Label within a RPL domain
+       The IPv6 Flow Label within a rpl domain
     """
     # implementing http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03
 
@@ -125,7 +127,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
     MASK_LENGTH_6LoRH_IPINIP = 0x1F
 
-    # === RPL source routing header (RFC6554)
+    # === rpl source routing header (RFC6554)
     SR_FIR_TYPE = 0x03
 
     # === UDP Header compression (RFC6282)
@@ -152,15 +154,14 @@ class OpenLbr(eventBusClient.eventBusClient):
         log.info("create instance")
 
         # store params
-        self.stateLock = threading.Lock()
-        self.networkPrefix = None
+        self.state_lock = threading.Lock()
+        self.network_prefix = None
         self.dagRootEui64 = None
-        self.usePageZero = use_page_zero
+        self.use_page_zero = use_page_zero
         self.fragmentor = Fragmentor()
 
         # initialize parent class
-        eventBusClient.eventBusClient.__init__(
-            self,
+        super(OpenLbr, self).__init__(
             name='OpenLBR',
             registrations=[
                 {
@@ -427,7 +428,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
             # keep payload and app_payload in case we want to assemble the message later.
             # as source address is being retrieved from the IPHC header, the signal includes it in case
-            # receiver such as RPL DAO processing needs to know the source.
+            # receiver such as rpl DAO processing needs to know the source.
 
             success = self._dispatchProtocol(dispatch_signal, (ipv6dic['src_addr'], ipv6dic['app_payload']))
 
@@ -446,7 +447,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 # no route to the destination
                 is_reachable = False
 
-            if self.networkPrefix == ipv6dic['dst_addr'][:8] and is_reachable:
+            if self.network_prefix == ipv6dic['dst_addr'][:8] and is_reachable:
                 # dispatch to mesh
                 self.dispatch('v6ToMesh', ipv6pkt)
             else:
@@ -501,10 +502,9 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         :param ipv6: [in] A disassembled IPv6 packet.
 
-        :raises: ValueError when some part of the process is not defined in
-            the standard.
-        :raises: NotImplementedError when some part of the process is defined in
-            the standard, but not implemented in this module.
+        :raises: ValueError when some part of the process is not defined in the standard.
+        :raises: NotImplementedError when some part of the process is defined in the standard, but not implemented in
+            this module.
 
         :returns: A disassembled 6LoWPAN packet.
         """
@@ -552,7 +552,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         """
         return_val = []
 
-        if self.usePageZero:
+        if self.use_page_zero:
             print 'Page dispatch page number zero is not supported!\n'
             raise SystemError()
 
@@ -805,7 +805,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     if length == 1:
                         pkt_ipv6['src_addr'] = OpenTun.IPV6PREFIX + OpenTun.IPV6HOST
                     elif length == 9:
-                        pkt_ipv6['src_addr'] = self.networkPrefix + pkt_lowpan[ptr:ptr + 8]
+                        pkt_ipv6['src_addr'] = self.network_prefix + pkt_lowpan[ptr:ptr + 8]
                         ptr += 8
                     elif length == 17:
                         pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr + 16]
@@ -904,7 +904,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             if sac == self.IPHC_SAC_STATELESS:
                 prefix = self.LINK_LOCAL_PREFIX
             elif sac == self.IPHC_SAC_STATEFUL:
-                prefix = self.networkPrefix
+                prefix = self.network_prefix
             else:
                 log.error("wrong sac==" + str(sac))
                 return
@@ -936,7 +936,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             if dac == self.IPHC_DAC_STATELESS:
                 prefix = self.LINK_LOCAL_PREFIX
             elif dac == self.IPHC_DAC_STATEFUL:
-                prefix = self.networkPrefix
+                prefix = self.network_prefix
 
             # dam
             dam = ((pkt_lowpan[1]) & 0x03)
@@ -984,7 +984,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     pass
                 pkt_ipv6['hop_hdr_len'] = pkt_lowpan[ptr]
                 ptr = ptr + 1
-                # start of RPL Option
+                # start of rpl Option
                 pkt_ipv6['hop_optionType'] = pkt_lowpan[ptr]
                 ptr = ptr + 1
                 pkt_ipv6['hop_optionLen'] = pkt_lowpan[ptr]
@@ -995,7 +995,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ptr = ptr + 1
                 pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr + 1]) << 0)
                 ptr = ptr + 2
-                # end RPL option
+                # end rpl option
                 if (pkt_ipv6['hop_nhc'] & 0x01) == 1:
                     if ((pkt_lowpan[ptr] >> 1) & 0x07) == self.NHC_EID_IPV6:
                         pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
@@ -1030,26 +1030,19 @@ class OpenLbr(eventBusClient.eventBusClient):
     # ===== source route
 
     def _get_source_route(self, destination):
-        return_val = self._dispatchAndGetResult(
-            signal='getSourceRoute',
-            data=destination,
-        )
+        return_val = self._dispatchAndGetResult(signal='getSourceRoute', data=destination)
         return return_val
 
     def _set_prefix_notif(self, sender, signal, data):
-        """
-        Record the network prefix.
-        """
-        with self.stateLock:
-            self.networkPrefix = data
+        """ Record the network prefix. """
+        with self.state_lock:
+            self.network_prefix = data
             log.info('Set network prefix  {0}'.format(u.formatIPv6Addr(data)))
 
     def _info_dagroot_notif(self, sender, signal, data):
-        """
-        Record the DAGroot's EUI64 address.
-        """
+        """ Record the DAGroot's EUI64 address. """
         if data['isDAGroot'] == 1:
-            with self.stateLock:
+            with self.state_lock:
                 self.dagRootEui64 = data['eui64'][:]
 
     def _is_link_local(self, ipv6_address):

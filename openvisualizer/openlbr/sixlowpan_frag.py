@@ -8,7 +8,7 @@ import logging
 
 import openvisualizer.openvisualizer_utils as u
 
-log = logging.getLogger('openFrag')
+log = logging.getLogger('SixLowPanFrag')
 log.setLevel(logging.WARNING)
 log.addHandler(logging.NullHandler())
 
@@ -79,16 +79,23 @@ class Fragmentor(object):
             self.reassemble_buffer[datagram_tag] = new_entry
 
         # check if we can reassemble
-
+        num_of_frags = 0
+        used_tag = 0
         for tag, entry in self.reassemble_buffer.items():
             if entry.total_bytes == entry.recvd_bytes:
                 frags = sorted(entry.fragments, key=lambda frag: frag[0])
+                used_tag = tag
+                num_of_frags = len(frags)
                 reassembled_pkt = []
 
                 for frag in frags:
                     reassembled_pkt.extend(frag[1])
 
                 del self.reassemble_buffer[tag]
+
+        if reassembled_pkt is not None:
+            log.info("[GATEWAY] Reassembled {} frags with tag {} into an IPv6 packet of size {}".format(
+                num_of_frags, used_tag, len(reassembled_pkt)))
 
         return reassembled_pkt
 
@@ -132,5 +139,8 @@ class Fragmentor(object):
 
         # increment the tag for the new set of fragments
         self.datagram_tag += 1
+
+        log.info("[GATEWAY] Fragment incoming IPv6 packet (size: {}) into {} fragments with tag {}".format(
+            len(ip6_pkt), len(fragment_list), self.datagram_tag))
 
         return fragment_list

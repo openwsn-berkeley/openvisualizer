@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import logging.handlers
-import os
-import sys
 from random import randint, shuffle
 
 import pytest
@@ -10,13 +8,8 @@ import scapy.layers.inet6 as ip6
 import scapy.layers.sixlowpan as lo
 from scapy.compat import raw
 
-here = sys.path[0]
-sys.path.insert(0, os.path.join(here, '..', '..', '..'))  # root/
-sys.path.insert(0, os.path.join(here, '..'))  # openLbr/
-
-import sixlowpan_frag
-
 # ============================ logging =========================================
+from openvisualizer.openlbr import sixlowpan_frag
 
 LOGFILE_NAME = 'test_frag.log'
 
@@ -26,7 +19,7 @@ log.addHandler(logging.NullHandler())
 
 logHandler = logging.handlers.RotatingFileHandler(LOGFILE_NAME, backupCount=5, mode='w')
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
-for loggerName in ['test_frag', 'openFrag']:
+for loggerName in ['test_frag', 'SixLowPanFrag']:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
     temp.addHandler(logHandler)

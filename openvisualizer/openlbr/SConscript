@@ -7,9 +7,12 @@ testenv = env.Clone()
 #===== unittests_openLbr
 
 unittests_openLbr = testenv.Command(
-    'test_report_openLbr.xml', [],
+    'test_report_openlbr.xml', [],
     'py.test unit_tests --junitxml $TARGET.file',
-    chdir=os.path.join('openvisualizer', 'openLbr')
+    chdir=os.path.join('openvisualizer', 'openlbr')
 )
+
+Clean(unittests_openLbr, [Glob('*.log.*'), Glob('*.log')])
+
 testenv.AlwaysBuild(unittests_openLbr)
 testenv.Alias('unittests_openLbr', unittests_openLbr)

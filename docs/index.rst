@@ -11,20 +11,18 @@ Contents:
 .. toctree::
    :maxdepth: 5
 
-   BspEmulator
-   eventBus
-   lbrClient
-   moteConnector
-   moteProbe
-   moteState
-   openLbr
-   openTunWindows
-   openType
-   openvisualizer_utils
-   RPL
-   SimEngine
-   openVisualizerApp
-   
+   bspemulator
+   eventbus
+   jrc
+   moteconnector
+   openparser
+   moteprobe
+   motestate
+   openlbr
+   opentun
+   rpl
+   simengine
+
 Indices and tables
 ==================
 

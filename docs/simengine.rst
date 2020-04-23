@@ -1,50 +1,50 @@
-SimEngine Package
-=================
+Package: simengine
+==================
 
-:mod:`IdManager` Module
+:mod:`idmanager` Module
 -----------------------
 
-.. automodule:: openvisualizer.SimEngine.IdManager
+.. automodule:: openvisualizer.simengine.idmanager
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`LocationManager` Module
+:mod:`locationmanager` Module
 -----------------------------
 
-.. automodule:: openvisualizer.SimEngine.LocationManager
+.. automodule:: openvisualizer.simengine.locationmanager
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`MoteHandler` Module
+:mod:`motehandler` Module
 -------------------------
 
-.. automodule:: openvisualizer.SimEngine.MoteHandler
+.. automodule:: openvisualizer.simengine.motehandler
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`Propagation` Module
+:mod:`propagation` Module
 -------------------------
 
-.. automodule:: openvisualizer.SimEngine.Propagation
+.. automodule:: openvisualizer.simengine.propagation
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`SimEngine` Module
+:mod:`simengine` Module
 -----------------------
 
-.. automodule:: openvisualizer.SimEngine.SimEngine
+.. automodule:: openvisualizer.simengine.simengine
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`TimeLine` Module
+:mod:`timeLine` Module
 ----------------------
 
-.. automodule:: openvisualizer.SimEngine.TimeLine
+.. automodule:: openvisualizer.simengine.timeline
     :members:
     :undoc-members:
     :show-inheritance:

@@ -3,7 +3,7 @@ import glob
 from distutils.core import setup
 
 from openvisualizer import appdirs
-from openvisualizer import ovVersion
+from openvisualizer import version
 
 '''
 This implementation of the traditional setup.py uses the application-level 
@@ -23,7 +23,7 @@ Use of the legacy distutils package also accommodates existing Linux packaging
 tools.
 '''
 
-VERSION = '.'.join([str(v) for v in ovVersion.VERSION])
+VERSION = '.'.join([str(v) for v in version.VERSION])
 data_dir = appdirs.site_data_dir('openvisualizer', 'OpenWSN')
 conf_dir = appdirs.site_config_dir('openvisualizer', 'OpenWSN')
 web_static = 'web_files/static'

@@ -6,7 +6,7 @@ import shutil
 from setuptools import setup
 from setuptools.command.build_py import build_py as _build_py
 
-from openvisualizer import ovVersion
+from openvisualizer import version
 
 '''
 This implementation of the traditional setup.py uses the root package's package_data parameter to store data files, 
@@ -19,7 +19,7 @@ setup.py.
 This implementation is based on setuptools, and builds the list of module dependencies by reading 'requirements.txt'.
 '''
 
-VERSION = '.'.join([str(v) for v in ovVersion.VERSION])
+VERSION = '.'.join([str(v) for v in version.VERSION])
 web_static = 'data/web_files/static'
 web_templates = 'data/web_files/templates'
 sim_data = 'data/sim_files'

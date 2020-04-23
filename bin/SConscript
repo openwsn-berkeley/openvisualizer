@@ -1,149 +1,148 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
-'''
-SCons script to run the application within the source repository. 
-Provides runcli and runweb targets.
-'''
+
+""" SCons script to run the application within the source repository. Provides the runov target. """
 
 import os
-import subprocess
-import sconsUtils
 import signal
+import subprocess
+
+import sconsUtils
 
 Import('env')
 
-def uiRunner(target, source, env):
-    '''
+
+def ov_runner(target, source, env):
+    """
     Builder to run OpenVisualizerApp as subprocess in current directory.
-    Note: Although this SCons task is constructed in the bin/openVisualizerApp 
-    directory, it is executed from the root openvisualizer directory (../..).
-    
-    Target is never created; always runs Python app. Does not check if
-    app is running already. Assumes current process already runs with the
-    required superuser/administrator privileges.
-    '''
+    Note: Although this SCons task is constructed in the bin directory, it is executed from the root OpenVisualizer
+    directory (../..).
+
+    Target is never created; always runs Python app. Does not check if app is running already.
+    """
+
     # Include root directory
-    pypath = '.'   
+    pypath = '.'
     try:
-        envpath = os.environ['PYTHONPATH']
-        if envpath:
-            pypath = pypath + os.pathsep + envpath
+        env_path = os.environ['PYTHONPATH']
+        if env_path:
+            pypath = pypath + os.pathsep + env_path
     except KeyError:
         pass
 
-    subEnv               = os.environ.copy()
-    subEnv['PYTHONPATH'] = pypath
+    sub_env = os.environ.copy()
+    sub_env['PYTHONPATH'] = pypath
 
-    argList = [
-        'python', str(source[0]), 
-        '-a',     env['BUILD_DIR'],
-    ]
+    arg_list = ['python', str(source[0]), '-a', env['BUILD_DIR']]
+
+    if env['HOST']:
+        arg_list.append('--host={0}'.format(env['HOST']))
+
+    if env['PORT']:
+        arg_list.append('--port={0}'.format(env['PORT']))
+
     if env['SIMCOUNT']:
-        # Must append to list in a single item, without embedded quotes.
-        argList.append('--simCount={0}'.format(env['SIMCOUNT']))
+        arg_list.append('--simCount={0}'.format(env['SIMCOUNT']))
+
     elif env['SIMOPT']:
-        argList.append('--sim')
-    
+        arg_list.append('--sim')
+
     if env['SIMTOPOLOGY']:
-        argList.append('--simTopology={0}'.format(env['SIMTOPOLOGY']))
-   
+        arg_list.append('--simTopology={0}'.format(env['SIMTOPOLOGY']))
+
     if env['PATHTOPO']:
-        argList.append('--pathTopo={0}'.format(env['PATHTOPO']))
- 
-    if env['TRACEOPT']:
-        argList.append('--trace')
+        arg_list.append('--pathTopo={0}'.format(env['PATHTOPO']))
+
     if env['DEBUGOPT']:
-        argList.append('--debug')
+        arg_list.append('--debug')
+
+    if env['TRACE']:
+        arg_list.append('--trace')
+
     if env['OPENTESTBED']:
-        argList.append('--opentestbed')
-    if env['MQTT_BROKER_ADDRESS']:
-        argList.append('--mqtt-broker-address='
-                       + '{0}'.format(env['MQTT_BROKER_ADDRESS']))
+        arg_list.append('--opentestbed')
+
+    if env['MQTT_BROKER']:
+        arg_list.append('--mqtt-broker={0}'.format(env['MQTT_BROKER']))
+
     if env['OPENTUN']:
-        argList.append('--opentun')
+        arg_list.append('--opentun')
 
     if env['USEPAGEZERO']:
-        argList.append('--usePageZero')
-        
-    if env['HOSTOPT']:
-        argList.append('-H {0}'.format(env['HOSTOPT']))
-    if env['PORTOPT']:
-        argList.append('-p {0}'.format(env['PORTOPT']))
+        arg_list.append('--usePageZero')
 
-    if env['ROOT']:
-        argList.append('--root={0}'.format(env['ROOT']))
-    
     result = 0
     try:
-        p = subprocess.Popen(argList, env=subEnv)
+        p = subprocess.Popen(arg_list, env=sub_env)
 
         if env['WAIT_ON_UI']:
             # Must wait for a program that uses raw_input(); otherwise
             # SCons exits and standard input is sent to shell.
             result = p.wait()
-            
-            if (os.name == 'posix' and result == -signal.SIGTERM) \
-                    or (os.name != 'posix' and result == signal.SIGTERM):
+
+            if (os.name == 'posix' and result == -signal.SIGTERM) or (os.name != 'posix' and result == signal.SIGTERM):
                 # Likely from console; not an error
                 result = 0
         else:
             # Display PID to make it easier to kill if necessary.
             print 'Child PID is {0}'.format(p.pid)
-    except:
+    except ValueError or OSError:
         result = 1
-        
+
     return result
-    
-def setupUiRunner(env, uiFile, dataDirs):
-    '''
-    Sets up dependencies for data files required to run an OpenVisualizer 
+
+
+def setup_ov_runner(env, ui_file, data_dirs):
+    """
+    Sets up dependencies for data files required to run an OpenVisualizer
     UI. The data files are copied to the environment's BUILD_DIR.
-    
-    * Copies simulation firmware to the sim_files data directory if running
-      a simulation.
-    * Creates commands to copy conf files unless they exist already. The 
-      user may have edited them.
-    * Creates commands to copy the provided static data directories 
-      unconditionally.
-    
-    :param uiFile:   Filename to run in openVisualizerApp directory
-    :param dataDirs: Dirs containing static data
-    :rtype:          The targets reference for the Builder.
-    '''
-    
-    # Create Builder to run GUI    
-    env.Append(BUILDERS = {'RunUi' : Builder(action = uiRunner)})
-    
-    targets = env.RunUi(uiFile)
+
+    * Copies simulation firmware to the sim_files data directory if running a simulation.
+    * Creates commands to copy conf files unless they exist already. The user may have edited them.
+    * Creates commands to copy the provided static data directories unconditionally.
+
+    :param env: contains the build environment
+    :param ui_file: filename to run in openVisualizerApp directory
+    :param data_dirs: dirs containing static data
+    :rtype: the targets reference for the Builder.
+    """
+
+    # Create Builder to run GUI
+    env.Append(BUILDERS={'RunUi': Builder(action=ov_runner)})
+
+    targets = env.RunUi(ui_file)
+
+    Depends(targets, 'defines.py')
+    env.Command('defines.py', '', 'python ' + os.path.join('bin', 'helpers', 'generate_defines.py'))
 
     if (env['SIMOPT'] or env['SIMCOUNT']) and env['SIMCOPYOPT']:
-        # Appending uiFile to pseudo-target to make it unique.
-        simfwTarget = 'simui-{0}'.format(uiFile)
-        Depends(targets, simfwTarget)
-        sconsUtils.copySimfw(env, simfwTarget)
-    
+        # Appending ui_file to pseudo-target to make it unique.
+        sim_fw_target = 'simui-{0}'.format(ui_file)
+        Depends(targets, sim_fw_target)
+        sconsUtils.copySimfw(env, sim_fw_target)
+
     for node in (env['CONF_FILES'] + env['DATA_FILES']):
-        bldNode = os.path.join(env['BUILD_DIR'], node)
-        
-        Depends(targets, bldNode)
+        bld_node = os.path.join(env['BUILD_DIR'], node)
+
+        Depends(targets, bld_node)
         Command(
-            bldNode, 
+            bld_node,
             node,
             [
                 Mkdir(env['BUILD_DIR']),
                 Copy('$TARGET', '$SOURCE')
             ]
         )
-        
+
     for node in env['DATA_DIRS']:
-        bldNode = os.path.join(env['BUILD_DIR'], node)
-        
-        Depends(targets, bldNode)
+        bld_node = os.path.join(env['BUILD_DIR'], node)
+
+        Depends(targets, bld_node)
         Command(
-            bldNode, 
+            bld_node,
             node,
             [
                 Delete('$TARGET'),
@@ -151,35 +150,29 @@ def setupUiRunner(env, uiFile, dataDirs):
                 Copy('$TARGET', '$SOURCE')
             ]
         )
-        AlwaysBuild(bldNode)
+        AlwaysBuild(bld_node)
 
     Clean(targets, env['ROOT_BUILD_DIR'])
     Clean(targets, env['CLEAN_UP'])
     return targets
 
-# Prepare the environment to create builders for data files and directoires,
-# as well as a builder to run the app itself.
-env['BUILD_DIR']   = os.path.join(env['ROOT_BUILD_DIR'], 'runui')
-env['WAIT_ON_UI']  = False
-# Must create the entries for use here and by parent SConstruct to identify
-# these kinds of files for other use.
-env['CONF_FILES']  = ['openvisualizer.conf', 'logging.conf', 'trace.conf']
-env['DATA_DIRS']   = ['web_files', 'sim_files']
-env['DATA_FILES']  = []
 
 # Prepare the environment to create builders for data files and directoires, as well as a builder to run the app itself.
 env['BUILD_DIR'] = os.path.join(env['ROOT_BUILD_DIR'], 'runui')
-env['CLEAN_UP'] = os.path.join(env['ROOT_PROJECT_DIR'], 'debugpins.vcd')
+env['CLEAN_UP'] = \
+    [
+        os.path.join(env['ROOT_PROJECT_DIR'], 'debugpins.vcd'),
+        os.path.join(env['ROOT_PROJECT_DIR'], 'openvisualizer', 'motehandler', 'moteconnector', 'openparser',
+                     'defines.py')
+    ]
 env['WAIT_ON_UI'] = False
 
-cliEnv               = env.Clone()
-cliEnv['WAIT_ON_UI'] = True
-cliEnv['HOSTOPT']    = None
-cliEnv['PORTOPT']    = None
-cliEnv['ROVEROPT']    = None
-Alias('runcli', setupUiRunner(cliEnv, 'openVisualizerCli.py', []))
+# Must create the entries for use here and by parent SConstruct to identify these kinds of files for other use.
+env['CONF_FILES'] = ['openvisualizer.conf', 'logging.conf', 'trace.conf']
+env['DATA_DIRS'] = ['web_files', 'sim_files']
+env['DATA_FILES'] = []
 
-webEnv               = env.Clone()
-webdirs              = ['web_files']
-webEnv['WAIT_ON_UI'] = True
-Alias('runweb', setupUiRunner(webEnv, 'openVisualizerWeb.py', webdirs))
+# Customize environment for each target. Must remove 'host' and 'port'
+ovEnv = env.Clone()
+ovEnv['WAIT_ON_UI'] = True
+Alias('runov', setup_ov_runner(ovEnv, 'openvisualizer_cli.py', []))

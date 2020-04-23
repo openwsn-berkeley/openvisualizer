@@ -73,32 +73,30 @@ class build_py(_build_py):
             shutil.rmtree(os.path.join(simPath, 'windows'))
 
 setup(
-    name             = 'openVisualizer',
-    packages         = ['openvisualizer', 
-                        'openvisualizer.BspEmulator', 'openvisualizer.eventBus', 
-                        'openvisualizer.lbrClient', 'openvisualizer.motehandler.moteconnector',
-                        'openvisualizer.motehandler.moteprobe', 'openvisualizer.motehandler.motestate',
-                        'openvisualizer.openLbr', 'openvisualizer.opentun', 'openvisualizer.openUI',
-                        'openvisualizer.rpl', 'openvisualizer.SimEngine', 'openvisualizer.remoteConnectorServer',
-                        'openvisualizer.jrc'],
-    scripts          = appdirGlob('openVisualizer*.py'),
-    package_dir      = {'': '.', 'openvisualizer': 'openvisualizer'},
-    # Copy simdata files by extension so don't copy .gitignore in that directory.
-    package_data     = {'openvisualizer': [
-                        'data/*.conf',
-                        'data/requirements.txt',
-                        '/'.join([webstatic, 'css', '*']), 
-                        '/'.join([webstatic, 'font-awesome', 'css', '*']), 
-                        '/'.join([webstatic, 'font-awesome', 'fonts', '*']), 
-                        '/'.join([webstatic, 'images', '*']), 
-                        '/'.join([webstatic, 'js', '*.js']), 
-                        '/'.join([webstatic, 'js', 'plugins', 'metisMenu', '*']), 
-                        '/'.join([webtmpl, '*']), 
-                        '/'.join([simdata, 'windows', '*.pyd']), 
-                        '/'.join([simdata, 'linux',   '*.so']), 
-                        '/'.join([simdata, '*.h']) 
-                        ]},
-    install_requires = deplist,
+    name='openVisualizer',
+    packages=['openvisualizer',
+              'openvisualizer.BspEmulator', 'openvisualizer.eventbus', 'openvisualizer.motehandler.moteconnector',
+              'openvisualizer.motehandler.moteprobe', 'openvisualizer.motehandler.motestate',
+              'openvisualizer.openlbr', 'openvisualizer.opentun',
+              'openvisualizer.rpl', 'openvisualizer.SimEngine', 'openvisualizer.jrc'],
+    scripts=[appdirGlob('openvisualizer*.py'), appdirGlob('webserver.py')],
+    package_dir={'': '.', 'openvisualizer': 'openvisualizer'},
+    # Copy sim_data files by extension so don't copy .gitignore in that directory.
+    package_data={'openvisualizer': [
+        'data/*.conf',
+        'data/requirements.txt',
+        '/'.join([webstatic, 'css', '*']),
+        '/'.join([webstatic, 'font-awesome', 'css', '*']),
+        '/'.join([webstatic, 'font-awesome', 'fonts', '*']),
+        '/'.join([webstatic, 'images', '*']),
+        '/'.join([webstatic, 'js', '*.js']),
+        '/'.join([webstatic, 'js', 'plugins', 'metisMenu', '*']),
+        '/'.join([webtmpl, '*']),
+        '/'.join([simdata, 'windows', '*.pyd']),
+        '/'.join([simdata, 'linux', '*.so']),
+        '/'.join([simdata, '*.h'])
+    ]},
+    install_requires=deplist,
     # Must extract zip to edit conf files.
     zip_safe         = False,
     version          = VERSION,

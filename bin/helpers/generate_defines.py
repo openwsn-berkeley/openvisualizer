@@ -1,4 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
+#!/usr/bin/env python2
+
+# Copyright (c) 2010-2013, Regents of the University of California.
 # All rights reserved. 
 #  
 # Released under the BSD 3-Clause license as published at the link below.
@@ -27,9 +29,9 @@ import time
 
 # ============================ defines =========================================
 
-INPUT_FILE = os.path.join('../../..', '..', '..', 'openwsn-fw', 'inc', 'opendefs.h')
-INPUT_FILE_SIXTOP = os.path.join('../../..', '..', '..', 'openwsn-fw', 'openstack', '02b-MAChigh', 'sixtop.h')
-OUTPUT_FILE = 'defines.py'
+INPUT_FILE = os.path.join('..', 'openwsn-fw', 'inc', 'opendefs.h')
+INPUT_FILE_SIXTOP = os.path.join('..', 'openwsn-fw', 'openstack', '02b-MAChigh', 'sixtop.h')
+OUTPUT_FILE = os.path.join('openvisualizer', 'motehandler', 'moteconnector', 'openparser', 'defines.py')
 
 
 # ============================ helpers =========================================
@@ -149,10 +151,8 @@ def main():
         output += [""]
         output = '\n'.join(output)
 
-        # write to file
-        file = open(OUTPUT_FILE, 'w')
-        file.write(output)
-        file.close()
+        with open(OUTPUT_FILE, 'w') as f:
+            f.write(output)
 
         print "{0} created successfully.".format(OUTPUT_FILE)
 
@@ -164,12 +164,11 @@ def main():
         output += ["ERROR: could not open the following file"]
         output += ["   {0}".format(INPUT_FILE)]
         output += [""]
-        output += ["Do you have the openwsn-fw and openwsn-sw repositories"]
-        output += ["checked out side-by-side?"]
+        output += ["Do you have the openwsn-fw and openwsn-sw repositories checked out side-by-side?"]
         output = '\n'.join(output)
         print output
 
-    raw_input('\nScript ended. Press enter to close.')
+        _ = raw_input('Press any key to continue...\n')
 
 
 if __name__ == '__main__':

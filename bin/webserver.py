@@ -7,101 +7,55 @@
 
 import datetime
 import functools
-import json
 import logging
-import os
 import re
-import signal
-import sys
-import threading
 import time
-from argparse import ArgumentParser
-from cmd import Cmd
 
 import bottle
 from bottle import view, response
 
-import pathHelper
-
-if __name__ == "__main__":
-    # Update Python path if running in in-tree development mode
-    base_dir = os.path.dirname(__file__)
-    conf_file = os.path.join(base_dir, "openvisualizer.conf")
-    if os.path.exists(conf_file):
-        pathHelper.updatePath()
-
-log = logging.getLogger('openVisualizerWeb')
-
-try:
-    from openvisualizer.motehandler.motestate import motestate
-except ImportError:
-    # Debug failed lookup on first library import
-    print 'ImportError: cannot find openvisualizer.motestate module'
-    print 'sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path))
-
-# We want to import local module coap instead of the built-in one
-here = sys.path[0]
-openwsn_dir = os.path.dirname(os.path.dirname(here))
-coap_dir = os.path.join(openwsn_dir, 'coap')
-sys.path.insert(0, coap_dir)
-
-from coap import coap
-import openVisualizerApp
 from openvisualizer import ovVersion
 from openvisualizer.BspEmulator import VcdLogger
 from openvisualizer.SimEngine import SimEngine
-from openvisualizer.eventBus import eventBusClient
+from openvisualizer.eventBus.eventBusClient import eventBusClient
+from openvisualizer.motehandler.motestate.motestate import MoteState
+
+log = logging.getLogger('OVWebServer')
 
 # add default parameters to all bottle templates
 view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in ovVersion.VERSION])))
 
 
-class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
-    """
-    Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web
-    server.
-    """
+class WebServer(eventBusClient):
+    """ Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web server. """
 
     def __init__(self, app, web_srv):
         """
         :param app: OpenVisualizerApp
         :param web_srv: Web server
         """
-        log.info('Creating OpenVisualizerWeb')
+        log.debug('create instance')
 
         # store params
         self.app = app
         self.engine = SimEngine.SimEngine()
         self.web_srv = web_srv
 
-        # command support
-        Cmd.__init__(self)
-        self.doc_header = 'Commands (type "help all" or "help <topic>"):'
-        self.prompt = '> '
-        self.intro = '\nOpenVisualizer  (type "help" for commands)'
-
-        # used for remote motes :
-        self.rover_motes = {}
-        self.client = coap.coap(udpPort=9000)
-        self.client.respTimeout = 2
-        self.client.ackTimeout = 2
-        self.client.maxRetransmit = 1
+        # initialize parent classes
+        super(WebServer, self).__init__(name='OpenVisualizerWeb', registrations=[])
 
         self._define_routes()
         # To find page templates
         bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.data_dir))
 
-        # initialize parent class
-        eventBusClient.eventBusClient.__init__(self, name='OpenVisualizerWeb', registrations=[])
-
         # Set DAGroots imported
         if app.dagroot_list:
             # Wait the end of the mote threads creation
             time.sleep(1)
-            for moteid in app.dagroot_list:
-                self._show_moteview(moteid)
-                self._get_mote_data(moteid)
-                self._toggle_dagroot(moteid)
+            for mote_id in app.dagroot_list:
+                self._show_moteview(mote_id)
+                self._get_mote_data(mote_id)
+                self._toggle_dagroot(mote_id)
 
     # ======================== public ==========================================
 
@@ -161,7 +115,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         :param moteid: 16-bit ID of mote
         """
 
-        log.info('Toggle root status for moteid {0}'.format(moteid))
+        log.debug('Toggle root status for moteid {0}'.format(moteid))
         ms = self.app.get_mote_state(moteid)
         if ms:
             if log.isEnabledFor(logging.DEBUG):
@@ -342,8 +296,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         dagroot_list = []
 
         for ms in self.app.mote_states:
-            if ms.get_state_elem(motestate.MoteState.ST_IDMANAGER).isDAGroot:
-                dagroot_list.append(ms.get_state_elem(motestate.MoteState.ST_IDMANAGER).get_16b_addr()[1])
+            if ms.get_state_elem(MoteState.ST_IDMANAGER).isDAGroot:
+                dagroot_list.append(ms.get_state_elem(MoteState.ST_IDMANAGER).get_16b_addr()[1])
 
         data['DAGrootList'] = dagroot_list
 
@@ -355,179 +309,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient, Cmd):
         return data
 
     def _get_event_data(self):
-        response = {
+        res = {
             'isDebugPkts': 'true' if self.app.ebm.wiresharkDebugEnabled else 'false', 'stats': self.app.ebm.getStats()
         }
-        return response
-
-    # ===== callbacks
-
-    def do_state(self, arg):
-        """
-        Prints provided state, or lists states.
-        Usage: state [state-name]
-        """
-        if not arg:
-            for ms in self.app.mote_states:
-                output = []
-                output += ['Available states:']
-                output += [' - {0}'.format(s) for s in ms.get_state_elem_names()]
-                self.stdout.write('\n'.join(output))
-            self.stdout.write('\n')
-        else:
-            for ms in self.app.mote_states:
-                try:
-                    self.stdout.write(str(ms.get_state_elem(arg)))
-                    self.stdout.write('\n')
-                except ValueError as err:
-                    self.stdout.write(str(err))
-                    self.stdout.write('\n')
-
-    def do_list(self, arg):
-        """ List available states. (Obsolete; use 'state' without parameters.) """
-        self.do_state('')
-
-    def do_root(self, arg):
-        """
-        Sets dagroot to the provided mote, or lists motes
-        Usage: root [serial-port]
-        """
-        if not arg:
-            self.stdout.write('Available ports:')
-            if self.app.mote_states:
-                for ms in self.app.mote_states:
-                    self.stdout.write('  {0}'.format(ms.mote_connector.serialport))
-            else:
-                self.stdout.write('  <none>')
-            self.stdout.write('\n')
-        else:
-            for ms in self.app.mote_states:
-                try:
-                    if ms.mote_connector.serialport == arg:
-                        ms.trigger_action(motestate.MoteState.TRIGGER_DAGROOT)
-                except ValueError as err:
-                    self.stdout.write(str(err))
-                    self.stdout.write('\n')
-
-    def do_set(self, arg):
-        """ Sets mote with parameters. """
-        if not arg:
-            self.stdout.write('Available ports:')
-            if self.app.mote_states:
-                for ms in self.app.mote_states:
-                    self.stdout.write('  {0}'.format(ms.mote_connector.serialport))
-            else:
-                self.stdout.write('  <none>')
-            self.stdout.write('\n')
-        else:
-            try:
-                [port, command, parameter] = arg.split(' ')
-                for ms in self.app.mote_states:
-                    try:
-                        if ms.mote_connector.serialport == port:
-                            ms.trigger_action([motestate.MoteState.SET_COMMAND, command, parameter])
-                    except ValueError as err:
-                        self.stdout.write(err)
-                        self.stdout.write('\n')
-            except ValueError as err:
-                print "{0}:{1}".format(type(err), err)
-
-    def help_all(self):
-        """ Lists first line of help for all documented commands. """
-        names = self.get_names()
-        names.sort()
-        maxlen = 65
-        self.stdout.write(
-            'type "help <topic>" for topic details\n'.format(80 - maxlen - 3))
-        for name in names:
-            if name[:3] == 'do_':
-                try:
-                    doc = getattr(self, name).__doc__
-                    if doc:
-                        # Handle multi-line doc comments and format for length.
-                        doclines = doc.splitlines()
-                        doc = doclines[0]
-                        if len(doc) == 0 and len(doclines) > 0:
-                            doc = doclines[1].strip()
-                        if len(doc) > maxlen:
-                            doc = doc[:maxlen] + '...'
-                        self.stdout.write('{0} - {1}\n'.format(
-                            name[3:80 - maxlen], doc))
-                except AttributeError:
-                    pass
-
-    def do_quit(self, arg):
-        self.app.close()
-        os.kill(os.getpid(), signal.SIGTERM)
-        return True
-
-    def emptyline(self):
-        return
-
-    def cmdloop(self, intro=None):
-        try:
-            super(OpenVisualizerWeb, self).cmdloop(intro=intro)
-        except KeyboardInterrupt:
-            print("\nYou pressed Ctrl-C. Killing OpenVisualizer..\n")
-            self.app.close()
-            os.kill(os.getpid(), signal.SIGTERM)
-
-
-# ============================ main ============================================
-
-def _add_parser_args(parser):
-    """ Adds arguments specific to web UI. """
-    parser.add_argument('-H', '--host', dest='host', default='0.0.0.0', action='store', help='host address')
-    parser.add_argument('-p', '--port', dest='port', default=8080, action='store', help='port number')
-
-
-webapp = None
-if __name__ == "__main__":
-    parser = ArgumentParser()
-    _add_parser_args(parser)
-    arg_space = parser.parse_known_args()[0]
-
-    # log
-    log.info(
-        'Initializing OpenVisualizerWeb with options: \n\t{0}'.format(
-            '\n    '.join(
-                [
-                    'host = {0}'.format(arg_space.host),
-                    'port = {0}'.format(arg_space.port)
-                ]
-            )
-        )
-    )
-
-    # ===== start the app
-    app = openVisualizerApp.main(parser)
-
-    # ===== add a web interface
-    websrv = bottle.Bottle()
-    webapp = OpenVisualizerWeb(app, websrv)
-
-    # start web interface in a separate thread
-    webthread = threading.Thread(
-        target=websrv.run,
-        kwargs={
-            'host': arg_space.host,
-            'port': arg_space.port,
-            'quiet': not app.debug,
-            'debug': app.debug,
-        }
-    )
-    webthread.start()
-
-    # ===== add a cli (minimal) interface
-
-    banner = []
-    banner += ['OpenVisualizer']
-    banner += ['web interface started at {0}:{1}'.format(arg_space.host, arg_space.port)]
-    banner += ['enter \'quit\' to exit']
-    banner = '\n'.join(banner)
-    print banner
-
-    arg_space = parser.parse_args()
-    webapp.do_root(arg_space.root)
-
-    webapp.cmdloop()
+        return res

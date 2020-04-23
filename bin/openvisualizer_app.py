@@ -84,7 +84,7 @@ class OpenVisualizerApp(object):
         if self.simulator_mode:
             # in "simulator" mode, motes are emulated
             sys.path.append(os.path.join(self.data_dir, 'sim_files'))
-            import oos_openwsn
+            import oos_openwsn  # pylint: disable=import-error
 
             motehandler.read_notif_ids(os.path.join(self.data_dir, 'sim_files', 'openwsnmodule_obj.h'))
             self.mote_probes = []

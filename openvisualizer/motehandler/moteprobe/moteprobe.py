@@ -10,10 +10,10 @@ import os
 from enum import IntEnum
 
 if os.name == 'nt':  # Windows
-    import _winreg as winreg
+    import _winreg as winreg  # pylint: disable=import-error
 elif os.name == 'posix':  # Linux
-    import glob
-    import platform  # To recognize MAC OS X
+    import glob  # pylint: disable=import-error
+    import platform  # pylint: disable=import-error
 import threading
 
 import serial

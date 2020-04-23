@@ -10,9 +10,9 @@ import platform
 import SCons
 import sconsutils
 
-#============================ banner ==========================================
+# ============================ banner ==========================================
 
-banner  = [""]
+banner = [""]
 banner += [" ___                 _ _ _  ___  _ _ "]
 banner += ["| . | ___  ___ ._ _ | | | |/ __>| \ |"]
 banner += ["| | || . \/ ._>| ' || | | |\__ \|   |"]
@@ -22,9 +22,9 @@ banner += [""]
 
 print '\n'.join(banner)
 
-#============================ SCons environment ===============================
+# ============================ SCons environment ===============================
 
-#===== help text
+# ===== help text
 
 Help('''
 Usage:
@@ -33,6 +33,7 @@ Usage:
     scons copy-simfw
     scons <sdist|upload|sdist-native>
     scons unittests
+    scons pylint
     scons docs
 
 Targets:
@@ -85,14 +86,16 @@ Targets:
     unittests:
         Runs unittests of the openvisualizer package.
 
+    pylint:
+        Verifies coding style consistency and checks for potential errors.
+
     docs:
         Generate source documentation in build{0}html directory
 '''.format(os.sep))
 
-
 # Define base environment
 env = Environment(
-    ENV = {'PATH' : os.environ['PATH']}
+    ENV={'PATH': os.environ['PATH']}
 )
 
 # Must define with absolute path since SCons construction may occur in a subdirectory via SConscript.
@@ -101,10 +104,12 @@ env['ROOT_PROJECT_DIR'] = os.path.join(os.getcwd())
 
 # External openwsn-fw repository directory. An environment variable makes it easy to change since it depends on the host
 # running this script.
-env['FW_DIR']         = os.path.join('..', 'openwsn-fw')
+env['FW_DIR'] = os.path.join('..', 'openwsn-fw')
 
-def default(env,target,source):
+
+def default(env, target, source):
     print SCons.Script.help_text
+
 
 Default(env.Command('default', None, default))
 
@@ -112,57 +117,57 @@ Default(env.Command('default', None, default))
 runnerEnv = env.Clone()
 
 AddOption('--sim',
-    dest      = 'simOpt',
-    default   = False,
-    action    = 'store_true')
+          dest='simOpt',
+          default=False,
+          action='store_true')
 runnerEnv['SIMOPT'] = GetOption('simOpt')
 
 AddOption('--simCount',
-    dest      = 'simCount',
-    default   = 0,
-    type      = 'int')
+          dest='simCount',
+          default=0,
+          type='int')
 runnerEnv['SIMCOUNT'] = GetOption('simCount')
 
 AddOption('--host',
-    dest      = 'host',
-    default   = '0.0.0.0',
-    type      = 'string')
+          dest='host',
+          default='0.0.0.0',
+          type='string')
 runnerEnv['HOST'] = GetOption('host')
 
 AddOption('--port',
-    dest      = 'port',
-    default   = '8080',
-    type      = 'int')
+          dest='port',
+          default='8080',
+          type='int')
 runnerEnv['PORT'] = GetOption('port')
 
 AddOption('--trace',
-    dest      = 'traceOpt',
-    default   = False,
-    action    = 'store_true')
+          dest='traceOpt',
+          default=False,
+          action='store_true')
 runnerEnv['TRACE'] = GetOption('traceOpt')
 
 AddOption('--simTopo',
-    dest      = 'simTopology',
-    default   = '',
-    type      = 'string')
+          dest='simTopology',
+          default='',
+          type='string')
 runnerEnv['SIMTOPOLOGY'] = GetOption('simTopology')
 
 AddOption('--pathTopo',
-    dest      = 'pathTopo',
-    default   = '',
-    action    = 'store')
+          dest='pathTopo',
+          default='',
+          action='store')
 runnerEnv['PATHTOPO'] = GetOption('pathTopo')
 
 AddOption('--nosimcopy',
-    dest      = 'simcopyOpt',
-    default   = True,
-    action    = 'store_true')
+          dest='simcopyOpt',
+          default=True,
+          action='store_true')
 runnerEnv['SIMCOPYOPT'] = GetOption('simcopyOpt')
 
 AddOption('--opentestbed',
-    dest      = 'opentestbed',
-    default   = False,
-    action    = 'store_true')
+          dest='opentestbed',
+          default=False,
+          action='store_true')
 runnerEnv['OPENTESTBED'] = GetOption('opentestbed')
 
 AddOption('--mqtt-broker',
@@ -172,59 +177,89 @@ AddOption('--mqtt-broker',
 runnerEnv['MQTT_BROKER'] = GetOption('mqtt_broker')
 
 AddOption('--opentun',
-    dest      = 'opentun',
-    default   = False,
-    action    = 'store_true')
+          dest='opentun',
+          default=False,
+          action='store_true')
 runnerEnv['OPENTUN'] = GetOption('opentun')
 
 AddOption('--ovdebug',
-    dest      = 'debugOpt',
-    default   = False,
-    action    = 'store_true')
+          dest='debugOpt',
+          default=False,
+          action='store_true')
 runnerEnv['DEBUGOPT'] = GetOption('debugOpt')
 
 AddOption('--usePageZero',
-    dest      = 'usePageZero',
-    default   = False,
-    action    = 'store_true')
+          dest='usePageZero',
+          default=False,
+          action='store_true')
 runnerEnv['USEPAGEZERO'] = GetOption('usePageZero')
 
-#============================ SCons targets ===================================
+# ============================ SCons targets ===================================
 
-#===== copy-simfw
+# ===== copy-simfw
 
-simhosts = ['amd64-linux','x86-linux','amd64-windows','x86-windows']
+simhosts = ['amd64-linux', 'x86-linux', 'amd64-windows', 'x86-windows']
 if os.name == 'nt':
-    defaultIndex = 2 if platform.architecture()[0]=='64bit' else 3
+    defaultIndex = 2 if platform.architecture()[0] == '64bit' else 3
 else:
-    defaultIndex = 0 if platform.architecture()[0]=='64bit' else 1
+    defaultIndex = 0 if platform.architecture()[0] == '64bit' else 1
 
 AddOption('--simhost',
-    dest      = 'simhostOpt',
-    default   = simhosts[defaultIndex],
-    type      = 'choice',
-    choices   = simhosts)
+          dest='simhostOpt',
+          default=simhosts[defaultIndex],
+          type='choice',
+          choices=simhosts)
 
 # Must copy SIMHOSTOPT to runner environment since it also reads sconsutils.py.
-env['SIMHOSTOPT']       = GetOption('simhostOpt')
+env['SIMHOSTOPT'] = GetOption('simhostOpt')
 runnerEnv['SIMHOSTOPT'] = env['SIMHOSTOPT']
 
 Alias('copy-simfw', sconsutils.copy_simulation_fw(env, 'simcopy'))
 
-#===== runov
+# ===== runov
 
 # Must define run targets below the copy-simfw target so SIMHOSTOPT is available. Run targets may copy simulation
 # firmware before starting.
 
 app_dir = os.path.join('bin')
-SConscript(os.path.join(app_dir, 'SConscript'), exports = {"env": runnerEnv})
+SConscript(os.path.join(app_dir, 'SConscript'), exports={"env": runnerEnv})
 
 # Copy variables for data files out of runner environment, to be used in
 # dist targets below.
 env['CONF_FILES'] = runnerEnv['CONF_FILES']
-env['DATA_DIRS']  = runnerEnv['DATA_DIRS']
+env['DATA_DIRS'] = runnerEnv['DATA_DIRS']
 
-#===== sdist
+# ===== pylint
+
+modules = ['openvisualizer/' + d for d in ['bspemulator',
+                                           'eventbus',
+                                           'jrc',
+                                           # 'motehandler',
+                                           'openlbr',
+                                           # 'opentun',
+                                           'rpl',
+                                           'simengine',
+                                           'ovtracer.py',
+                                           'version.py',
+                                           'openvisualizer_utils.py']] + \
+          ['bin/' + d for d in ['helpers',
+                                'opencli.py',
+                                'openvisualizer_cli.py',
+                                'openvisualizer_app.py',
+                                'serialtestercli.py',
+                                #'webserver.py'
+                                ]]
+for module in modules:
+    pylint = env.Command(
+        module + '_linter.log', module,
+        'pylint -j4 --output-format=parseable -E $SOURCE > $TARGET.file',
+    )
+    env.AlwaysBuild(pylint)
+    env.Alias('pylint', pylint)
+
+Clean(pylint, Glob('*_linter.log'))
+
+# ===== sdist
 
 def makeTreeSdist(env, target):
     '''
@@ -237,9 +272,9 @@ def makeTreeSdist(env, target):
     Cleans up the temporary package data file.
     '''
     datadir = os.path.join('data')
-    appdir  = os.path.join('bin')
+    appdir = os.path.join('bin')
     distdir = os.path.join('build', 'dist')
-    topdir  = os.path.join('.')
+    topdir = os.path.join('.')
     cmdlist = []
 
     cmdlist.append(Delete(distdir))
@@ -270,10 +305,12 @@ def makeTreeSdist(env, target):
 
     return env.Command(target, '', cmdlist)
 
+
 Alias('sdist', makeTreeSdist(env, 'sdist'))
 Alias('upload', makeTreeSdist(env, 'upload'))
 
-#===== sdist-native
+
+# ===== sdist-native
 
 def makeNativeSdist(env):
     '''
@@ -283,14 +320,15 @@ def makeNativeSdist(env):
     distdir = os.path.join('build', 'dist')
 
     return env.Command('native', '',
-                    [
-                    Delete(distdir),
-                    Delete('MANIFEST'),
-                    Copy('setup.py', 'nativeSetup.py'),
-                    'python setup.py sdist --dist-dir {0}'.format(distdir),
-                    Delete('setup.py'),
-                    Delete('MANIFEST'),
-                    ])
+                       [
+                           Delete(distdir),
+                           Delete('MANIFEST'),
+                           Copy('setup.py', 'nativeSetup.py'),
+                           'python setup.py sdist --dist-dir {0}'.format(distdir),
+                           Delete('setup.py'),
+                           Delete('MANIFEST'),
+                       ])
+
 
 Alias('sdist-native', makeNativeSdist(env))
 
@@ -299,9 +337,9 @@ Alias('sdist-native', makeNativeSdist(env))
 # scan for SConscript contains unit tests
 SConscript(os.path.join('tests', 'SConscript'), exports = {"env": env})
 
-#===== docs
+# ===== docs
 
 SConscript(
     os.path.join('docs', 'SConscript'),
-    exports = {"env": env},
+    exports={"env": env},
 )

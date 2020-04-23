@@ -117,7 +117,7 @@ class BspSctimer(BspModule.BspModule):
             self.compareArmed = True
         
         except Exception as err:
-            errMsg=u.formatCriticalMessage(err)
+            errMsg=u.format_critical_message(err)
             print errMsg
             self.log.critical(errMsg)
     

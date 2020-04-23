@@ -3,154 +3,160 @@
 #  
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
-import traceback
+
 import threading
+import traceback
+
 
 def buf2int(buf):
-    '''
-    Converts some consecutive bytes of a buffer into an integer. 
+    """
+    Converts some consecutive bytes of a buffer into an integer.
     Big-endianness is assumed.
-    
-    :param buf:      [in] Byte array.
-    '''
-    returnVal = 0
+
+    :param buf: Byte array.
+    """
+
+    return_val = 0
     for i in range(len(buf)):
-        returnVal += buf[i]<<(8*(len(buf)-i-1))
-    return returnVal
+        return_val += buf[i] << (8 * (len(buf) - i - 1))
+    return return_val
 
-#===== formatting
 
-def formatStringBuf(buf):
-    return '({0:>2}B) {1}'.format(
-        len(buf),
-        '-'.join(["%02x" % ord(b) for b in buf]),
-    )
+# ===== formatting
 
-def formatBuf(buf):
-    '''
-    Format a bytelist into an easy-to-read string. For example: 
+def format_string_buf(buf):
+    return '({0:>2}B) {1}'.format(len(buf), '-'.join(["%02x" % ord(b) for b in buf]))
+
+
+def format_buf(buf):
+    """
+    Format a bytelist into an easy-to-read string. For example:
 
     ``[0xab,0xcd,0xef,0x00] -> '(4B) ab-cd-ef-00'``
-    '''
-    return '({0:>2}B) {1}'.format(
-        len(buf),
-        '-'.join(["%02x" % b for b in buf]),
-    )
+    """
 
-def formatIPv6Addr(addr):
+    return '({0:>2}B) {1}'.format(len(buf), '-'.join(["%02x" % b for b in buf]))
+
+
+def format_ipv6_addr(addr):
     # group by 2 bytes
-    addr = [buf2int(addr[2*i:2*i+2]) for i in range(len(addr)/2)]
+    addr = [buf2int(addr[2 * i:2 * i + 2]) for i in range(len(addr) / 2)]
     return ':'.join(["%x" % b for b in addr])
-    
-def formatAddr(addr):
+
+
+def format_addr(addr):
     return '-'.join(["%02x" % b for b in addr])
-    
-def formatThreadList():
+
+
+def format_thread_list():
     return '\nActive threads ({0})\n   {1}'.format(
         threading.activeCount(),
-        '\n   '.join([t.name for t in threading.enumerate()]),
+        '\n   '.join([t.name for t in threading.enumerate()])
     )
 
-#===== parsing
+
+# ===== parsing
 
 def hex2buf(s):
-    '''
+    """
     Convert a string of hex caracters into a byte list. For example:
 
     ``'abcdef00' -> [0xab,0xcd,0xef,0x00]``
-    
-    :param s: [in] The string to convert
-    
+
+    :param s: The string to convert
+
     :returns: A list of integers, each element in [0x00..0xff].
-    '''
-    assert type(s)==str
-    assert len(s)%2 == 0
-    
-    returnVal = []
-    
-    for i in range(len(s)/2):
-        realIdx = i*2
-        returnVal.append(int(s[realIdx:realIdx+2],16))
-    
-    return returnVal
+    """
+    assert type(s) == str
+    assert len(s) % 2 == 0
 
-#===== CRC
+    return_val = []
 
-def calculateCRC(payload):  
-    
-    checksum       = [0x00]*2
-    
-    checksum       = _oneComplementSum(payload,checksum)
-    
-    checksum[0]   ^= 0xFF
-    checksum[1]   ^= 0xFF
+    for i in range(len(s) / 2):
+        realIdx = i * 2
+        return_val.append(int(s[realIdx:realIdx + 2], 16))
 
-    checksum[0]   = int(checksum[0])
-    checksum[1]   = int(checksum[1])
+    return return_val
+
+
+# ===== CRC
+
+def calculate_crc(payload):
+    checksum = [0x00] * 2
+
+    checksum = _one_complement_sum(payload, checksum)
+
+    checksum[0] ^= 0xFF
+    checksum[1] ^= 0xFF
+
+    checksum[0] = int(checksum[0])
+    checksum[1] = int(checksum[1])
 
     return checksum
 
-def calculatePseudoHeaderCRC(src,dst,length,nh,payload):
-    '''
-    See these references: 
-    
+
+def calculate_pseudo_header_crc(src, dst, length, nh, payload):
+    """
+    See these references:
+
     * http://www-net.cs.umass.edu/kurose/transport/UDP.html
     * http://tools.ietf.org/html/rfc1071
     * http://en.wikipedia.org/wiki/User_Datagram_Protocol#IPv6_PSEUDO-HEADER
-    '''
-    
-    checksum       = [0x00]*2
-    
-    #compute pseudo header crc
-    checksum       = _oneComplementSum(src,checksum)
-    checksum       = _oneComplementSum(dst,checksum)
-    checksum       = _oneComplementSum(length,checksum)
-    checksum       = _oneComplementSum(nh,checksum)
-    checksum       = _oneComplementSum(payload,checksum)
-    
-    checksum[0]   ^= 0xFF
-    checksum[1]   ^= 0xFF
+    """
 
-    checksum[0]   = int(checksum[0])
-    checksum[1]   = int(checksum[1])
+    checksum = [0x00] * 2
+
+    # compute pseudo header crc
+    checksum = _one_complement_sum(src, checksum)
+    checksum = _one_complement_sum(dst, checksum)
+    checksum = _one_complement_sum(length, checksum)
+    checksum = _one_complement_sum(nh, checksum)
+    checksum = _one_complement_sum(payload, checksum)
+
+    checksum[0] ^= 0xFF
+    checksum[1] ^= 0xFF
+
+    checksum[0] = int(checksum[0])
+    checksum[1] = int(checksum[1])
 
     return checksum
 
-def _oneComplementSum(field,checksum):
-        
-    sum            = 0xFFFF & (checksum[0] << 8 | checksum[1])
-    i              = len(field)
+
+def _one_complement_sum(field, checksum):
+    res = 0xFFFF & (checksum[0] << 8 | checksum[1])
+    i = len(field)
     while i > 1:
-        sum       += 0xFFFF & (field[-i] << 8 | (field[-i+1]))
-        i         -= 2
+        res += 0xFFFF & (field[-i] << 8 | (field[-i + 1]))
+        i -= 2
     if i:
-        sum       += (0xFF & field[-1]) << 8
-    while sum >> 16:
-        sum        = (sum & 0xFFFF) + (sum >> 16)
-    
-    checksum[0]    = (sum >> 8) & 0xFF
-    checksum[1]    = sum & 0xFF
-    
+        res += (0xFF & field[-1]) << 8
+    while res >> 16:
+        res = (res & 0xFFFF) + (res >> 16)
+
+    checksum[0] = (res >> 8) & 0xFF
+    checksum[1] = res & 0xFF
+
     return checksum
+
 
 def byteinverse(b):
     # TODO: speed up through lookup table
     rb = 0
     for pos in range(8):
-        if b&(1<<pos)!=0:
+        if b & (1 << pos) != 0:
             bitval = 1
         else:
             bitval = 0
-        rb |= bitval<<(7-pos)
+        rb |= bitval << (7 - pos)
     return rb
 
-def calculateFCS(rpayload):
-    
+
+def calculate_fcs(rpayload):
     payload = []
-    for b in rpayload:        
+    for b in rpayload:
         payload += [byteinverse(b)]
-    
-    FCS16TAB  = (
+
+    FCS16TAB = (
         0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7,
         0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef,
         0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6,
@@ -184,30 +190,33 @@ def calculateFCS(rpayload):
         0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8,
         0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0
     )
-    crc     = 0x0000
+
+    crc = 0x0000
     for b in payload:
-        crc = ((crc<<8)&0xffff) ^ FCS16TAB[((crc>>8)^b) & 0xff]
-    
-    returnVal = [
-        byteinverse(crc>>8),
-        byteinverse(crc&0xff)
+        crc = ((crc << 8) & 0xffff) ^ FCS16TAB[((crc >> 8) ^ b) & 0xff]
+
+    return_val = [
+        byteinverse(crc >> 8),
+        byteinverse(crc & 0xff)
     ]
-    return returnVal
+    return return_val
 
-def formatCriticalMessage(error):
-    returnVal  = []
-    returnVal += ['Error:']
-    returnVal += [str(error)]
-    returnVal += ['\ncall stack:\n']
-    returnVal += [traceback.format_exc()]
-    returnVal += ['\n']
-    returnVal  = '\n'.join(returnVal)
-    return returnVal
 
-def formatCrashMessage(threadName,error):
-    returnVal  = []
-    returnVal += ['\n']
-    returnVal += ['======= crash in {0} ======='.format(threadName)]
-    returnVal += [formatCriticalMessage(error)]
-    returnVal  = '\n'.join(returnVal)
-    return returnVal
+def format_critical_message(error):
+    return_val = []
+    return_val += ['Error:']
+    return_val += [str(error)]
+    return_val += ['\ncall stack:\n']
+    return_val += [traceback.format_exc()]
+    return_val += ['\n']
+    return_val = '\n'.join(return_val)
+    return return_val
+
+
+def format_crash_message(threadName, error):
+    return_val = []
+    return_val += ['\n']
+    return_val += ['======= crash in {0} ======='.format(threadName)]
+    return_val += [format_critical_message(error)]
+    return_val = '\n'.join(return_val)
+    return return_val

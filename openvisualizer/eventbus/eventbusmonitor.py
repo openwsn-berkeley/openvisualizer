@@ -104,7 +104,7 @@ class EventBusMonitor(object):
                         output = []
                         output += ['']
                         output += ['- moteId:    {0}'.format(moteId)]
-                        output += ['- frame:     {0}'.format(u.formatBuf(frame))]
+                        output += ['- frame:     {0}'.format(u.format_buf(frame))]
                         output += ['- frequency: {0}'.format(frequency)]
                         output = '\n'.join(output)
                         log.debug(output)
@@ -177,7 +177,7 @@ class EventBusMonitor(object):
         mac += phop  # source address
         mac += lowpan
         # CRC
-        mac += u.calculateFCS(mac)
+        mac += u.calculate_fcs(mac)
 
         return zep + mac
 
@@ -198,7 +198,7 @@ class EventBusMonitor(object):
 
         # mac frame
         mac = body
-        mac += u.calculateFCS(mac)
+        mac += u.calculate_fcs(mac)
 
         return zep + mac
 
@@ -225,7 +225,7 @@ class EventBusMonitor(object):
         # CRC See https://tools.ietf.org/html/rfc2460.
 
         # not sure if the payload contains the udp header in this case.
-        udp[6:8] = u.calculatePseudoHeaderCRC(
+        udp[6:8] = u.calculate_pseudo_header_crc(
             src=addr,
             dst=addr,
             length=[0x00, 0x00] + udp[4:6],

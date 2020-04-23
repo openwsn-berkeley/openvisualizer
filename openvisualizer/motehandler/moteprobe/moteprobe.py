@@ -310,8 +310,8 @@ class MoteProbe(threading.Thread):
                             # start of frame
                             log.debug("{0}: start of hdlc frame {1} {2}".format(
                                 self.name,
-                                u.formatStringBuf(self.hdlc.HDLC_FLAG),
-                                u.formatStringBuf(rx_byte))
+                                u.format_string_buf(self.hdlc.HDLC_FLAG),
+                                u.format_string_buf(rx_byte))
                             )
 
                             self.is_receiving = True
@@ -323,22 +323,22 @@ class MoteProbe(threading.Thread):
                             self._add_to_input_buf(rx_byte)
                         elif self.is_receiving and rx_byte == self.hdlc.HDLC_FLAG:
                             # end of frame
-                            log.debug("{0}: end of hdlc frame {1} ".format(self.name, u.formatStringBuf(rx_byte)))
+                            log.debug("{0}: end of hdlc frame {1} ".format(self.name, u.format_string_buf(rx_byte)))
                             self.is_receiving = False
                             self._add_to_input_buf(rx_byte)
                             temp_buf = self.input_buf
                             try:
                                 self.input_buf = self.hdlc.dehdlcify(self.input_buf)
                                 log.debug("{0}: {2} dehdlcized input: {1}".format(
-                                    self.name, u.formatStringBuf(self.input_buf),
-                                    u.formatStringBuf(temp_buf))
+                                    self.name, u.format_string_buf(self.input_buf),
+                                    u.format_string_buf(temp_buf))
                                 )
 
                             except openhdlc.HdlcException as err:
                                 log.warning('{0}: invalid serial frame: {2} {1}'.format(
                                     self.name,
                                     err,
-                                    u.formatStringBuf(temp_buf))
+                                    u.format_string_buf(temp_buf))
                                 )
                             else:
                                 if self.send_to_parser:
@@ -348,7 +348,7 @@ class MoteProbe(threading.Thread):
                 if self.mode == self.MoteModes.MODE_EMULATED:
                     self.serial.doneReading()
         except Exception as err:
-            errMsg = u.formatCrashMessage(self.name, err)
+            errMsg = u.format_crash_message(self.name, err)
             log.critical(errMsg)
             sys.exit(-1)
         finally:

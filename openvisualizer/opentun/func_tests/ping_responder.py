@@ -193,7 +193,7 @@ class WriteThread(threading.Thread):
                 # transmit
                 self.dispatch(signal='v6ToInternet', data=echo_request)
         except Exception as err:
-            err_msg = u.formatCrashMessage(self.name, err)
+            err_msg = u.format_crash_message(self.name, err)
             log.critical(err_msg)
             sys.exit(1)
 

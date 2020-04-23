@@ -103,18 +103,18 @@ class OpenHdlc(object):
         # make copy of input
         out_buf = in_buf[:]
         if log.isEnabledFor(logging.DEBUG):
-            log.debug("got              {0}".format(u.formatStringBuf(out_buf)))
+            log.debug("got              {0}".format(u.format_string_buf(out_buf)))
 
         # remove flags
         out_buf = out_buf[1:-1]
         if log.isEnabledFor(logging.DEBUG):
-            log.debug("after flags:     {0}".format(u.formatStringBuf(out_buf)))
+            log.debug("after flags:     {0}".format(u.format_string_buf(out_buf)))
 
         # unstuff
         out_buf = out_buf.replace(self.HDLC_ESCAPE + self.HDLC_FLAG_ESCAPED, self.HDLC_FLAG)
         out_buf = out_buf.replace(self.HDLC_ESCAPE + self.HDLC_ESCAPE_ESCAPED, self.HDLC_ESCAPE)
         if log.isEnabledFor(logging.DEBUG):
-            log.debug("after unstuff:   {0}".format(u.formatStringBuf(out_buf)))
+            log.debug("after unstuff:   {0}".format(u.format_string_buf(out_buf)))
 
         if len(out_buf) < 2:
             raise HdlcException('packet too short')
@@ -129,7 +129,7 @@ class OpenHdlc(object):
         # remove CRC
         out_buf = out_buf[:-2]  # remove CRC
         if log.isEnabledFor(logging.DEBUG):
-            log.debug("after CRC:       {0}".format(u.formatStringBuf(out_buf)))
+            log.debug("after CRC:       {0}".format(u.format_string_buf(out_buf)))
 
         return out_buf
 

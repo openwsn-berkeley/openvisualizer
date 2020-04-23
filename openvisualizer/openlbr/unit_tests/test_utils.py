@@ -139,4 +139,4 @@ def test_format_ipv6_addr(expected_format_ipv6):
 
     log.info(ipv6_string)
 
-    assert u.formatIPv6Addr(ipv6_list) == ipv6_string
+    assert u.format_ipv6_addr(ipv6_list) == ipv6_string

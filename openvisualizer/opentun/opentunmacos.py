@@ -57,7 +57,7 @@ class TunReadThread(threading.Thread):
                 p = [ord(b) for b in p]
 
                 # debug info
-                log.debug('packet captured on tun interface: {0}'.format(u.formatBuf(p)))
+                log.debug('packet captured on tun interface: {0}'.format(u.format_buf(p)))
 
                 # make sure it's an IPv6 packet (i.e., starts with 0x6x)
                 if (p[0] & 0xf0) != 0x60:
@@ -70,7 +70,7 @@ class TunReadThread(threading.Thread):
                 # call the callback
                 self.callback(p)
         except Exception as err:
-            err_msg = u.formatCrashMessage(self.name, err)
+            err_msg = u.format_crash_message(self.name, err)
             log.critical(err_msg)
             sys.exit(1)
 
@@ -116,7 +116,7 @@ class OpenTunMACOS(OpenTun):
             os.write(self.tun_if, data)
             log.debug("data dispatched to tun correctly {0}, {1}".format(signal, sender))
         except Exception as err:
-            err_msg = u.formatCriticalMessage(err)
+            err_msg = u.format_critical_message(err)
             log.critical(err_msg)
 
     def _create_tun_if(self):
@@ -141,8 +141,8 @@ class OpenTunMACOS(OpenTun):
         else:
             # =====
             log.debug("configuring IPv6 address")
-            prefix_str = u.formatIPv6Addr(self.IPV6PREFIX)
-            host_str = u.formatIPv6Addr(self.IPV6HOST)
+            prefix_str = u.format_ipv6_addr(self.IPV6PREFIX)
+            host_str = u.format_ipv6_addr(self.IPV6HOST)
 
             v = os.system('ifconfig {0} inet6 {1}:{2} prefixlen 64'.format(if_name, prefix_str, host_str))
             v = os.system('ifconfig {0} inet6 fe80::{1} prefixlen 64 add'.format(if_name, host_str))

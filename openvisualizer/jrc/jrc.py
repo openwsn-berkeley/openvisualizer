@@ -54,7 +54,7 @@ class Contexthandler(object):
         for dictionary in self.join_resource.joinedNodes:
             if dictionary['eui64'] == u.buf2str(eui64):
                 log.info("Node {0} found in joinedNodes. Returning context {1}.".format(
-                    utils.formatIPv6Addr(dictionary['eui64']), str(dictionary['context'])))
+                    utils.format_ipv6_addr(dictionary['eui64']), str(dictionary['context'])))
                 return dictionary['context']
 
         # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET
@@ -65,7 +65,7 @@ class Contexthandler(object):
                                          aeadAlgorithm=oscoap.AES_CCM_16_64_128())
 
         log.info("New node: {0}. Instantiating new context based on the master secret.".format(
-            utils.formatIPv6Addr(eui64)))
+            utils.format_ipv6_addr(eui64)))
 
         return context
 
@@ -189,7 +189,7 @@ class CoapServer(EventBusClient):
         Forwards the packet to the virtual CoAP server running in test mode (PyDispatcher).
         """
 
-        sender = utils.formatIPv6Addr(data[0])
+        sender = utils.format_ipv6_addr(data[0])
         # FIXME pass source port within the signal and open coap client at this port
         self.coap_client = \
             coap.coap(ipAddress=sender, udpPort=d.DEFAULT_UDP_PORT, testing=True,
@@ -225,7 +225,7 @@ class CoapServer(EventBusClient):
 
         # CRC See https://tools.ietf.org/html/rfc2460.
 
-        udp[6:8] = utils.calculatePseudoHeaderCRC(
+        udp[6:8] = utils.calculate_pseudo_header_crc(
             src=src_ipv6_address,
             dst=dst_ipv6_address,
             length=[0x00, 0x00] + udp[4:6],

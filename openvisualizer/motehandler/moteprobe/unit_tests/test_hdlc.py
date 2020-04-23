@@ -56,7 +56,7 @@ def test_build_request_frame():
 
     # hdlcify
     frame_hdlcified = hdlc.hdlcify('\x53')
-    log.debug("request frame: {0}".format(u.formatStringBuf(frame_hdlcified)))
+    log.debug("request frame: {0}".format(u.format_string_buf(frame_hdlcified)))
 
 
 def test_dehdlcify_to_zero():
@@ -67,15 +67,15 @@ def test_dehdlcify_to_zero():
     # hdlc_frame
     hdlc_frame = [0x53, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa]
     hdlc_frame = ''.join([chr(b) for b in hdlc_frame])
-    log.debug("hdlc_frame:      {0}".format(u.formatStringBuf(hdlc_frame)))
+    log.debug("hdlc_frame:      {0}".format(u.format_string_buf(hdlc_frame)))
 
     # hdlcify
     hdlc_frame = hdlc.hdlcify(hdlc_frame)
-    log.debug("hdlcify: {0}".format(u.formatStringBuf(hdlc_frame)))
+    log.debug("hdlcify: {0}".format(u.format_string_buf(hdlc_frame)))
 
     # remove flags
     hdlc_frame = hdlc_frame[1:-1]
-    log.debug("no flags:   {0}".format(u.formatStringBuf(hdlc_frame)))
+    log.debug("no flags:   {0}".format(u.format_string_buf(hdlc_frame)))
 
     # calculate CRC
     crcini = 0xffff
@@ -94,14 +94,14 @@ def test_randdom_back_and_forth(random_frame):
 
     hdlc = openhdlc.OpenHdlc()
 
-    log.debug("random_frame:    {0}".format(u.formatStringBuf(random_frame)))
+    log.debug("random_frame:    {0}".format(u.format_string_buf(random_frame)))
 
     # hdlcify
     frame_hdlcified = hdlc.hdlcify(random_frame)
-    log.debug("hdlcified:   {0}".format(u.formatStringBuf(frame_hdlcified)))
+    log.debug("hdlcified:   {0}".format(u.format_string_buf(frame_hdlcified)))
 
     # dehdlcify
     frame_dehdlcified = hdlc.dehdlcify(frame_hdlcified)
-    log.debug("dehdlcified:    {0}".format(u.formatStringBuf(frame_dehdlcified)))
+    log.debug("dehdlcified:    {0}".format(u.format_string_buf(frame_dehdlcified)))
 
     assert frame_dehdlcified == random_frame

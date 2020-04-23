@@ -17,8 +17,8 @@ import signal
 import sys
 
 import utils as u
+from openvisualizer.simengine import simengine, motehandler
 from openvisualizer.OVtracer import OVtracer
-from openvisualizer.SimEngine import SimEngine, MoteHandler
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
@@ -66,7 +66,7 @@ class OpenVisualizerApp(object):
         # create opentun call last since indicates prefix
         self.opentun = OpenTun.create(opentun)
         if self.simulator_mode:
-            self.simengine = SimEngine.SimEngine(sim_topology)
+            self.simengine = simengine.SimEngine(sim_topology)
             self.simengine.start()
 
         topo = None
@@ -87,10 +87,10 @@ class OpenVisualizerApp(object):
             sys.path.append(os.path.join(self.data_dir, 'sim_files'))
             import oos_openwsn
 
-            MoteHandler.readNotifIds(os.path.join(self.data_dir, 'sim_files', 'openwsnmodule_obj.h'))
+            motehandler.read_notif_ids(os.path.join(self.data_dir, 'sim_files', 'openwsnmodule_obj.h'))
             self.mote_probes = []
             for _ in range(self.num_motes):
-                mote_handler = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
+                mote_handler = motehandler.MoteHandler(oos_openwsn.OpenMote())
                 self.simengine.indicateNewMote(mote_handler)
                 self.mote_probes += [moteprobe.MoteProbe(mqtt_broker_address, emulated_mote=mote_handler)]
         elif self.iotlab_motes:
@@ -122,14 +122,14 @@ class OpenVisualizerApp(object):
         # boot all emulated motes, if applicable
         if self.simulator_mode:
             self.simengine.pause()
-            now = self.simengine.timeline.getCurrentTime()
+            now = self.simengine.timeline.get_current_time()
             for rank in range(self.simengine.getNumMotes()):
                 mote_handler = self.simengine.getMoteHandler(rank)
-                self.simengine.timeline.scheduleEvent(
+                self.simengine.timeline.schedule_event(
                     now,
-                    mote_handler.getId(),
-                    mote_handler.hwSupply.switch_on,
-                    mote_handler.hwSupply.INTR_SWITCHON
+                    mote_handler.get_id(),
+                    mote_handler.hw_supply.switch_on,
+                    mote_handler.hw_supply.INTR_SWITCHON
                 )
             self.simengine.resume()
 
@@ -137,16 +137,16 @@ class OpenVisualizerApp(object):
         if self.path_topo and self.simulator_mode and 'motes' in topo:
 
             # delete each connections automatically established during motes creation
-            connections_to_delete = self.simengine.propagation.retrieveConnections()
+            connections_to_delete = self.simengine.propagation.retrieve_connections()
             for co in connections_to_delete:
                 from_mote = int(co['fromMote'])
                 to_mote = int(co['toMote'])
-                self.simengine.propagation.deleteConnection(from_mote, to_mote)
+                self.simengine.propagation.delete_connection(from_mote, to_mote)
 
             motes = topo['motes']
             for mote in motes:
-                mh = self.simengine.getMoteHandlerById(mote['id'])
-                mh.setLocation(mote['lat'], mote['lon'])
+                mh = self.simengine.get_mote_handler_by_id(mote['id'])
+                mh.set_location(mote['lat'], mote['lon'])
 
             # implements new connections
             connect = topo['connections']
@@ -154,8 +154,8 @@ class OpenVisualizerApp(object):
                 from_mote = int(co['fromMote'])
                 to_mote = int(co['toMote'])
                 pdr = float(co['pdr'])
-                self.simengine.propagation.createConnection(from_mote, to_mote)
-                self.simengine.propagation.updateConnection(from_mote, to_mote, pdr)
+                self.simengine.propagation.create_connection(from_mote, to_mote)
+                self.simengine.propagation.update_connection(from_mote, to_mote, pdr)
 
             # store DAGroot moteids in DAGrootList
             dagroot_l = topo['DAGrootList']

@@ -16,7 +16,7 @@ from bottle import view, response
 
 from openvisualizer import ovVersion
 from openvisualizer.bspemulator import vcdlogger
-from openvisualizer.SimEngine import SimEngine
+from openvisualizer.simengine import simengine
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.motehandler.motestate.motestate import MoteState
 
@@ -38,7 +38,7 @@ class WebServer(EventBusClient):
 
         # store params
         self.app = app
-        self.engine = SimEngine.SimEngine()
+        self.engine = simengine.SimEngine()
         self.web_srv = web_srv
 
         # initialize parent classes
@@ -208,15 +208,15 @@ class WebServer(EventBusClient):
         while True:
             try:
                 mh = self.engine.getMoteHandler(rank)
-                mote_id = mh.getId()
-                (lat, lon) = mh.getLocation()
+                mote_id = mh.get_id()
+                (lat, lon) = mh.get_location()
                 motes += [{'id': mote_id, 'lat': lat, 'lon': lon}]
                 rank += 1
             except IndexError:
                 break
 
         # connections
-        connections = self.engine.propagation.retrieveConnections()
+        connections = self.engine.propagation.retrieve_connections()
 
         data = {'motes': motes, 'connections': connections}
 
@@ -243,8 +243,8 @@ class WebServer(EventBusClient):
             motes_temp[index][param] = v
 
         for (_, v) in motes_temp.items():
-            mh = self.engine.getMoteHandlerById(v['id'])
-            mh.setLocation(v['lat'], v['lon'])
+            mh = self.engine.get_mote_handler_by_id(v['id'])
+            mh.set_location(v['lat'], v['lon'])
 
     def _topology_connections_create(self):
 
@@ -254,7 +254,7 @@ class WebServer(EventBusClient):
         from_mote = int(data['fromMote'])
         to_mote = int(data['toMote'])
 
-        self.engine.propagation.createConnection(from_mote, to_mote)
+        self.engine.propagation.create_connection(from_mote, to_mote)
 
     def _topology_connections_update(self):
         data = bottle.request.forms
@@ -264,7 +264,7 @@ class WebServer(EventBusClient):
         to_mote = int(data['toMote'])
         pdr = float(data['pdr'])
 
-        self.engine.propagation.updateConnection(from_mote, to_mote, pdr)
+        self.engine.propagation.update_connection(from_mote, to_mote, pdr)
 
     def _topology_connections_delete(self):
 
@@ -274,7 +274,7 @@ class WebServer(EventBusClient):
         from_mote = int(data['fromMote'])
         to_mote = int(data['toMote'])
 
-        self.engine.propagation.deleteConnection(from_mote, to_mote)
+        self.engine.propagation.delete_connection(from_mote, to_mote)
 
     def _topology_route_retrieve(self):
 

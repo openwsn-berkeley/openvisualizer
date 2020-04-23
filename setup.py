@@ -77,9 +77,9 @@ setup(
     packages=['openvisualizer',
               'openvisualizer.bspemulator', 'openvisualizer.eventbus', 'openvisualizer.motehandler.moteconnector',
               'openvisualizer.motehandler.moteprobe', 'openvisualizer.motehandler.motestate',
-              'openvisualizer.openlbr', 'openvisualizer.opentun',
-              'openvisualizer.rpl', 'openvisualizer.SimEngine', 'openvisualizer.jrc'],
-    scripts=[appdirGlob('openvisualizer*.py'), appdirGlob('webserver.py')],
+              'openvisualizer.openlbr', 'openvisualizer.opentun', 'openvisualizer.rpl', 'openvisualizer.simengine',
+              'openvisualizer.jrc'],
+    scripts=appdirGlob('opentui.py'),
     package_dir={'': '.', 'openvisualizer': 'openvisualizer'},
     # Copy sim_data files by extension so don't copy .gitignore in that directory.
     package_data={'openvisualizer': [

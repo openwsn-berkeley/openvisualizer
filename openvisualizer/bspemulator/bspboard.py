@@ -39,10 +39,10 @@ class BspBoard(BspModule):
             # log the activity
             self.log.debug('cmd_sleep')
 
-            self.motehandler.cpuDone.release()
+            self.motehandler.cpu_done.release()
 
             # block the mote until CPU is released by ISR
-            self.motehandler.cpuRunning.acquire()
+            self.motehandler.cpu_running.acquire()
 
         except Exception as err:
             self.log.critical(err)

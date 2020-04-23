@@ -31,29 +31,28 @@ with open('README.txt') as f:
     LONG_DESCRIPTION    = f.read()
 
 def appdirGlob(globstr, subdir=''):
-    appdir = 'bin/openVisualizerApp'
+    appdir = 'bin/'
     if subdir == '':
         return glob.glob('/'.join([appdir, globstr]))
     else:
         return glob.glob('/'.join([appdir, subdir, globstr]))
-        
+
 
 setup(
     name             = 'openVisualizer',
-    packages         = ['openvisualizer', 
+    packages         = ['openvisualizer',
                         'openvisualizer.bspemulator', 'openvisualizer.eventbus',
                         'openvisualizer.motehandler.moteconnector', 'openvisualizer.moteprobe',
-                        'openvisualizer.openlbr', 'openvisualizer.opentun',
-                        'openvisualizer.rpl', 'openvisualizer.SimEngine',
-                        'openvisualizer.jrc'],
+                        'openvisualizer.motehandler.motestate', 'openvisualizer.openlbr', 'openvisualizer.opentun',
+                        'openvisualizer.rpl', 'openvisualizer.simengine', 'openvisualizer.jrc'],
     package_dir      = {'': '.', 'openvisualizer': 'openvisualizer'},
     scripts          = [appdirGlob('openvisualizer*.py'), appdirGlob('webserver.py')],
     # Copy simdata files by extension so don't copy .gitignore in that directory.
     data_files       = [(confdir,                                  appdirGlob('*.conf')),
-                        ('/'.join([datadir, webstatic, 'css']),                        appdirGlob('*', '/'.join([webstatic, 'css']))), 
-                        ('/'.join([datadir, webstatic, 'font-awesome', 'css']),        appdirGlob('*', '/'.join([webstatic, 'font-awesome', 'css']))), 
-                        ('/'.join([datadir, webstatic, 'font-awesome', 'fonts']),      appdirGlob('*', '/'.join([webstatic, 'font-awesome', 'fonts']))), 
-                        ('/'.join([datadir, webstatic, 'images']),                     appdirGlob('*', '/'.join([webstatic, 'images']))), 
+                        ('/'.join([datadir, webstatic, 'css']),                        appdirGlob('*', '/'.join([webstatic, 'css']))),
+                        ('/'.join([datadir, webstatic, 'font-awesome', 'css']),        appdirGlob('*', '/'.join([webstatic, 'font-awesome', 'css']))),
+                        ('/'.join([datadir, webstatic, 'font-awesome', 'fonts']),      appdirGlob('*', '/'.join([webstatic, 'font-awesome', 'fonts']))),
+                        ('/'.join([datadir, webstatic, 'images']),                     appdirGlob('*', '/'.join([webstatic, 'images']))),
                         ('/'.join([datadir, webstatic, 'js']),                         appdirGlob('*.js', '/'.join([webstatic, 'js']))),
                         ('/'.join([datadir, webstatic, 'js', 'plugins', 'metisMenu']), appdirGlob('*', '/'.join([webstatic, 'js', 'plugins', 'metisMenu']))),
                         ('/'.join([datadir, webtmpl]),             appdirGlob('*', webtmpl)),

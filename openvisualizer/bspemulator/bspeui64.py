@@ -31,7 +31,7 @@ class BspEui64(BspModule):
             self.log.debug('cmd_get')
 
         # get my 16-bit ID
-        my_id = self.motehandler.getId()
+        my_id = self.motehandler.get_id()
 
         # format my EUI64
         my_eui64 = [0x14, 0x15, 0x92, 0xcc, 0x00, 0x00, ((my_id >> 8) & 0xff), ((my_id >> 0) & 0xff)]

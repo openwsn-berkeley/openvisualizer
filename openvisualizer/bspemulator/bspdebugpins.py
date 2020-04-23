@@ -437,8 +437,8 @@ class BspDebugPins(BspModule):
 
     def _log_vcd(self, signal):
         self.vcdLogger.log(
-            ts=self.timeline.getCurrentTime(),
-            mote=self.motehandler.getId(),
+            ts=self.timeline.get_current_time(),
+            mote=self.motehandler.get_id(),
             signal=signal,
             state=getattr(self, '{0}PinHigh'.format(signal)),
         )

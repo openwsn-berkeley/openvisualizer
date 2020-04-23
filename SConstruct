@@ -28,7 +28,8 @@ print '\n'.join(banner)
 
 Help('''
 Usage:
-    scons [options] runtui
+    scons runov
+    scons serialtest
     scons copy-simfw
     scons <sdist|upload|sdist-native>
     scons unittests
@@ -52,6 +53,9 @@ Targets:
           --nosimcopy   Skips copying simulation firmware at startup from the openwsn-fw directory.
           --ovdebug     Enable debug mode; more detailed logging
           --usePageZero Use page number 0 in page dispatch of 6lowpan packet (only works within one-hop).
+
+    serialtest:
+        Runs a serial test on a connected mote.
 
     copy-simfw:
         Copy files for the simulator, generated from an OpenWSN firmware build on this host. Assumes firmware top-level

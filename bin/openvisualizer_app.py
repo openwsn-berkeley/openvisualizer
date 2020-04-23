@@ -5,8 +5,7 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
 """
-Contains application model for OpenVisualizer. Expects to be called by
-top-level UI module.  See main() for startup use.
+Contains application model for OpenVisualizer. Expects to be called by top-level UI module.  See main() for startup use.
 """
 
 import json
@@ -17,8 +16,8 @@ import signal
 import sys
 
 import utils as u
+from openvisualizer.ovtracer import OVtracer
 from openvisualizer.simengine import simengine, motehandler
-from openvisualizer.OVtracer import OVtracer
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
@@ -35,7 +34,7 @@ log.addHandler(logging.NullHandler())
 
 class OpenVisualizerApp(object):
     """
-    Provides an application model for OpenVisualizer. Provides common top-level functionality for several UI clients.
+    Provides an application model for OpenVisualizer. Provides common, top-level functionality for several UI clients.
     """
 
     def __init__(self, conf_dir, data_dir, log_dir, simulator_mode, num_motes, trace, debug, use_page_zero,

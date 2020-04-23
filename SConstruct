@@ -48,6 +48,7 @@ Targets:
           --host        Specify host to deploy webserver. Default is 'localhost'.
           --port        Specify port on which webserver will listen.
           --simTopo=<linear|fully-meshed>
+          --trace       Use the Yappi profiler.
           --mqtt-broker Specify the address of the mqtt-broker used for logging, e.g., 'argus.paris.inria.fr'.
                         Force a certain topology for simulation.
           --nosimcopy   Skips copying simulation firmware at startup from the openwsn-fw directory.

@@ -5,7 +5,7 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 '''
 SCons script to run the application within the source repository. 
-Provides rungui, runcli, runweb and runrover targets.
+Provides runcli and runweb targets.
 '''
 
 import os
@@ -183,10 +183,3 @@ webEnv               = env.Clone()
 webdirs              = ['web_files']
 webEnv['WAIT_ON_UI'] = True
 Alias('runweb', setupUiRunner(webEnv, 'openVisualizerWeb.py', webdirs))
-
-roverEnv             = env.Clone()
-roverEnv['HOSTOPT']  = None
-roverEnv['PORTOPT']  = None
-roverEnv['ROVEROPT']  = None
-roverEnv['WAIT_ON_UI'] = True
-Alias('runrover', setupUiRunner(roverEnv, 'openRoverApp.py', []))

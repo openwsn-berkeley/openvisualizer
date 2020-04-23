@@ -35,11 +35,10 @@ Usage:
     scons docs
    
 Targets:
-    rungui/runcli/runweb/runrover:
-        Run OpenVisualizer with GUI, command line, or web interface, respectively. The application is run in the
-        build/runui/ directory. By default it does not need any superuser privileges. The runrover target runs a minimal
-        version of OpenVisualizer that should run on remote rovers.
-        
+    runcli/runweb:
+        Run OpenVisualizer with command line, or web interface, respectively. The application is run in the build/runui/
+        directory. Since it accesses your computer's network interfaces, it must be run as superuser/administrator.
+
         Options
           --sim         Run in simulator mode with default count of motes.
           --simCount=n  Run in simulator mode with 'n' motes.

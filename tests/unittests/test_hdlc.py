@@ -7,6 +7,8 @@ import random
 
 import pytest
 
+# noinspection PyUnresolvedReferences
+import build_python_path
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.motehandler.moteprobe import openhdlc
 

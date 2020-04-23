@@ -5,6 +5,8 @@ import logging.handlers
 
 import pytest
 
+# noinspection PyUnresolvedReferences
+import build_python_path
 import openvisualizer.openvisualizer_utils as u
 
 # ============================ logging =========================================
@@ -101,7 +103,7 @@ EXPECTED_FORMAT_IPv6 = [
             ],
             '123:4567:0:0:fedc:ba98:7654:3210'  # string
         )
-    ),
+    )
 ]
 
 

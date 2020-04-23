@@ -1,15 +1,14 @@
 """
-This is a functional test which verify the correct behavior of the OpenTun.
-The test involves 3 components:
-- the opentun element under test, which sits on the EvenBus
-- the ReadThread, implemented in this test module, which listens for ICMPv6
-  echo request packets, and answers with an echo reply packet.
-- the WriteThread, implemented in this test module, which periodically sends
-  an echo reply. The expected behavior is that, for each echo request sent by
-  the writeThread, an echo reply is received by the readThread.
+This is a functional test which verify the correct behavior of the OpenTun. The test involves 3 components:
 
-Run this test by double-clicking on this file, then pinging any address in the
-prefix of your tun interface (e.g. 'ping bbbb::5').
+- the opentun element under test, which sits on the EvenBus
+- the ReadThread, implemented in this test module, which listens for ICMPv6 echo request packets, and answers with an
+  echo reply packet.
+- the WriteThread, implemented in this test module, which periodically sends an echo reply. The expected behavior is
+  that, for each echo request sent by the WriteThread, an echo reply is received by the ReadThread.
+
+Run this test by double-clicking on this file, then pinging any address in the prefix of your tun interface
+(e.g. 'ping bbbb::5').
 """
 
 import logging
@@ -69,17 +68,13 @@ def checksum(byte_list):
 
 class ReadThread(EventBusClient):
     """
-    Thread which continously reads input from a TUN interface.
+    Thread which continuously reads input from a TUN interface.
 
-    If that input is an IPv4 or IPv6 echo request (a "ping" command) issued to
-    any IP address in the virtual network behind the TUN interface, this thread
-    answers with the appropriate echo reply.
+    If that input is an IPv4 or IPv6 echo request (a "ping" command) issued to any IP address in the virtual network
+    behind the TUN interface, this thread answers with the appropriate echo reply.
     """
 
     def __init__(self):
-
-        # store params
-
         # initialize parent class
         super(ReadThread, self).__init__(
             name='OpenTun',
@@ -172,7 +167,7 @@ class WriteThread(threading.Thread):
         super(WriteThread, self).__init__()
 
         # give this thread a name
-        self.name = 'writeThread'
+        self.name = 'WriteThread'
         self.go_on = True
 
         # start myself
@@ -245,21 +240,17 @@ class WriteThread(threading.Thread):
         return echo_request
 
 
-# ============================ main ============================================
-
 def main():
-    # === create eventBus client elements
-
+    # create the tun interface
     tun_if = opentun.OpenTun.create(opentun=True)
+
+    # add read and write thread
     read_thread = ReadThread()
     write_thread = WriteThread(read_thread.dispatch)
 
-    # === wait for Enter to stop
+    raw_input()
 
-    raw_input("Press enter to stop...\n")
-
-    # === stop eventBus client elements
-
+    # stop threads
     tun_if.close()
     write_thread.close()
     write_thread.join()

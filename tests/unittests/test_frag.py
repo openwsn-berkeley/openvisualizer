@@ -8,9 +8,11 @@ import scapy.layers.inet6 as ip6
 import scapy.layers.sixlowpan as lo
 from scapy.compat import raw
 
-# ============================ logging =========================================
+# noinspection PyUnresolvedReferences
+import build_python_path
 from openvisualizer.openlbr import sixlowpan_frag
 
+# ============================ logging =========================================
 LOGFILE_NAME = 'test_frag.log'
 
 log = logging.getLogger('test_frag')

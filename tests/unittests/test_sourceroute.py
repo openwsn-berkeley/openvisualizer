@@ -6,6 +6,8 @@ import logging.handlers
 
 import pytest
 
+# noinspection PyUnresolvedReferences
+import build_python_path
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.rpl import topology
 from openvisualizer.rpl.sourceroute import SourceRoute

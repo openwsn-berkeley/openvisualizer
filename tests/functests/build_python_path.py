@@ -23,7 +23,7 @@ import sys
 
 
 def update_path():
-    sys.path.insert(0, os.path.join('..', '..', '..'))  # root
+    sys.path.insert(0, os.path.join('..', '..'))  # root
 
 
 update_path()

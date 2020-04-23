@@ -54,9 +54,6 @@ Targets:
           --ovdebug     Enable debug mode; more detailed logging
           --usePageZero Use page number 0 in page dispatch of 6lowpan packet (only works within one-hop).
 
-    serialtest:
-        Runs a serial test on a connected mote.
-
     copy-simfw:
         Copy files for the simulator, generated from an OpenWSN firmware build on this host. Assumes firmware top-level
         directory is '../../../openwsn-fw'.
@@ -84,7 +81,7 @@ Targets:
     serialtest:
         Runs a serial test on a connected mote.
 
-    unittest:
+    unittests:
         Runs unittests of the openvisualizer package.
 
     docs:
@@ -296,19 +293,10 @@ def makeNativeSdist(env):
 
 Alias('sdist-native', makeNativeSdist(env))
 
-#===== unittest
+#===== unittests
 
 # scan for SConscript contains unit tests
-dirs = [
-    os.path.join('openvisualizer', 'motehandler', 'moteprobe'),
-    os.path.join('openvisualizer', 'openlbr'),
-    os.path.join('openvisualizer', 'rpl'),
-]
-
-for d in dirs:
-    SConscript(os.path.join(d, 'SConscript'), exports = {"env": env})
-
-Alias('unittests', ['unittests_moteProbe', 'unittests_openLbr', 'unittests_RPL'])
+SConscript(os.path.join('tests', 'SConscript'), exports = {"env": env})
 
 #===== docs
 

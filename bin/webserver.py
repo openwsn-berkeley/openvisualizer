@@ -17,7 +17,7 @@ from bottle import view, response
 from openvisualizer import ovVersion
 from openvisualizer.BspEmulator import VcdLogger
 from openvisualizer.SimEngine import SimEngine
-from openvisualizer.eventBus.eventBusClient import eventBusClient
+from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.motehandler.motestate.motestate import MoteState
 
 log = logging.getLogger('OVWebServer')
@@ -26,7 +26,7 @@ log = logging.getLogger('OVWebServer')
 view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in ovVersion.VERSION])))
 
 
-class WebServer(eventBusClient):
+class WebServer(EventBusClient):
     """ Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web server. """
 
     def __init__(self, app, web_srv):
@@ -165,7 +165,7 @@ class WebServer(eventBusClient):
         :param enabled: 'true' if enabled; any other value considered false
         """
         log.info('Enable wireshark debug : {0}'.format(enabled))
-        self.app.ebm.setWiresharkDebug(enabled == 'true')
+        self.app.ebm.set_wireshark_debug(enabled == 'true')
         return '{"result" : "success"}'
 
     def _set_gologic_debug(self, enabled):
@@ -283,7 +283,7 @@ class WebServer(eventBusClient):
 
         destination_eui = [0x14, 0x15, 0x92, 0xcc, 0x00, 0x00, 0x00, int(data['destination'])]
 
-        route = self._dispatchAndGetResult(signal='getSourceRoute', data=destination_eui)
+        route = self._dispatch_and_get_result(signal='getSourceRoute', data=destination_eui)
         route = [r[-1] for r in route]
         data = {'route': route}
 
@@ -310,6 +310,6 @@ class WebServer(eventBusClient):
 
     def _get_event_data(self):
         res = {
-            'isDebugPkts': 'true' if self.app.ebm.wiresharkDebugEnabled else 'false', 'stats': self.app.ebm.getStats()
+            'isDebugPkts': 'true' if self.app.ebm.wireshark_debug_enabled else 'false', 'stats': self.app.ebm.get_stats()
         }
         return res

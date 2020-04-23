@@ -17,19 +17,19 @@ import logging
 import threading
 import time
 
-from openvisualizer.eventBus import eventBusClient
+from openvisualizer.eventbus.eventbusclient import EventBusClient
 
 log = logging.getLogger('Topology')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-class Topology(eventBusClient.eventBusClient):
+class Topology(EventBusClient):
 
     def __init__(self):
 
         # log
-        log.debug('create instance')    
+        log.debug('create instance')
 
         # local variables
         self.data_lock = threading.Lock()

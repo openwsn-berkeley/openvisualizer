@@ -12,7 +12,7 @@ import threading
 from pydispatch import dispatcher
 
 from openparser import openparser, parserexception
-from openvisualizer.eventBus.eventBusClient import eventBusClient
+from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.motehandler.motestate.motestate import MoteState
 
 log = logging.getLogger('MoteConnector')
@@ -20,7 +20,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-class MoteConnector(eventBusClient):
+class MoteConnector(EventBusClient):
 
     def __init__(self, mote_probe):
 
@@ -123,7 +123,7 @@ class MoteConnector(eventBusClient):
                 # retrieve the prefix of the network
                 with self.state_lock:
                     if not self.network_prefix:
-                        network_prefix = self._dispatchAndGetResult(
+                        network_prefix = self._dispatch_and_get_result(
                             signal='getNetworkPrefix',
                             data=[],
                         )
@@ -131,7 +131,7 @@ class MoteConnector(eventBusClient):
 
                 # retrieve the security key of the network
                 with self.state_lock:
-                    key_dict = self._dispatchAndGetResult(
+                    key_dict = self._dispatch_and_get_result(
                         signal='getL2SecurityKey',
                         data=[],
                     )
@@ -139,9 +139,9 @@ class MoteConnector(eventBusClient):
                 # create data to send
                 with self.state_lock:
                     data_to_send = [
-                                     openparser.OpenParser.SERFRAME_PC2MOTE_SETDAGROOT,
-                                     openparser.OpenParser.SERFRAME_ACTION_TOGGLE,
-                                 ] + self.network_prefix + key_dict['index'] + key_dict['value']
+                                       openparser.OpenParser.SERFRAME_PC2MOTE_SETDAGROOT,
+                                       openparser.OpenParser.SERFRAME_ACTION_TOGGLE,
+                                   ] + self.network_prefix + key_dict['index'] + key_dict['value']
 
                 # toggle the DAGroot state
                 self._send_to_mote_probe(data_to_send=data_to_send)

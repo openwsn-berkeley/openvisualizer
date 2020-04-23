@@ -9,7 +9,7 @@ import logging
 
 from openvisualizer.SimEngine     import SimEngine, \
                                          Propagation
-from openvisualizer.eventBus      import eventBusClient
+from openvisualizer.eventbus      import eventbusclient
 import BspModule
 
 class RadioState:
@@ -28,7 +28,7 @@ class RadioState:
     TXRX_DONE           = 'TXRX_DONE'            # Frame has been sent/received completely.
     TURNING_OFF         = 'TURNING_OFF'          # Turning the RF chain off.
 
-class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
+class BspRadio(BspModule.BspModule, eventbusclient.EventBusClient):
     '''
     Emulates the 'radio' BSP module
     '''
@@ -58,7 +58,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         
         # initialize the parents
         BspModule.BspModule.__init__(self,'BspRadio')
-        eventBusClient.eventBusClient.__init__(
+        eventbusclient.EventBusClient.__init__(
             self,
             name                  = 'BspRadio_{0}'.format(self.motehandler.getId()),
             registrations         =  [],

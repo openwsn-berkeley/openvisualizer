@@ -16,7 +16,7 @@ from coap import coap, coapResource, coapDefines as d, coapUtils as u, coapObjec
 
 from cojp_defines import CoJPLabel
 from openvisualizer import openvisualizer_utils as utils
-from openvisualizer.eventBus.eventBusClient import eventBusClient
+from openvisualizer.eventbus.eventbusclient import EventBusClient
 
 log = logging.getLogger('JRC')
 log.setLevel(logging.ERROR)
@@ -71,7 +71,7 @@ class Contexthandler(object):
 
 
 # ======================== Interface with OpenVisualizer ======================================
-class CoapServer(eventBusClient):
+class CoapServer(EventBusClient):
     # link-local prefix
     LINK_LOCAL_PREFIX = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 

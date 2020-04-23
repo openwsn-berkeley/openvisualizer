@@ -16,14 +16,14 @@ Module which receives DAO messages and calculates source routes.
 import logging
 import threading
 
-from openvisualizer.eventBus import eventBusClient
+from openvisualizer.eventbus.eventbusclient import EventBusClient
 
 log = logging.getLogger('SourceRoute')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-class SourceRoute(eventBusClient.eventBusClient):
+class SourceRoute(EventBusClient):
 
     def __init__(self):
 
@@ -48,7 +48,7 @@ class SourceRoute(eventBusClient.eventBusClient):
         source_route = []
         with self.dataLock:
             try:
-                parents = self._dispatchAndGetResult(signal='getParents', data=None)
+                parents = self._dispatch_and_get_result(signal='getParents', data=None)
                 self._get_source_route_internal(dest_addr, source_route, parents)
             except Exception as err:
                 log.error(err)

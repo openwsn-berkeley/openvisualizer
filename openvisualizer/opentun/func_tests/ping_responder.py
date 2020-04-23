@@ -20,7 +20,7 @@ import time
 # noinspection PyUnresolvedReferences
 import build_python_path
 import openvisualizer.openvisualizer_utils as u
-from openvisualizer.eventBus import eventBusClient
+from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.opentun import opentun
 
 log = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ def checksum(byte_list):
 
 # ============================ threads =========================================
 
-class ReadThread(eventBusClient.eventBusClient):
+class ReadThread(EventBusClient):
     """
     Thread which continously reads input from a TUN interface.
 

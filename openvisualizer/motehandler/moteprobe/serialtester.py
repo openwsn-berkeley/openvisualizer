@@ -8,7 +8,7 @@ import logging
 import random
 import threading
 
-from openvisualizer.eventBus.eventBusClient import eventBusClient
+from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.motehandler.moteconnector.openparser import openparser
 
 log = logging.getLogger('SerialTester')
@@ -16,7 +16,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-class SerialTester(eventBusClient):
+class SerialTester(EventBusClient):
     DFLT_TESTPKT_LENGTH = 10  # number of bytes in a test packet
     DFLT_NUM_TESTPKT = 20  # number of test packets to send
     DFLT_TIMEOUT = 5  # timeout in second for getting a reply

@@ -8,7 +8,7 @@ import logging
 import threading
 
 import openvisualizer.openvisualizer_utils as u
-from openvisualizer.eventBus.eventBusClient import eventBusClient
+from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.openlbr.sixlowpan_frag import Fragmentor
 from openvisualizer.opentun.opentun import OpenTun
 
@@ -20,7 +20,7 @@ log.addHandler(logging.NullHandler())
 # ============================ parameters ======================================
 
 
-class OpenLbr(eventBusClient):
+class OpenLbr(EventBusClient):
     """
     Class which is responsible for translating between 6LoWPAN and IPv6
     headers.
@@ -430,7 +430,7 @@ class OpenLbr(eventBusClient):
             # as source address is being retrieved from the IPHC header, the signal includes it in case
             # receiver such as rpl DAO processing needs to know the source.
 
-            success = self._dispatchProtocol(dispatch_signal, (ipv6dic['src_addr'], ipv6dic['app_payload']))
+            success = self._dispatch_protocol(dispatch_signal, (ipv6dic['src_addr'], ipv6dic['app_payload']))
 
             if success:
                 return
@@ -1030,7 +1030,7 @@ class OpenLbr(eventBusClient):
     # ===== source route
 
     def _get_source_route(self, destination):
-        return_val = self._dispatchAndGetResult(signal='getSourceRoute', data=destination)
+        return_val = self._dispatch_and_get_result(signal='getSourceRoute', data=destination)
         return return_val
 
     def _set_prefix_notif(self, sender, signal, data):

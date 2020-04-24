@@ -9,12 +9,15 @@ import logging
 import logging.config
 import os
 import signal
+import sys
 import threading
 import time
+from ConfigParser import SafeConfigParser
 from argparse import ArgumentParser
 from cmd import Cmd
 
 import bottle
+import coloredlogs
 
 # do not remove the line below, prevents PyCharm from optimizing out the Python path modification
 # noinspection PyUnresolvedReferences
@@ -27,6 +30,58 @@ from webserver import WebServer
 # do not remove line below, prevents PyCharm from optimizing out the next import
 
 log = logging.getLogger('OpenVisualizerCli')
+
+
+class ColoredFormatter(coloredlogs.ColoredFormatter):
+    def __init__(self, fmt=None, datefmt=None, style='%'):
+        """ Match coloredlogs.ColoredFormatter arguments with logging.Formatter """
+        self.parser = SafeConfigParser()
+        if sys.platform.startswith('win32'):
+            log_colors_conf = 'bin/colors_win.conf'
+        else:
+            log_colors_conf = 'bin/colors_unix.conf'
+
+        self.parser.read(log_colors_conf)
+
+        ls = self.parse_section_options('levels', 'keys')
+        fs = self.parse_section_options('fields', 'keys')
+
+        coloredlogs.ColoredFormatter.__init__(self, fmt=fmt, datefmt=datefmt, level_styles=ls, field_styles=fs)
+
+    def parse_section_options(self, section, option):
+        dictionary = {}
+
+        # briefly install a default logger
+        coloredlogs.install(level='DEBUG', logger=log, fmt='%(asctime)s %(levelname)s %(message)s', datefmt='%H:%M:%S')
+
+        if self.parser.has_section(section) and self.parser.has_option(section, option):
+            subsections = map(str.strip, self.parser.get(section, option).split(','))
+
+            for subsect in subsections:
+                if not self.parser.has_section(str(subsect)):
+                    log.warning('unknown section name: {}'.format(subsect))
+                else:
+                    dictionary[subsect] = {}
+                    options = self.parser.options(subsect)
+                    for opt in options:
+                        _opt = opt.strip().lower()
+                        if _opt == 'bold' or _opt == 'faint':
+                            try:
+                                res = self.parser.getboolean(subsect, opt)
+                            except ValueError:
+                                log.error('illegal value: {} for option: {}'.format(self.parser.get(subsect, opt), opt))
+                                continue
+                        elif _opt == 'color' or 'background':
+                            try:
+                                res = self.parser.getint(subsect, opt)
+                            except ValueError:
+                                res = self.parser.get(subsect, opt)
+                        else:
+                            log.warning('unknown option name: {}'.format(opt))
+                            continue
+
+                        dictionary[subsect][opt] = res
+        return dictionary
 
 
 class OpenVisualizerCli(Cmd):
@@ -47,8 +102,8 @@ class OpenVisualizerCli(Cmd):
 
     def start_webserver(self, args):
         log.info(
-            'Initializing webserver with options: \n\t{0}'.format(
-                '\n\t'.join(
+            'Initializing webserver with options: \n\t\t{0}'.format(
+                '\n\t\t'.join(
                     ['host: {0}'.format(args.host), 'port: {0}'.format(args.port)]
                 )
             )
@@ -217,7 +272,7 @@ def _add_parser_args(parser):
         dest='sim_topology',
         default='',
         action='store',
-        help='force a certain toplogy (simulation mode only)'
+        help='force a certain topology (simulation mode only)'
     )
 
     parser.add_argument(
@@ -325,12 +380,12 @@ def main():
     logging.config.fileConfig(os.path.join(conf_dir, 'logging.conf'),
                               {'logDir': u.force_slash_sep(log_dir, args.debug)})
 
-    # initialize openvisualizer application
+    # initialize OpenVisualizer application
     app = openvisualizer_app.main(parser, conf_dir, data_dir, log_dir, DEFAULT_MOTE_COUNT)
     cli = OpenVisualizerCli(app)
 
-    log.debug('Using external dirs:\n    {}'.format(
-        '\n    '.join(['conf     = {0}'.format(conf_dir),
+    log.debug('Using external dirs:\n\t\t{}'.format(
+        '\n\t\t'.join(['conf     = {0}'.format(conf_dir),
                        'data     = {0}'.format(data_dir),
                        'log      = {0}'.format(log_dir)],
                       )))

@@ -10,8 +10,12 @@ import socket
 import sys
 import time
 
+import verboselogs
+
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.eventbus.eventbusclient import EventBusClient
+
+verboselogs.install()
 
 log = logging.getLogger('OpenTun')
 log.setLevel(logging.ERROR)

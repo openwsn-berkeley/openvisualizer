@@ -12,3 +12,5 @@ hkdf
 paho-mqtt
 scapy
 pytest==4.6.9
+coloredlogs
+verboselogs

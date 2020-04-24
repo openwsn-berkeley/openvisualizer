@@ -16,8 +16,6 @@ import signal
 import sys
 
 import utils as u
-from openvisualizer.ovtracer import OVtracer
-from openvisualizer.simengine import simengine, motehandler
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
@@ -25,7 +23,9 @@ from openvisualizer.motehandler.moteprobe import moteprobe
 from openvisualizer.motehandler.motestate import motestate
 from openvisualizer.openlbr import openlbr
 from openvisualizer.opentun.opentun import OpenTun
+from openvisualizer.ovtracer import OVtracer
 from openvisualizer.rpl import topology, rpl
+from openvisualizer.simengine import simengine, motehandler
 
 log = logging.getLogger('OpenVisualizerApp')
 log.setLevel(logging.ERROR)
@@ -276,17 +276,17 @@ def main(parser, conf_dir, data_dir, log_dir, sim_motes):
     else:
         topo = 'Pister-hack model'
 
-    log.info('Initializing OpenVisualizerApp with options:\n\t- {0}'.format(
-        '\n\t- '.join(['appdir          = {0}'.format(args.appdir),
-                       'sim             = {0}'.format(args.simulator_mode),
-                       'simCount        = {0}'.format(args.num_motes),
-                       'simTopology     = {0}'.format(topo),
-                       'trace           = {0}'.format(args.trace),
-                       'debug           = {0}'.format(args.debug),
-                       'mqtt-broker     = {0}'.format(args.mqtt_broker),
-                       'testbed_motes   = {0}'.format(args.testbed_motes),
-                       'use_page_zero   = {0}'.format(args.use_page_zero)],
-                      )))
+    log.info('Initializing OpenVisualizerApp with options:\n\t\t- {0}'.format(
+        '\n\t\t- '.join(['appdir          = {0}'.format(args.appdir),
+                         'sim             = {0}'.format(args.simulator_mode),
+                         'simCount        = {0}'.format(args.num_motes),
+                         'simTopology     = {0}'.format(topo),
+                         'trace           = {0}'.format(args.trace),
+                         'debug           = {0}'.format(args.debug),
+                         'mqtt-broker     = {0}'.format(args.mqtt_broker),
+                         'testbed_motes   = {0}'.format(args.testbed_motes),
+                         'use_page_zero   = {0}'.format(args.use_page_zero)],
+                        )))
 
     log.debug('sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path)))
 

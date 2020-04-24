@@ -1,18 +1,20 @@
 # Copyright (c) 2010-2013, Regents of the University of California.
-# All rights reserved. 
-#  
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
 import logging
 import struct
 
+import verboselogs
 from enum import IntEnum
 
 import defines
 from parser import Parser
 from parserexception import ParserException
 
+verboselogs.install()
 log = logging.getLogger('ParserIEC')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
@@ -22,7 +24,10 @@ class ParserInfoErrorCritical(Parser):
     HEADER_LENGTH = 1
 
     class LogSeverity(IntEnum):
+        SEVERITY_VERBOSE = ord('V')
         SEVERITY_INFO = ord('I')
+        SEVERITY_WARNING = ord('W')
+        SEVERITY_SUCCESS = ord('U')
         SEVERITY_ERROR = ord('E')
         SEVERITY_CRITICAL = ord('C')
 
@@ -73,8 +78,14 @@ class ParserInfoErrorCritical(Parser):
         )
 
         # log
-        if self.severity == self.LogSeverity.SEVERITY_INFO:
+        if self.severity == self.LogSeverity.SEVERITY_VERBOSE:
+            log.verbose(output)
+        elif self.severity == self.LogSeverity.SEVERITY_INFO:
             log.info(output)
+        elif self.severity == self.LogSeverity.SEVERITY_WARNING:
+            log.warning(output)
+        elif self.severity == self.LogSeverity.SEVERITY_SUCCESS:
+            log.success(output)
         elif self.severity == self.LogSeverity.SEVERITY_ERROR:
             log.error(output)
         elif self.severity == self.LogSeverity.SEVERITY_CRITICAL:

@@ -143,7 +143,7 @@ class RPL(eventbusclient.EventBusClient):
         # unregister the DAGroot
         if data['isDAGroot'] == 0 and same_dagroot:
             # log
-            log.info("unregistering DAGroot {0}".format(u.format_addr(new_dagroot_eui64)))
+            log.warning("unregistering DAGroot {0}".format(u.format_addr(new_dagroot_eui64)))
 
             # unregister from old DAGroot
             self.unregister(
@@ -260,7 +260,7 @@ class RPL(eventbusclient.EventBusClient):
         output += ['- children:']
         for p in children:
             output += ['   {0}:{1}'.format(u.format_ipv6_addr(self.network_prefix), u.format_ipv6_addr(p))]
-        output = '\n'.join(output)
+        output = '\n\t\t'.join(output)
         log.info(output)
 
         node = u.format_ipv6_addr(source)

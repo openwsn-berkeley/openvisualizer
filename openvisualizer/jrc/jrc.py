@@ -12,11 +12,14 @@ import os
 import threading
 
 import cbor
+import verboselogs
 from coap import coap, coapResource, coapDefines as d, coapUtils as u, coapObjectSecurity as oscoap
 
 from cojp_defines import CoJPLabel
 from openvisualizer import openvisualizer_utils as utils
 from openvisualizer.eventbus.eventbusclient import EventBusClient
+
+verboselogs.install()
 
 log = logging.getLogger('JRC')
 log.setLevel(logging.ERROR)
@@ -53,7 +56,7 @@ class Contexthandler(object):
         # this is important for replay protection
         for dictionary in self.join_resource.joinedNodes:
             if dictionary['eui64'] == u.buf2str(eui64):
-                log.info("Node {0} found in joinedNodes. Returning context {1}.".format(
+                log.verbose("Node {0} found in joinedNodes. Returning context {1}.".format(
                     utils.format_ipv6_addr(dictionary['eui64']), str(dictionary['context'])))
                 return dictionary['context']
 
@@ -64,8 +67,7 @@ class Contexthandler(object):
                                          recipientID=u.buf2str(recipient_id),
                                          aeadAlgorithm=oscoap.AES_CCM_16_64_128())
 
-        log.info("New node: {0}. Instantiating new context based on the master secret.".format(
-            utils.format_ipv6_addr(eui64)))
+        log.verbose("New node: {0}. Derive new OSCORE context from master secret.".format(utils.format_ipv6_addr(eui64)))
 
         return context
 
@@ -265,7 +267,7 @@ class JoinResource(coapResource.coapResource):
 
     def POST(self, options=[], payload=[]):
 
-        log.info("received JRC join request")
+        log.verbose("received JRC join request")
 
         link_layer_keyset = [self.networkKeyIndex, u.buf2str(self.networkKey)]
 

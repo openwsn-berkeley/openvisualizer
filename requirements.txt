@@ -1,9 +1,9 @@
-pyserial==2.6
-PyDispatcher==2.0.3
-bottle==0.11.6
-Sphinx==1.8.5
+pyserial
+PyDispatcher
+bottle
+Sphinx
 yappi
-intelhex==2.1
+intelhex
 openwsn-coap
 pylint
 pycryptodome
@@ -11,6 +11,7 @@ cbor
 hkdf
 paho-mqtt
 scapy
-pytest==4.6.9
+pytest
 coloredlogs
 verboselogs
+pywin32; sys_platform == 'win32'

@@ -310,7 +310,7 @@ def _add_parser_args(parser):
     parser.add_argument(
         '--mqtt-broker',
         dest='mqtt_broker',
-        default='',
+        default='argus.paris.inria.fr',
         action='store',
         help='MQTT broker address to use'
     )
@@ -391,7 +391,6 @@ def main():
                       )))
 
     # log
-
     time.sleep(0.1)
 
     cli.start_webserver(args)

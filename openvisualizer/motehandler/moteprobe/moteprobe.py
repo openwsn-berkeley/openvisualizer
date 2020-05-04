@@ -95,7 +95,7 @@ def find_serial_ports(is_iot_motes=False):
             probe.join()
 
     # log
-    log.info("discovered following serial-port(s): {0}".format(['{0}@{1}'.format(s[0], s[1]) for s in mote_ports]))
+    log.success("discovered following serial-port(s): {0}".format(['{0}@{1}'.format(s[0], s[1]) for s in mote_ports]))
 
     return mote_ports
 
@@ -119,24 +119,23 @@ class OpentestbedMoteFinder(object):
         mqtt_client.loop_start()
 
         # wait for a while to gather the response from otboxes
+        log.info("discovering motes in testbed... (waiting for {}s)".format(self.OPENTESTBED_RESP_STATUS_TIMEOUT))
         time.sleep(self.OPENTESTBED_RESP_STATUS_TIMEOUT)
 
         # close the client and return the motes list
         mqtt_client.loop_stop()
 
-        print "{0} motes are found".format(len(self.opentestbed_motelist))
+        log.info("discovered {0} motes".format(len(self.opentestbed_motelist)))
 
         return self.opentestbed_motelist
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
 
-        print "connected to : {0}".format(self.mqtt_broker_address)
+        log.success("succesfully connected to: {0}".format(self.mqtt_broker_address))
 
         client.subscribe('opentestbed/deviceType/box/deviceId/+/resp/status')
 
-        payload_status = {
-            'token': 123,
-        }
+        payload_status = {'token': 123}
         # publish the cmd message
         client.publish(
             topic='opentestbed/deviceType/box/deviceId/all/cmd/status',
@@ -223,7 +222,7 @@ class MoteProbe(threading.Thread):
         self.mqtt_broker_address = mqtt_broker_address
 
         # log
-        log.info("creating MoteProbe attaching to {0}".format(self._portname))
+        log.debug("creating MoteProbe attaching to {0}".format(self._portname))
 
         # local variables
         self.hdlc = openhdlc.OpenHdlc()
@@ -423,9 +422,9 @@ class MoteProbe(threading.Thread):
         try:
             serial_bytes = json.loads(message.payload)['serialbytes']
         except:
-            print "Error: failed to parse message payload {0}".format(message.payload)
+            log.error("failed to parse message payload {0}".format(message.payload))
         else:
             try:
                 self.serialbytes_queue.put(serial_bytes, block=False)
             except:
-                print "queue overflow"
+                log.warning("queue overflow")

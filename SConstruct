@@ -49,9 +49,10 @@ Targets:
           --host        Specify host to deploy webserver. Default is 'localhost'.
           --port        Specify port on which webserver will listen.
           --simTopo=<linear|fully-meshed>
+                        Force a specific topology for the simulation.
           --trace       Use the Yappi profiler.
-          --mqtt-broker Specify the address of the mqtt-broker used for logging, e.g., 'argus.paris.inria.fr'.
-                        Force a certain topology for simulation.
+          --mqtt-broker Specify the address of the mqtt-broker used for logging, default: 'argus.paris.inria.fr'.
+          --opentestbed Use the opentestbed infrastructure.
           --nosimcopy   Skips copying simulation firmware at startup from the openwsn-fw directory.
           --ovdebug     Enable debug mode; more detailed logging
           --usePageZero Use page number 0 in page dispatch of 6lowpan packet (only works within one-hop).
@@ -172,7 +173,6 @@ runnerEnv['OPENTESTBED'] = GetOption('opentestbed')
 
 AddOption('--mqtt-broker',
     dest      = 'mqtt_broker',
-    default   = '',
     type      = 'string')
 runnerEnv['MQTT_BROKER'] = GetOption('mqtt_broker')
 

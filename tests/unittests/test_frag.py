@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import logging.handlers
 from random import randint, shuffle
@@ -8,8 +8,6 @@ import scapy.layers.inet6 as ip6
 import scapy.layers.sixlowpan as lo
 from scapy.compat import raw
 
-# noinspection PyUnresolvedReferences
-import build_python_path
 from openvisualizer.openlbr import sixlowpan_frag
 
 # ============================ logging =========================================

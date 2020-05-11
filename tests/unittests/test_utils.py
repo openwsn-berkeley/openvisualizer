@@ -5,11 +5,8 @@ import logging.handlers
 
 import pytest
 
-# noinspection PyUnresolvedReferences
-import build_python_path
-import openvisualizer.openvisualizer_utils as u
-
 # ============================ logging =========================================
+from openvisualizer.utils import byteinverse, hex2buf, format_ipv6_addr, buf2int
 
 LOGFILE_NAME = 'test_utils.log'
 
@@ -119,21 +116,21 @@ def expected_format_ipv6(request):
 def test_buf2int(expected_buf2int):
     (exp_buf, exp_int) = json.loads(expected_buf2int)
 
-    assert u.buf2int(exp_buf) == exp_int
+    assert buf2int(exp_buf) == exp_int
 
 
 def test_hex2buf(expected_hex2buf):
     (exp_hex, exp_buf) = json.loads(expected_hex2buf)
     exp_hex = str(exp_hex)
 
-    assert u.hex2buf(exp_hex) == exp_buf
+    assert hex2buf(exp_hex) == exp_buf
 
 
 def test_byteinverse(expected_byteinverse):
     (b, b_inverse) = json.loads(expected_byteinverse)
 
-    assert u.byteinverse(b) == b_inverse
-    assert u.byteinverse(b_inverse) == b
+    assert byteinverse(b) == b_inverse
+    assert byteinverse(b_inverse) == b
 
 
 def test_format_ipv6_addr(expected_format_ipv6):
@@ -141,4 +138,4 @@ def test_format_ipv6_addr(expected_format_ipv6):
 
     log.info(ipv6_string)
 
-    assert u.format_ipv6_addr(ipv6_list) == ipv6_string
+    assert format_ipv6_addr(ipv6_list) == ipv6_string

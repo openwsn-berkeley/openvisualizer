@@ -6,13 +6,12 @@ import logging.handlers
 
 import pytest
 
-# noinspection PyUnresolvedReferences
-import build_python_path
-import openvisualizer.openvisualizer_utils as u
 from openvisualizer.rpl import topology
 from openvisualizer.rpl.sourceroute import SourceRoute
 
 # ============================ logging =========================================
+from openvisualizer.utils import format_addr
+
 LOGFILE_NAME = 'test_sourceroute.log'
 
 log = logging.getLogger('test_sourceRoute')
@@ -73,13 +72,13 @@ def test_source_route(expected_source_route):
     if log.isEnabledFor(logging.DEBUG):
         output = []
         output += ['\n']
-        output += ['expected_destination: {0}'.format(u.format_addr(expected_destination))]
+        output += ['expected_destination: {0}'.format(format_addr(expected_destination))]
         output += ['expectedRoute:']
         for m in expected_route:
-            output += ['- {0}'.format(u.format_addr(m))]
+            output += ['- {0}'.format(format_addr(m))]
         output += ['calculatedRoute:']
         for m in calculated_route:
-            output += ['- {0}'.format(u.format_addr(m))]
+            output += ['- {0}'.format(format_addr(m))]
         output = '\n'.join(output)
         log.debug(output)
 

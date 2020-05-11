@@ -16,5 +16,6 @@ coloredlogs
 verboselogs
 click
 blessed
+ipaddr
 pywin32; sys_platform == 'win32'
 colorama; sys_platform == 'win32'

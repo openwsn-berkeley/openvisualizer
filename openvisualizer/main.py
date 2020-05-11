@@ -327,7 +327,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
 
     def boot_motes(self, addresses):
         # boot all emulated motes, if applicable
-        log.info('RPC: {}'.format(self.boot_motes.__name__))
+        log.debug('RPC: {}'.format(self.boot_motes.__name__))
 
         if self.simulator_mode:
             self.simengine.pause()
@@ -384,13 +384,17 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
                 break
         raise Fault(faultCode=-1, faultString="Could not set {} as root".format(port))
 
+    def get_dagroot(self):
+        log.debug('RPC: {}'.format(self.get_dagroot.__name__))
+        return self.dagroot
+
     def get_mote_state(self, mote_id):
         """
         Returns the MoteState object for the provided connected mote.
         :param mote_id: 16-bit ID of mote
         :rtype: MoteState or None if not found
         """
-        log.info('RPC: {}'.format(self.get_mote_state.__name__))
+        log.debug('RPC: {}'.format(self.get_mote_state.__name__))
 
         for ms in self.mote_states:
             id_manager = ms.get_state_elem(ms.ST_IDMANAGER)
@@ -437,9 +441,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
 
     def get_mote_dict(self):
         """ Returns a dictionary with key-value entry: (mote_id: serialport) """
-        mote_dict = {}
+        log.debug('RPC: {}'.format(self.get_mote_dict.__name__))
 
-        log.info('RPC: {}'.format(self.get_mote_dict.__name__))
+        mote_dict = {}
 
         for ms in self.mote_states:
             addr = ms.get_state_elem(motestate.MoteState.ST_IDMANAGER).get_16b_addr()
@@ -448,7 +452,6 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             else:
                 mote_dict[ms.mote_connector.serialport] = None
 
-        log.info(mote_dict)
         return mote_dict
 
     @staticmethod

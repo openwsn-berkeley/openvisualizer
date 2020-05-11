@@ -3,8 +3,6 @@
 import logging.handlers
 import sys
 
-# noinspection PyUnresolvedReferences
-from bin.helpers import build_python_path
 from opencli import OpenCli
 from openvisualizer.motehandler.moteprobe.serialtester import SerialTester
 from openvisualizer.motehandler.moteprobe import moteprobe
@@ -14,6 +12,7 @@ logHandler = logging.handlers.RotatingFileHandler(
     maxBytes=2000000,
     backupCount=5,
     mode='w')
+
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
 
 
@@ -148,14 +147,14 @@ def main():
             mote_probe_handler = moteprobe.MoteProbe(serial_port=serialport, mqtt_broker_address=None)
         elif test_mode == '1':
             try:
-                testbed_mote = raw_input('testbed mote to connect to (e.g. 00-12-4b-00-14-b5-b6-0b): ')
+                testbed_mote = raw_input('Testbed mote to connect to (e.g. 00-12-4b-00-14-b5-b6-0b): ')
             except KeyboardInterrupt:
                 return
                 # create a MoteProbe from opentestbed
             mote_probe_handler = moteprobe.MoteProbe(mqtt_broker_address=mqtt_broker_address,
                                                      testbedmote_eui64=testbed_mote)
         else:
-            raw_input("wrong input! Press Enter to quit..")
+            raw_input("Wrong input! Press Enter to quit..")
             return
 
     # create a SerialTester to attached to the MoteProbe
@@ -169,7 +168,7 @@ def main():
 # ============================ application logging =============================
 
 
-for loggerName in ['SerialTester', 'moteprobe', 'OpenHdlc']:
+for loggerName in ['SerialTester', 'MoteProbe', 'OpenHdlc']:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
     temp.addHandler(logHandler)

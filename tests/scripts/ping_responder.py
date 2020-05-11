@@ -16,11 +16,9 @@ import sys
 import threading
 import time
 
-# noinspection PyUnresolvedReferences
-import build_python_path
-import openvisualizer.openvisualizer_utils as u
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.opentun import opentun
+from openvisualizer.utils import format_crash_message
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -188,7 +186,7 @@ class WriteThread(threading.Thread):
                 # transmit
                 self.dispatch(signal='v6ToInternet', data=echo_request)
         except Exception as err:
-            err_msg = u.format_crash_message(self.name, err)
+            err_msg = format_crash_message(self.name, err)
             log.critical(err_msg)
             sys.exit(1)
 

@@ -64,7 +64,7 @@ class Topology(EventBusClient):
         motes = []
 
         with self.data_lock:
-            for src, dsts in self.parents.iteritems():
+            for src, dsts in self.parents.items():
                 src_s = ''.join(['%02X' % x for x in src[-2:]])
                 motes.append(src_s)
                 for dst in dsts:

@@ -6,7 +6,7 @@
 
 import logging
 
-import parser
+from openvisualizer.motehandler.moteconnector.openparser import parser
 
 log = logging.getLogger('ParserPrintf')
 log.setLevel(logging.INFO)

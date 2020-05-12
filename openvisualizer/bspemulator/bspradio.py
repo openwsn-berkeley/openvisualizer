@@ -6,7 +6,7 @@
 
 import logging
 
-from bspmodule import BspModule
+from openvisualizer.bspemulator.bspmodule import BspModule
 from openvisualizer.simengine import propagation
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 

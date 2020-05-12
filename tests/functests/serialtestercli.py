@@ -4,7 +4,7 @@ import logging.handlers
 import sys
 
 # noinspection PyUnresolvedReferences
-from helpers import build_python_path
+from bin.helpers import build_python_path
 from opencli import OpenCli
 from openvisualizer.motehandler.moteprobe.serialtester import SerialTester
 from openvisualizer.motehandler.moteprobe import moteprobe

@@ -4,31 +4,29 @@
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
+import Queue
+import json
 import logging
 import os
+import socket
+import sys
+import threading
+import time
 
+import paho.mqtt.client as mqtt
+import serial
 from enum import IntEnum
+from pydispatch import dispatcher
+
+from openvisualizer.motehandler.moteprobe import openhdlc
+from openvisualizer.motehandler.moteprobe.serialtester import SerialTester
+from openvisualizer.utils import format_string_buf, format_crash_message
 
 if os.name == 'nt':  # Windows
     import _winreg as winreg  # pylint: disable=import-error
 elif os.name == 'posix':  # Linux
     import glob  # pylint: disable=import-error
     import platform  # pylint: disable=import-error
-import threading
-
-import serial
-import socket
-import time
-import sys
-
-import paho.mqtt.client as mqtt
-import json
-import Queue
-
-from pydispatch import dispatcher
-import openhdlc
-import openvisualizer.openvisualizer_utils as u
-from openvisualizer.motehandler.moteprobe.serialtester import SerialTester
 
 log = logging.getLogger('MoteProbe')
 log.setLevel(logging.ERROR)
@@ -310,8 +308,8 @@ class MoteProbe(threading.Thread):
                             if log.isEnabledFor(logging.DEBUG):
                                 log.debug("{0}: start of hdlc frame {1} {2}".format(
                                     self.name,
-                                    u.format_string_buf(self.hdlc.HDLC_FLAG),
-                                    u.format_string_buf(rx_byte))
+                                    format_string_buf(self.hdlc.HDLC_FLAG),
+                                    format_string_buf(rx_byte))
                                 )
 
                             self.is_receiving = True
@@ -324,7 +322,7 @@ class MoteProbe(threading.Thread):
                         elif self.is_receiving and rx_byte == self.hdlc.HDLC_FLAG:
                             # end of frame
                             if log.isEnabledFor(logging.DEBUG):
-                                log.debug("{0}: end of hdlc frame {1} ".format(self.name, u.format_string_buf(rx_byte)))
+                                log.debug("{0}: end of hdlc frame {1} ".format(self.name, format_string_buf(rx_byte)))
 
                             self.is_receiving = False
                             self._add_to_input_buf(rx_byte)
@@ -334,13 +332,13 @@ class MoteProbe(threading.Thread):
 
                                 if log.isEnabledFor(logging.DEBUG):
                                     log.debug("{0}: {2} dehdlcized input: {1}".format(
-                                        self.name, u.format_string_buf(self.input_buf), u.format_string_buf(temp_buf)))
+                                        self.name, format_string_buf(self.input_buf), format_string_buf(temp_buf)))
 
                             except openhdlc.HdlcException as err:
                                 log.warning('{0}: invalid serial frame: {2} {1}'.format(
                                     self.name,
                                     err,
-                                    u.format_string_buf(temp_buf))
+                                    format_string_buf(temp_buf))
                                 )
                             else:
                                 if self.send_to_parser:
@@ -350,7 +348,7 @@ class MoteProbe(threading.Thread):
                 if self.mode == self.MoteModes.MODE_EMULATED:
                     self.serial.done_reading()
         except Exception as err:
-            err_msg = u.format_crash_message(self.name, err)
+            err_msg = format_crash_message(self.name, err)
             log.critical(err_msg)
             sys.exit(-1)
         finally:

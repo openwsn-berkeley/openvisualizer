@@ -15,9 +15,9 @@ import cbor
 import verboselogs
 from coap import coap, coapResource, coapDefines as d, coapUtils as u, coapObjectSecurity as oscoap
 
-from cojp_defines import CoJPLabel
-from openvisualizer import openvisualizer_utils as utils
 from openvisualizer.eventbus.eventbusclient import EventBusClient
+from openvisualizer.jrc.cojp_defines import CoJPLabel
+from openvisualizer.utils import format_ipv6_addr, calculate_pseudo_header_crc
 
 verboselogs.install()
 
@@ -56,8 +56,12 @@ class Contexthandler(object):
         # this is important for replay protection
         for dictionary in self.join_resource.joinedNodes:
             if dictionary['eui64'] == u.buf2str(eui64):
-                log.verbose("Node {0} found in joinedNodes. Returning context {1}.".format(
-                    utils.format_ipv6_addr(dictionary['eui64']), str(dictionary['context'])))
+                try:
+                    log.verbose("Node {0} found in joinedNodes. Returning context {1}.".format(
+                        format_ipv6_addr(dictionary['eui64']), str(dictionary['context'])))
+                except TypeError:
+                    log.error("Type-error in conversion of {}".format(dictionary['eui64']))
+                    
                 return dictionary['context']
 
         # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET
@@ -67,7 +71,7 @@ class Contexthandler(object):
                                          recipientID=u.buf2str(recipient_id),
                                          aeadAlgorithm=oscoap.AES_CCM_16_64_128())
 
-        log.verbose("New node: {0}. Derive new OSCORE context from master secret.".format(utils.format_ipv6_addr(eui64)))
+        log.verbose("New node: {0}. Derive new OSCORE context from master secret.".format(format_ipv6_addr(eui64)))
 
         return context
 
@@ -191,7 +195,7 @@ class CoapServer(EventBusClient):
         Forwards the packet to the virtual CoAP server running in test mode (PyDispatcher).
         """
 
-        sender = utils.format_ipv6_addr(data[0])
+        sender = format_ipv6_addr(data[0])
         # FIXME pass source port within the signal and open coap client at this port
         self.coap_client = \
             coap.coap(ipAddress=sender, udpPort=d.DEFAULT_UDP_PORT, testing=True,
@@ -227,7 +231,7 @@ class CoapServer(EventBusClient):
 
         # CRC See https://tools.ietf.org/html/rfc2460.
 
-        udp[6:8] = utils.calculate_pseudo_header_crc(
+        udp[6:8] = calculate_pseudo_header_crc(
             src=src_ipv6_address,
             dst=dst_ipv6_address,
             length=[0x00, 0x00] + udp[4:6],

@@ -7,10 +7,10 @@
 import logging
 import threading
 
-import openvisualizer.openvisualizer_utils as u
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.openlbr.sixlowpan_frag import Fragmentor
 from openvisualizer.opentun.opentun import OpenTun
+from openvisualizer.utils import format_ipv6_addr, buf2int, calculate_pseudo_header_crc, format_addr, format_buf
 
 log = logging.getLogger('OpenLbr')
 log.setLevel(logging.ERROR)
@@ -264,7 +264,7 @@ class OpenLbr(EventBusClient):
             if ipv6['next_header'] == self.IANA_ICMPv6 and ipv6['payload'][0] == self.ERR_DESTINATIONUNREACHABLE:
                 log.error(
                     'ICMPv6 packet with destination {0} dropped (DESTINATIONUNREACHABLE not supported)'.format(
-                        u.format_ipv6_addr(ipv6['dst_addr'])))
+                        format_ipv6_addr(ipv6['dst_addr'])))
                 log.error(self._format_lowpan(lowpan, lowpan_bytes))
                 return
 
@@ -362,16 +362,16 @@ class OpenLbr(EventBusClient):
                     new_udp_header_length = 0
 
                     if lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_INLINE:
-                        src_port = u.buf2int(ipv6dic['payload'][1:3])
-                        dest_port = u.buf2int(ipv6dic['payload'][3:5])
+                        src_port = buf2int(ipv6dic['payload'][1:3])
+                        dest_port = buf2int(ipv6dic['payload'][3:5])
                         udp_header_length = 5
                     elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_16S_8D:
-                        src_port = u.buf2int(ipv6dic['payload'][1:3])
+                        src_port = buf2int(ipv6dic['payload'][1:3])
                         dest_port = 0xf000 + ipv6dic['payload'][3]
                         udp_header_length = 4
                     elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_8S_16D:
                         src_port = 0xf000 + ipv6dic['payload'][1]
-                        dest_port = u.buf2int(ipv6dic['payload'][2:4])
+                        dest_port = buf2int(ipv6dic['payload'][2:4])
                         udp_header_length = 4
                     elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_4S_4D:
                         src_port = 0xf0b0 + ((ipv6dic['payload'][1] >> 4) & 0x0f)
@@ -400,15 +400,15 @@ class OpenLbr(EventBusClient):
                     new_udp[idx_len] = udp_len[0]
                     new_udp[idx_len + 1] = udp_len[1]
 
-                    checksum = u.calculate_pseudo_header_crc(ipv6dic['src_addr'], ipv6dic['dst_addr'], udp_len,
-                                                             [0, ipv6dic['next_header']], new_udp)
+                    checksum = calculate_pseudo_header_crc(ipv6dic['src_addr'], ipv6dic['dst_addr'], udp_len,
+                                                           [0, ipv6dic['next_header']], new_udp)
                     # fill crc with the right value.
                     new_udp[idx_cs] = checksum[0]
                     new_udp[idx_cs + 1] = checksum[1]
 
                     # keep fields for later processing if needed
-                    ipv6dic['udp_src_port'] = u.buf2int(new_udp[0:2])
-                    ipv6dic['udp_dest_port'] = u.buf2int(new_udp[2:4])
+                    ipv6dic['udp_src_port'] = buf2int(new_udp[0:2])
+                    ipv6dic['udp_dest_port'] = buf2int(new_udp[2:4])
                     ipv6dic['udp_length'] = new_udp[4:6]
                     ipv6dic['udp_checksum'] = new_udp[6:8]
                     ipv6dic['app_payload'] = new_udp[8:]
@@ -418,8 +418,8 @@ class OpenLbr(EventBusClient):
                     ipv6dic['payload_length'] = len(new_udp)
                 else:
                     # No UDP header compressed
-                    ipv6dic['udp_src_port'] = u.buf2int(ipv6dic['payload'][:2])
-                    ipv6dic['udp_dest_port'] = u.buf2int(ipv6dic['payload'][2:4])
+                    ipv6dic['udp_src_port'] = buf2int(ipv6dic['payload'][:2])
+                    ipv6dic['udp_dest_port'] = buf2int(ipv6dic['payload'][2:4])
                     ipv6dic['udp_length'] = ipv6dic['payload'][4:6]
                     ipv6dic['udp_checksum'] = ipv6dic['payload'][6:8]
                     ipv6dic['app_payload'] = ipv6dic['payload'][8:]
@@ -483,7 +483,7 @@ class OpenLbr(EventBusClient):
                 'version': ipv6[0] >> 4,
                 'traffic_class': ((ipv6[0] & 0x0F) << 4) + (ipv6[1] >> 4),
                 'flow_label': ((ipv6[1] & 0x0F) << 16) + (ipv6[2] << 8) + ipv6[3],
-                'payload_length': u.buf2int(ipv6[4:6]),
+                'payload_length': buf2int(ipv6[4:6]),
                 'next_header': ipv6[6],
                 'hop_limit': ipv6[7],
                 'src_addr': ipv6[8:8 + 16],
@@ -848,9 +848,9 @@ class OpenLbr(EventBusClient):
                         output = []
                         output += [' ']
                         output += ['Received a DeadLine Hop-by-Hop Header']
-                        output += ['exp_time is {0}'.format(u.format_addr(e_time))]
+                        output += ['exp_time is {0}'.format(format_addr(e_time))]
                         if o_val == 1:
-                            output += ['org_time is {0}'.format(u.format_addr(o_time))]
+                            output += ['org_time is {0}'.format(format_addr(o_time))]
                         output = '\n'.join(output)
                         log.error(output)
                         print output
@@ -1037,7 +1037,7 @@ class OpenLbr(EventBusClient):
         """ Record the network prefix. """
         with self.state_lock:
             self.network_prefix = data
-            log.info('Set network prefix  {0}'.format(u.format_ipv6_addr(data)))
+            log.info('Set network prefix  {0}'.format(format_ipv6_addr(data)))
 
     def _info_dagroot_notif(self, sender, signal, data):
         """ Record the DAGroot's EUI64 address. """
@@ -1064,9 +1064,9 @@ class OpenLbr(EventBusClient):
         output += ['Payload length:    {0}'.format(ipv6['payload_length'])]
         output += ['Hop Limit:         {0}'.format(ipv6['hop_limit'])]
         output += ['Next header:       {0}'.format(ipv6['next_header'])]
-        output += ['Source Addr.:      {0}'.format(u.format_ipv6_addr(ipv6['src_addr']))]
-        output += ['Destination Addr.: {0}'.format(u.format_ipv6_addr(ipv6['dst_addr']))]
-        output += ['Payload:           {0}'.format(u.format_buf(ipv6['payload']))]
+        output += ['Source Addr.:      {0}'.format(format_ipv6_addr(ipv6['src_addr']))]
+        output += ['Destination Addr.: {0}'.format(format_ipv6_addr(ipv6['dst_addr']))]
+        output += ['Payload:           {0}'.format(format_buf(ipv6['payload']))]
         output += ['']
         output += [self._format_wireshark(ipv6_bytes)]
         output += ['']
@@ -1078,17 +1078,17 @@ class OpenLbr(EventBusClient):
         output += ['']
         output += ['============================= lowpan packet ===================================']
         output += ['']
-        output += ['tf:                {0}'.format(u.format_buf(lowpan['tf']))]
-        output += ['nh:                {0}'.format(u.format_buf(lowpan['nh']))]
-        output += ['hlim:              {0}'.format(u.format_buf(lowpan['hlim']))]
-        output += ['cid:               {0}'.format(u.format_buf(lowpan['cid']))]
-        output += ['src_addr:          {0}'.format(u.format_buf(lowpan['src_addr']))]
-        output += ['dst_addr:          {0}'.format(u.format_buf(lowpan['dst_addr']))]
+        output += ['tf:                {0}'.format(format_buf(lowpan['tf']))]
+        output += ['nh:                {0}'.format(format_buf(lowpan['nh']))]
+        output += ['hlim:              {0}'.format(format_buf(lowpan['hlim']))]
+        output += ['cid:               {0}'.format(format_buf(lowpan['cid']))]
+        output += ['src_addr:          {0}'.format(format_buf(lowpan['src_addr']))]
+        output += ['dst_addr:          {0}'.format(format_buf(lowpan['dst_addr']))]
         if 'route' in lowpan:
             output += ['source route:']
             for hop in lowpan['route']:
-                output += [' - {0}'.format(u.format_addr(hop))]
-        output += ['payload:           {0}'.format(u.format_buf(lowpan['payload']))]
+                output += [' - {0}'.format(format_addr(hop))]
+        output += ['payload:           {0}'.format(format_buf(lowpan['payload']))]
         output += ['']
         output += [self._format_wireshark(lowpan_bytes)]
         output += ['']

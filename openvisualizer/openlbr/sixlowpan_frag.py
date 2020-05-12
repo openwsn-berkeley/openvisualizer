@@ -6,7 +6,7 @@
 
 import logging
 
-import openvisualizer.openvisualizer_utils as u
+from openvisualizer.utils import buf2int, hex2buf
 
 log = logging.getLogger('SixLowPanFrag')
 log.setLevel(logging.WARNING)
@@ -55,13 +55,13 @@ class Fragmentor(object):
 
         # parse fragmentation header
         dispatch = lowpan_pkt[0] & self.FRAG_DISPATCH_MASK
-        datagram_size = u.buf2int(lowpan_pkt[:2]) & self.FRAG_SIZE_MASK
+        datagram_size = buf2int(lowpan_pkt[:2]) & self.FRAG_SIZE_MASK
 
         if dispatch not in [self.FRAG1_DISPATCH, self.FRAGN_DISPATCH]:
             return lowpan_pkt
 
         # extract fragmentation tag
-        datagram_tag = u.buf2int(lowpan_pkt[2:4])
+        datagram_tag = buf2int(lowpan_pkt[2:4])
 
         if dispatch == self.FRAG1_DISPATCH:
             payload = lowpan_pkt[4:]
@@ -110,7 +110,7 @@ class Fragmentor(object):
             frag_header = []
             fragment = []
 
-            datagram_tag = u.hex2buf("{:04x}".format(self.datagram_tag))
+            datagram_tag = hex2buf("{:04x}".format(self.datagram_tag))
 
             if len(ip6_pkt) > self.MAX_FRAGMENT_SIZE:
                 frag_len = self.MAX_FRAGMENT_SIZE
@@ -119,12 +119,12 @@ class Fragmentor(object):
 
             if len(fragment_list) == 0:
                 # first fragment
-                dispatch_size = u.hex2buf("{:02x}".format((self.FRAG1_DISPATCH << 8) | original_length))
+                dispatch_size = hex2buf("{:02x}".format((self.FRAG1_DISPATCH << 8) | original_length))
                 frag_header.extend(dispatch_size)
                 frag_header.extend(datagram_tag)
             else:
                 # subsequent fragment
-                dispatch_size = u.hex2buf("{:02x}".format((self.FRAGN_DISPATCH << 8) | original_length))
+                dispatch_size = hex2buf("{:02x}".format((self.FRAGN_DISPATCH << 8) | original_length))
                 offset = [len(fragment_list) * (self.MAX_FRAGMENT_SIZE / 8)]
                 frag_header.extend(dispatch_size)
                 frag_header.extend(datagram_tag)

@@ -7,14 +7,13 @@
 
 import logging
 
-import simengine
-
 
 class IdManager(object):
     """ The module which assigns ID to the motes. """
 
     def __init__(self):
         # store params
+        from openvisualizer.simengine import simengine
         self.engine = simengine.SimEngine()
 
         # local variables

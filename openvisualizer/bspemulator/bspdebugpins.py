@@ -6,8 +6,8 @@
 
 import logging
 
-import vcdlogger
-from bspmodule import BspModule
+from openvisualizer.bspemulator import vcdlogger
+from openvisualizer.bspemulator.bspmodule import BspModule
 
 
 class BspDebugPins(BspModule):
@@ -15,7 +15,7 @@ class BspDebugPins(BspModule):
 
     _name = 'BspDebugPins'
 
-    def __init__(self, motehandler):
+    def __init__(self, motehandler, vcdlog):
         # initialize the parent
         super(BspDebugPins, self).__init__(motehandler)
 
@@ -31,7 +31,11 @@ class BspDebugPins(BspModule):
         self.syncPacketPinHigh = False
         self.syncAckPinHigh = False
         self.debugPinHigh = False
-        self.vcdLogger = vcdlogger.VcdLogger()
+
+        self.vcdlog = vcdlog
+
+        if self.vcdlog:
+            self.vcdLogger = vcdlogger.VcdLogger()
 
     # ======================== public ==========================================
 
@@ -436,9 +440,10 @@ class BspDebugPins(BspModule):
     # ======================== private =========================================
 
     def _log_vcd(self, signal):
-        self.vcdLogger.log(
-            ts=self.timeline.get_current_time(),
-            mote=self.motehandler.get_id(),
-            signal=signal,
-            state=getattr(self, '{0}PinHigh'.format(signal)),
-        )
+        if self.vcdlog:
+            self.vcdLogger.log(
+                ts=self.timeline.get_current_time(),
+                mote=self.motehandler.get_id(),
+                signal=signal,
+                state=getattr(self, '{0}PinHigh'.format(signal)),
+            )

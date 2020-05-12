@@ -4,8 +4,20 @@
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
+import logging
+import re
 import threading
 import traceback
+
+import verboselogs
+
+from openvisualizer import *
+
+verboselogs.install()
+
+log = logging.getLogger('Utils')
+log.setLevel(logging.ERROR)
+log.addHandler(logging.NullHandler())
 
 
 def buf2int(buf):
@@ -220,3 +232,83 @@ def format_crash_message(threadName, error):
     return_val += [format_critical_message(error)]
     return_val = '\n'.join(return_val)
     return return_val
+
+
+def extract_component_codes():
+    # find component codes in opendefs.h
+    log.verbose("Extracting firmware component names")
+
+    codes_found = {}
+    for line in open(FW_DEFINITIONS, 'r'):
+        m = re.search('\s*COMPONENT_(\S*)\s*=\s*(\S*),\s*', line)
+        if m:
+            name = m.group(1)
+            try:
+                code = int(m.group(2), 16)
+            except ValueError:
+                log.warning("For component {} - {} is not a hex number".format(name, m.group(2)))
+            else:
+                log.debug("Extracted component {} with code {}".format(name, code))
+                codes_found[code] = name
+
+    return codes_found
+
+
+def extract_log_descriptions():
+    # find error codes in opendefs.h
+    log.verbose("Generating firmware log descriptions.")
+
+    codes_found = {}
+    for line in open(FW_DEFINITIONS, 'r'):
+        m = re.search('\s*ERR_\S*\s*=\s*(\S*),\s*//\s*([\S\s]*)', line)
+        if m:
+            desc = m.group(2).strip()
+            try:
+                code = int(m.group(1), 16)
+            except ValueError:
+                log.warning("For log description {} - {} is not a hex number".format(desc, m.group(2)))
+            else:
+                log.debug("Extracted log description {} with code {}".format(desc, code))
+                codes_found[code] = desc
+
+    return codes_found
+
+
+def extract_6top_rcs():
+    # find sixtop return codes in sixtop.h
+    log.verbose("Extracting 6top return codes.")
+
+    codes_found = {}
+    for line in open(FW_SIXTOP_DEFINITIONS, 'r'):
+        m = re.search('\s*#define\s*IANA_6TOP_RC_(\S*)\s*(\S*)\s*\S*\s*(\S*)\s*\S*\s*[\S\s]*', line)
+        if m:
+            name = m.group(3)
+            try:
+                code = int(m.group(2), 16)
+            except ValueError:
+                log.warning("For return code {}: {} is not a hex number".format(name, m.group(2)))
+            else:
+                log.debug("Extracted 6top RC {} with code {}".format(name, code))
+                codes_found[code] = name
+
+    return codes_found
+
+
+def extract_6top_states():
+    # find sixtop state codes in sixtop.h
+    log.verbose("Extracting 6top states.")
+
+    codes_found = {}
+    for line in open(FW_SIXTOP_DEFINITIONS, 'r'):
+        m = re.search('\s*SIX_STATE_(\S*)\s*=\s*(\S*),\s*', line)
+        if m:
+            name = m.group(1)
+            try:
+                code = int(m.group(2), 16)
+            except ValueError:
+                log.warning("For state {} - {} is not a hex number".format(name, m.group(2)))
+            else:
+                log.debug("Extracted 6top state {} with code {}".format(name, code))
+                codes_found[code] = name
+
+    return codes_found

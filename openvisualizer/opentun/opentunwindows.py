@@ -3,18 +3,19 @@
 #  
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
+
 import logging
 import sys
 import threading
+
+from openvisualizer.opentun.opentun import OpenTun
+from openvisualizer.utils import format_crash_message, format_critical_message
 
 if sys.platform.startswith("win32"):
     import _winreg as reg  # pylint: disable=import-error
     import win32file  # pylint: disable=import-error
     import win32event  # pylint: disable=import-error
     import pywintypes  # pylint: disable=import-error
-
-import openvisualizer.openvisualizer_utils as u
-from opentun import OpenTun
 
 log = logging.getLogger('OpenTunWindows')
 log.setLevel(logging.ERROR)
@@ -93,7 +94,7 @@ class TunReadThread(threading.Thread):
                     # call the callback
                     self.callback(p)
         except Exception as err:
-            err_msg = u.format_crash_message(self.name, err)
+            err_msg = format_crash_message(self.name, err)
             log.critical(err_msg)
             sys.exit(1)
 
@@ -157,7 +158,7 @@ class OpenTunWindows(OpenTun):
             self.overlapped_tx.Offset = self.overlapped_tx.Offset + len(data)
             log.debug("data dispatched to tun correctly {0}, {1}".format(signal, sender))
         except Exception as err:
-            err_msg = u.format_critical_message(err)
+            err_msg = format_critical_message(err)
             log.critical(err_msg)
 
     def _create_tun_if(self):

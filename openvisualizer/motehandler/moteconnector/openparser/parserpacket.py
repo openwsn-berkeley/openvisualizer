@@ -6,7 +6,7 @@
 
 import logging
 
-import parser
+from openvisualizer.motehandler.moteconnector.openparser import parser
 
 log = logging.getLogger('ParserPacket')
 log.setLevel(logging.ERROR)
@@ -21,7 +21,7 @@ class ParserPacket(parser.Parser):
         log.debug("create instance")
 
         # initialize parent class
-        parser.Parser.__init__(self, self.HEADER_LENGTH)
+        super(ParserPacket, self).__init__(self.HEADER_LENGTH)
 
     # ======================== public ==========================================
 

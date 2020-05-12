@@ -7,7 +7,7 @@
 import logging
 
 import bspmodule
-import openvisualizer.openvisualizer_utils as u
+from openvisualizer.utils import format_critical_message
 
 
 class BspSctimer(bspmodule.BspModule):
@@ -106,7 +106,7 @@ class BspSctimer(bspmodule.BspModule):
             self.compare_armed = True
 
         except Exception as err:
-            err_msg = u.format_critical_message(err)
+            err_msg = format_critical_message(err)
             self.log.critical(err_msg)
 
     def cmd_read_counter(self):

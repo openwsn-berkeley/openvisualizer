@@ -56,7 +56,7 @@ def notif_id(s):
 
 class MoteHandler(threading.Thread):
 
-    def __init__(self, mote):
+    def __init__(self, mote, vcdlog):
 
         # store params
         self.engine = simengine.SimEngine()
@@ -76,7 +76,7 @@ class MoteHandler(threading.Thread):
         self.hw_crystal = hwcrystal.HwCrystal(self)
         # bsp
         self.bsp_board = bspboard.BspBoard(self)
-        self.bsp_debugpins = bspdebugpins.BspDebugPins(self)
+        self.bsp_debugpins = bspdebugpins.BspDebugPins(self, vcdlog)
         self.bsp_eui64 = bspeui64.BspEui64(self)
         self.bsp_leds = bspleds.BspLeds(self)
         self.bsp_sctimer = bspsctimer.BspSctimer(self)

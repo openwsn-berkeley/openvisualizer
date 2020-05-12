@@ -4,7 +4,7 @@
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
-from bspmodule import BspModule
+from openvisualizer.bspemulator.bspmodule import BspModule
 
 
 class BspBoard(BspModule):

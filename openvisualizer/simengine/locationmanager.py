@@ -8,14 +8,13 @@
 import logging
 import random
 
-import simengine
-
 
 class LocationManager(object):
     """ The module which assigns locations to the motes. """
 
     def __init__(self):
         # store params
+        from openvisualizer.simengine import simengine
         self.engine = simengine.SimEngine()
 
         # local variables

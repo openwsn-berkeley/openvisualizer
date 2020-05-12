@@ -7,7 +7,7 @@
 import logging
 from abc import ABCMeta
 
-from parserexception import ParserException
+from openvisualizer.motehandler.moteconnector.openparser.parserexception import ParserException
 
 log = logging.getLogger('Parser')
 log.setLevel(logging.ERROR)

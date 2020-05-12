@@ -10,11 +10,11 @@ import struct
 import verboselogs
 from enum import IntEnum
 
-import defines
-from parser import Parser
-from parserexception import ParserException
+from openvisualizer.motehandler.moteconnector.openparser.parser import Parser
+from openvisualizer.motehandler.moteconnector.openparser.parserexception import ParserException
 
 verboselogs.install()
+
 log = logging.getLogger('ParserIEC')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
@@ -31,7 +31,7 @@ class ParserInfoErrorCritical(Parser):
         SEVERITY_ERROR = ord('E')
         SEVERITY_CRITICAL = ord('C')
 
-    def __init__(self, severity):
+    def __init__(self, severity, stack_defines):
         assert self.LogSeverity(severity)
 
         # log
@@ -42,6 +42,7 @@ class ParserInfoErrorCritical(Parser):
 
         # store params
         self.severity = severity
+        self.stack_defines = stack_defines
 
         # store error info
         self.error_info = {}
@@ -67,14 +68,14 @@ class ParserInfoErrorCritical(Parser):
 
         if error_code == 37:
             # replace args of sixtop command/return code id by string
-            arg1 = defines.sixtop_returncode[arg1]
-            arg2 = defines.sixtop_statemachine[arg2]
+            arg1 = self.stack_defines["sixtop_returncodes"][arg1]
+            arg2 = self.stack_defines["sixtop_states"][arg2]
 
         # turn into string
         output = "{MOTEID:x} [{COMPONENT}] {ERROR_DESC}".format(
             COMPONENT=self._translate_component(component),
             MOTEID=mote_id,
-            ERROR_DESC=self._translateErrorDescription(error_code, arg1, arg2),
+            ERROR_DESC=self._translate_log_description(error_code, arg1, arg2),
         )
 
         # log
@@ -99,13 +100,13 @@ class ParserInfoErrorCritical(Parser):
 
     def _translate_component(self, component):
         try:
-            return defines.components[component]
+            return self.stack_defines["components"][component]
         except KeyError:
             return "unknown component code {0}".format(component)
 
-    def _translateErrorDescription(self, error_code, arg1, arg2):
+    def _translate_log_description(self, error_code, arg1, arg2):
         try:
-            return defines.errorDescriptions[error_code].format(
+            return self.stack_defines["log_descriptions"][error_code].format(
                 arg1, arg2)
         except KeyError:
             return "unknown error {0} arg1={1} arg2={2}".format(error_code, arg1, arg2)

@@ -1,6 +1,6 @@
 import logging
 
-from opentun import OpenTun
+from openvisualizer.opentun.opentun import OpenTun
 
 log = logging.getLogger("OpenTunNull")
 log.setLevel(logging.ERROR)

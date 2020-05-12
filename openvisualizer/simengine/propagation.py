@@ -10,7 +10,6 @@ import random
 import threading
 from math import radians, cos, sin, asin, sqrt, log10
 
-import simengine
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 
 
@@ -29,6 +28,7 @@ class Propagation(EventBusClient):
     def __init__(self, simTopology):
 
         # store params
+        from openvisualizer.simengine import simengine
         self.engine = simengine.SimEngine()
         self.sim_topology = simTopology
 

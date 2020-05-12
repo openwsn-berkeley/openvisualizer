@@ -4,40 +4,36 @@
 #
 # Released under the BSD 2-Clause license as published at the link below.
 # http://opensource.org/licenses/BSD-2-Clause
-
 import datetime
 import functools
 import logging
 import re
-import time
+import xmlrpclib
 
 import bottle
-from bottle import view, response
 
-from openvisualizer import version
+from openvisualizer import VERSION
 from openvisualizer.bspemulator import vcdlogger
-from openvisualizer.simengine import simengine
 from openvisualizer.eventbus.eventbusclient import EventBusClient
-from openvisualizer.motehandler.motestate.motestate import MoteState
+from openvisualizer.simengine import simengine
 
 log = logging.getLogger('OVWebServer')
 
 # add default parameters to all bottle templates
-view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in version.VERSION])))
+bottle.view = functools.partial(bottle.view, ovVersion='.'.join(list([str(v) for v in VERSION])))
 
 
 class WebServer(EventBusClient):
     """ Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web server. """
 
-    def __init__(self, app, web_srv):
+    def __init__(self, web_srv, rpc_server_addr):
         """
-        :param app: OpenVisualizerApp
         :param web_srv: Web server
         """
         log.debug('create instance')
 
         # store params
-        self.app = app
+        self.rpc_server = xmlrpclib.ServerProxy('http://{}:{}'.format(*rpc_server_addr))
         self.engine = simengine.SimEngine()
         self.web_srv = web_srv
 
@@ -46,16 +42,16 @@ class WebServer(EventBusClient):
 
         self._define_routes()
         # To find page templates
-        bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.data_dir))
+        bottle.TEMPLATE_PATH.append('openvisualizer/web_files/templates/')
 
         # Set DAGroots imported
-        if app.dagroot_list:
-            # Wait the end of the mote threads creation
-            time.sleep(1)
-            for mote_id in app.dagroot_list:
-                self._show_moteview(mote_id)
-                self._get_mote_data(mote_id)
-                self._toggle_dagroot(mote_id)
+        # if app.dagroot_list:
+        #     # Wait the end of the mote threads creation
+        #     time.sleep(1)
+        #     for mote_id in app.dagroot_list:
+        #         self._show_moteview(mote_id)
+        #         self._get_mote_data(mote_id)
+        #         self._toggle_dagroot(mote_id)
 
     # ======================== public ==========================================
 
@@ -89,7 +85,7 @@ class WebServer(EventBusClient):
         self.web_srv.route(path='/topology/route', method='GET', callback=self._topology_route_retrieve)
         self.web_srv.route(path='/static/<filepath:path>', callback=self._server_static)
 
-    @view('moteview.tmpl')
+    @bottle.view('moteview.tmpl')
     def _show_moteview(self, moteid=None):
         """
         Collects the list of motes, and the requested mote to view.
@@ -98,7 +94,7 @@ class WebServer(EventBusClient):
         if log.isEnabledFor(logging.DEBUG):
             log.debug("moteview moteid parameter is {0}".format(moteid))
 
-        mote_list = self.app.get_mote_dict().keys()
+        mote_list = self.rpc_server.get_mote_dict().keys()
 
         tmpl_data = {
             'motelist': mote_list,
@@ -107,7 +103,7 @@ class WebServer(EventBusClient):
         return tmpl_data
 
     def _server_static(self, filepath):
-        return bottle.static_file(filepath, root='{0}/web_files/static/'.format(self.app.data_dir))
+        return bottle.static_file(filepath, root='openvisualizer/web_files/static/')
 
     def _toggle_dagroot(self, moteid):
         """
@@ -116,11 +112,16 @@ class WebServer(EventBusClient):
         """
 
         log.debug('Toggle root status for moteid {0}'.format(moteid))
-        ms = self.app.get_mote_state(moteid)
+        try:
+            ms = self.rpc_server.get_mote_state(moteid)
+        except xmlrpclib.Fault as err:
+            log.error("A fault occurred: {}".format(err))
+            return '{"result" : "fail"}'
+
         if ms:
             if log.isEnabledFor(logging.DEBUG):
                 log.debug('Found mote {0} in mote_states'.format(moteid))
-            ms.trigger_action(ms.TRIGGER_DAGROOT)
+            self.rpc_server.set_root(moteid)
             return '{"result" : "success"}'
         else:
             if log.isEnabledFor(logging.DEBUG):
@@ -132,31 +133,17 @@ class WebServer(EventBusClient):
         Collects data for the provided mote.
         :param moteid: 16-bit ID of mote
         """
+        states = {}
 
         if log.isEnabledFor(logging.DEBUG):
             log.debug('Get JSON data for moteid {0}'.format(moteid))
-        ms = self.app.get_mote_state(moteid)
-        if ms:
-            if log.isEnabledFor(logging.DEBUG):
-                log.debug('Found mote {0} in mote_states'.format(moteid))
-            states = {
-                ms.ST_IDMANAGER: ms.get_state_elem(ms.ST_IDMANAGER).to_json('data'),
-                ms.ST_ASN: ms.get_state_elem(ms.ST_ASN).to_json('data'),
-                ms.ST_ISSYNC: ms.get_state_elem(ms.ST_ISSYNC).to_json('data'),
-                ms.ST_MYDAGRANK: ms.get_state_elem(ms.ST_MYDAGRANK).to_json('data'),
-                ms.ST_KAPERIOD: ms.get_state_elem(ms.ST_KAPERIOD).to_json('data'),
-                ms.ST_OUPUTBUFFER: ms.get_state_elem(ms.ST_OUPUTBUFFER).to_json('data'),
-                ms.ST_BACKOFF: ms.get_state_elem(ms.ST_BACKOFF).to_json('data'),
-                ms.ST_MACSTATS: ms.get_state_elem(ms.ST_MACSTATS).to_json('data'),
-                ms.ST_SCHEDULE: ms.get_state_elem(ms.ST_SCHEDULE).to_json('data'),
-                ms.ST_QUEUE: ms.get_state_elem(ms.ST_QUEUE).to_json('data'),
-                ms.ST_NEIGHBORS: ms.get_state_elem(ms.ST_NEIGHBORS).to_json('data'),
-                ms.ST_JOINED: ms.get_state_elem(ms.ST_JOINED).to_json('data'),
-            }
-        else:
-            if log.isEnabledFor(logging.DEBUG):
-                log.debug('Mote {0} not found in mote_states'.format(moteid))
-            states = {}
+        try:
+            states = self.rpc_server.get_mote_state(moteid)
+        except xmlrpclib.Fault as err:
+            log.error("Could not fetch mote state for mote {}: {}".format(moteid, err))
+            return states
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug('Found mote {0} in mote_states'.format(moteid))
         return states
 
     def _set_wireshark_debug(self, enabled):
@@ -165,7 +152,7 @@ class WebServer(EventBusClient):
         :param enabled: 'true' if enabled; any other value considered false
         """
         log.info('Enable wireshark debug : {0}'.format(enabled))
-        self.app.ebm.set_wireshark_debug(enabled == 'true')
+        # self.app.ebm.set_wireshark_debug(enabled == 'true')
         return '{"result" : "success"}'
 
     def _set_gologic_debug(self, enabled):
@@ -173,29 +160,29 @@ class WebServer(EventBusClient):
         vcdlogger.VcdLogger().set_enabled(enabled == 'true')
         return '{"result" : "success"}'
 
-    @view('eventBus.tmpl')
+    @bottle.view('eventBus.tmpl')
     def _show_event_bus(self):
         """ Simple page; data for the page template is identical to the data for periodic updates of event list. """
         tmpl_data = self._get_event_data().copy()
         return tmpl_data
 
     def _show_dag(self):
-        states, edges = self.app.topology.get_dag()
+        states, edges = self.rpc_server.get_dag()
         return {'states': states, 'edges': edges}
 
-    @view('connectivity.tmpl')
+    @bottle.view('connectivity.tmpl')
     def _show_connectivity(self):
         return {}
 
     def _show_motes_connectivity(self):
-        states, edges = self.app.get_motes_connectivity()
+        states, edges = self.rpc_server.get_motes_connectivity()
         return {'states': states, 'edges': edges}
 
-    @view('routing.tmpl')
+    @bottle.view('routing.tmpl')
     def _show_routing(self):
         return {}
 
-    @view('topology.tmpl')
+    @bottle.view('topology.tmpl')
     def _topology_page(self):
         """ Retrieve the HTML/JS page. """
         return {}
@@ -207,7 +194,7 @@ class WebServer(EventBusClient):
         rank = 0
         while True:
             try:
-                mh = self.engine.getMoteHandler(rank)
+                mh = self.engine.get_mote_handler(rank)
                 mote_id = mh.get_id()
                 (lat, lon) = mh.get_location()
                 motes += [{'id': mote_id, 'lat': lat, 'lon': lon}]
@@ -295,21 +282,22 @@ class WebServer(EventBusClient):
         now = datetime.datetime.now()
         dagroot_list = []
 
-        for ms in self.app.mote_states:
-            if ms.get_state_elem(MoteState.ST_IDMANAGER).isDAGroot:
-                dagroot_list.append(ms.get_state_elem(MoteState.ST_IDMANAGER).get_16b_addr()[1])
+        dagroot = self.rpc_server.get_dagroot()[1]
+        if dagroot is not None:
+            dagroot_list.append(dagroot)
 
         data['DAGrootList'] = dagroot_list
 
-        response.headers['Content-disposition'] = 'attachement; filename=topology_data_' + now.strftime(
+        bottle.response.headers['Content-disposition'] = 'attachment; filename=topology_data_' + now.strftime(
             "%d-%m-%y_%Hh%M") + '.json'
-        response.headers['filename'] = 'test.json'
-        response.headers['Content-type'] = 'application/json'
+        bottle.response.headers['filename'] = 'test.json'
+        bottle.response.headers['Content-type'] = 'application/json'
 
         return data
 
     def _get_event_data(self):
         res = {
-            'isDebugPkts': 'true' if self.app.ebm.wireshark_debug_enabled else 'false', 'stats': self.app.ebm.get_stats()
+            'isDebugPkts': 'true' if self.rpc_server.get_ebm_wireshark_enabled() else 'false',
+            'stats': self.rpc_server.get_ebm_stats()
         }
         return res

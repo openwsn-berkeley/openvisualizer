@@ -11,8 +11,8 @@ import threading
 
 from pydispatch import dispatcher
 
-from openparser import openparser, parserexception
 from openvisualizer.eventbus.eventbusclient import EventBusClient
+from openvisualizer.motehandler.moteconnector.openparser import openparser, parserexception
 from openvisualizer.motehandler.motestate.motestate import MoteState
 
 log = logging.getLogger('MoteConnector')
@@ -22,17 +22,18 @@ log.addHandler(logging.NullHandler())
 
 class MoteConnector(EventBusClient):
 
-    def __init__(self, mote_probe):
+    def __init__(self, mote_probe, stack_defines):
 
         # log
         log.debug("create instance")
 
         self.mote_probe = mote_probe
+        self.stack_defines = stack_defines
         # store params
         self.serialport = self.mote_probe.portname
 
         # local variables
-        self.parser = openparser.OpenParser(mote_probe.mqtt_broker_address)
+        self.parser = openparser.OpenParser(mote_probe.mqtt_broker_address, stack_defines)
         self.state_lock = threading.Lock()
         self.network_prefix = None
         self._subscribed_data_for_dagroot = False

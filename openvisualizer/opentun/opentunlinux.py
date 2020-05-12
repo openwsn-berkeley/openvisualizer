@@ -10,11 +10,11 @@ import struct
 import sys
 import threading
 
+from openvisualizer.opentun.opentun import OpenTun
+from openvisualizer.utils import format_buf, format_crash_message, format_ipv6_addr, format_critical_message
+
 if sys.platform.startswith('linux'):
     from fcntl import ioctl  # pylint: disable=import-error
-
-import openvisualizer.openvisualizer_utils as u
-from opentun import OpenTun
 
 log = logging.getLogger('OpenTunLinux')
 log.setLevel(logging.ERROR)
@@ -61,7 +61,7 @@ class TunReadThread(threading.Thread):
                 p = [ord(b) for b in p]
 
                 # debug info
-                log.debug('packet captured on tun interface: {0}'.format(u.format_buf(p)))
+                log.debug('packet captured on tun interface: {0}'.format(format_buf(p)))
 
                 # remove tun ID octets
                 p = p[4:]
@@ -77,7 +77,7 @@ class TunReadThread(threading.Thread):
                 # call the callback
                 self.callback(p)
         except Exception as err:
-            err_msg = u.format_crash_message(self.name, err)
+            err_msg = format_crash_message(self.name, err)
             log.critical(err_msg)
             sys.exit(1)
 
@@ -135,7 +135,7 @@ class OpenTunLinux(OpenTun):
             os.write(self.tun_if, data)
             log.debug("data dispatched to tun correctly {0}, {1}".format(signal, sender))
         except Exception as err:
-            err_msg = u.format_critical_message(err)
+            err_msg = format_critical_message(err)
             log.critical(err_msg)
 
     def _create_tun_if(self):
@@ -154,8 +154,8 @@ class OpenTunLinux(OpenTun):
 
             # =====
             log.debug("configuring the IPv6 address")
-            prefix_str = u.format_ipv6_addr(OpenTun.IPV6PREFIX)
-            host_str = u.format_ipv6_addr(OpenTun.IPV6HOST)
+            prefix_str = format_ipv6_addr(OpenTun.IPV6PREFIX)
+            host_str = format_ipv6_addr(OpenTun.IPV6HOST)
 
             v = os.system('ip tuntap add dev ' + ifname + ' mode tun user root')
             v = os.system('ip link set ' + ifname + ' up')

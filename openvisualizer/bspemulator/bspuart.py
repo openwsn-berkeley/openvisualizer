@@ -7,7 +7,7 @@
 import logging
 import threading
 
-from bspmodule import BspModule
+from openvisualizer.bspemulator.bspmodule import BspModule
 
 
 class BspUart(BspModule):

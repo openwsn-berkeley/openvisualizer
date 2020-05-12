@@ -11,7 +11,7 @@ import threading
 
 import paho.mqtt.client as mqtt
 
-import parser
+from openvisualizer.motehandler.moteconnector.openparser import parser
 
 log = logging.getLogger('ParserData')
 log.setLevel(logging.ERROR)

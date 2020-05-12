@@ -8,9 +8,9 @@ import collections
 import logging
 import struct
 
-import openvisualizer.openvisualizer_utils as u
-import parser
-from parserexception import ParserException
+from openvisualizer.motehandler.moteconnector.openparser import parser
+from openvisualizer.motehandler.moteconnector.openparser.parserexception import ParserException
+from openvisualizer.utils import format_buf
 
 log = logging.getLogger('ParserStatus')
 log.setLevel(logging.ERROR)
@@ -296,7 +296,7 @@ class ParserStatus(parser.Parser):
                         "could not extract tuple {0} by applying {1} to {2}; error: {3}".format(
                             key.name,
                             key.structure,
-                            u.format_buf(data),
+                            format_buf(data),
                             str(err)
                         )
                     )

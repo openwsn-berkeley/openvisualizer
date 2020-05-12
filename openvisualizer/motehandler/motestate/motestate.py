@@ -12,10 +12,11 @@ StateElem class.
 import logging
 import threading
 
-from elements import StateOutputBuffer, StateAsn, StateJoined, StateMacStats, StateTable, StateScheduleRow, \
-    StateBackoff, StateQueue, StateNeighborsRow, StateIsSync, StateIdManager, StateMyDagRank, StateKaPeriod
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.motehandler.moteconnector.openparser import parserstatus
+from openvisualizer.motehandler.motestate.elements import StateOutputBuffer, StateAsn, StateJoined, StateMacStats, \
+    StateTable, StateScheduleRow, StateBackoff, StateQueue, StateNeighborsRow, StateIsSync, StateIdManager, \
+    StateMyDagRank, StateKaPeriod
 
 log = logging.getLogger('MoteState')
 log.setLevel(logging.ERROR)

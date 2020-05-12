@@ -6,7 +6,7 @@
 
 import logging
 
-from bspmodule import BspModule
+from openvisualizer.bspemulator.bspmodule import BspModule
 
 
 class BspEui64(BspModule):

@@ -6,12 +6,9 @@
 
 import logging
 
-import parser
-import parserdata
-import parserpacket
-import parserprintf
-import parserstatus
-from parseriec import ParserInfoErrorCritical
+from openvisualizer.motehandler.moteconnector.openparser import parser, parserstatus, parserdata, parserpacket, \
+    parserprintf
+from openvisualizer.motehandler.moteconnector.openparser.parseriec import ParserInfoErrorCritical
 
 log = logging.getLogger('OpenParser')
 log.setLevel(logging.ERROR)
@@ -41,7 +38,7 @@ class OpenParser(parser.Parser):
     SERFRAME_ACTION_NO = ord('N')
     SERFRAME_ACTION_TOGGLE = ord('T')
 
-    def __init__(self, mqtt_broker_address):
+    def __init__(self, mqtt_broker_address, stack_defines):
         # log
         log.debug("create instance")
 
@@ -50,12 +47,12 @@ class OpenParser(parser.Parser):
 
         # subparser objects
         self.parser_status = parserstatus.ParserStatus()
-        self.parser_verbose = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_VERBOSE)
-        self.parser_info = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_INFO)
-        self.parser_warning = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_WARNING)
-        self.parser_success = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_SUCCESS)
-        self.parser_error = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_ERROR)
-        self.parser_critical = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_CRITICAL)
+        self.parser_verbose = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_VERBOSE, stack_defines)
+        self.parser_info = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_INFO, stack_defines)
+        self.parser_warning = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_WARNING, stack_defines)
+        self.parser_success = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_SUCCESS, stack_defines)
+        self.parser_error = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_ERROR, stack_defines)
+        self.parser_critical = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_CRITICAL, stack_defines)
         self.parser_data = parserdata.ParserData(mqtt_broker_address)
         self.parser_packet = parserpacket.ParserPacket()
         self.parser_printf = parserprintf.ParserPrintf()

@@ -8,7 +8,7 @@
 import logging
 import random
 
-from hwmodule import HwModule
+from openvisualizer.bspemulator.hwmodule import HwModule
 
 
 class HwCrystal(HwModule):

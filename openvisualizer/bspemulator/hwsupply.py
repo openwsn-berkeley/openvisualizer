@@ -6,7 +6,7 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 import logging
 
-from hwmodule import HwModule
+from openvisualizer.bspemulator.hwmodule import HwModule
 
 
 class HwSupply(HwModule):

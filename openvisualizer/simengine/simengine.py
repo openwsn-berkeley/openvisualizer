@@ -9,10 +9,7 @@ import logging
 import threading
 import time
 
-import timeline
-import idmanager
-import locationmanager
-import propagation
+from openvisualizer.simengine import timeline, propagation, idmanager, locationmanager
 
 
 class SimEngineStats(object):
@@ -154,7 +151,7 @@ class SimEngine(object):
 
     # === called from the main script
 
-    def indicateNewMote(self, newMoteHandler):
+    def indicate_new_mote(self, newMoteHandler):
 
         # add this mote to my list of motes
         self.moteHandlers.append(newMoteHandler)
@@ -173,22 +170,22 @@ class SimEngine(object):
 
     # === getting information about the system
 
-    def getNumMotes(self):
+    def get_num_motes(self):
         return len(self.moteHandlers)
 
-    def getMoteHandler(self, rank):
+    def get_mote_handler(self, rank):
         return self.moteHandlers[rank]
 
     def get_mote_handler_by_id(self, moteId):
-        returnVal = None
+        return_val = None
         for h in self.moteHandlers:
             if h.get_id() == moteId:
-                returnVal = h
+                return_val = h
                 break
-        assert returnVal
-        return returnVal
+        assert return_val
+        return return_val
 
-    def getStats(self):
+    def get_stats(self):
         return self.stats
 
     # ======================== private =========================================

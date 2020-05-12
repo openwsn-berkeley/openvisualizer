@@ -98,7 +98,9 @@ class TimeLine(threading.Thread):
             event = self.timeline.pop(0)
 
             # make sure that this event is later in time than the previous
-            assert (self.current_time <= event.at_time)
+            if not self.current_time <= event.at_time:
+                self.log.critical("Current time {} exceeds event time: {}".format(self.current_time, event))
+                assert 0
 
             # record the current time
             self.current_time = event.at_time

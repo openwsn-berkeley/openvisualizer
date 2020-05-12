@@ -234,12 +234,12 @@ def format_crash_message(threadName, error):
     return return_val
 
 
-def extract_component_codes():
+def extract_component_codes(fw_definitions_path):
     # find component codes in opendefs.h
     log.verbose("Extracting firmware component names")
 
     codes_found = {}
-    for line in open(FW_DEFINITIONS, 'r'):
+    for line in open(fw_definitions_path, 'r'):
         m = re.search('\s*COMPONENT_(\S*)\s*=\s*(\S*),\s*', line)
         if m:
             name = m.group(1)
@@ -254,12 +254,12 @@ def extract_component_codes():
     return codes_found
 
 
-def extract_log_descriptions():
+def extract_log_descriptions(fw_definitions_path):
     # find error codes in opendefs.h
     log.verbose("Generating firmware log descriptions.")
 
     codes_found = {}
-    for line in open(FW_DEFINITIONS, 'r'):
+    for line in open(fw_definitions_path, 'r'):
         m = re.search('\s*ERR_\S*\s*=\s*(\S*),\s*//\s*([\S\s]*)', line)
         if m:
             desc = m.group(2).strip()
@@ -274,12 +274,12 @@ def extract_log_descriptions():
     return codes_found
 
 
-def extract_6top_rcs():
+def extract_6top_rcs(fw_6top_definitions_path):
     # find sixtop return codes in sixtop.h
     log.verbose("Extracting 6top return codes.")
 
     codes_found = {}
-    for line in open(FW_SIXTOP_DEFINITIONS, 'r'):
+    for line in open(fw_6top_definitions_path, 'r'):
         m = re.search('\s*#define\s*IANA_6TOP_RC_(\S*)\s*(\S*)\s*\S*\s*(\S*)\s*\S*\s*[\S\s]*', line)
         if m:
             name = m.group(3)
@@ -294,12 +294,12 @@ def extract_6top_rcs():
     return codes_found
 
 
-def extract_6top_states():
+def extract_6top_states(fw_6top_definitions_path):
     # find sixtop state codes in sixtop.h
     log.verbose("Extracting 6top states.")
 
     codes_found = {}
-    for line in open(FW_SIXTOP_DEFINITIONS, 'r'):
+    for line in open(fw_6top_definitions_path, 'r'):
         m = re.search('\s*SIX_STATE_(\S*)\s*=\s*(\S*),\s*', line)
         if m:
             name = m.group(1)

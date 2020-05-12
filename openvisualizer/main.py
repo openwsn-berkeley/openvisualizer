@@ -113,7 +113,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
     """
 
     def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog, use_page_zero, sim_topology, iotlab_motes, testbed_motes,
-                 mqtt_broker, opentun):
+                 mqtt_broker, opentun, fw_path):
 
         # store params
         self.host = host
@@ -125,6 +125,15 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.iotlab_motes = iotlab_motes
         self.testbed_motes = testbed_motes
         self.vcdlog = vcdlog
+        self.fw_path = fw_path
+        self.dagroot = None
+
+        if self.fw_path is None:
+            try:
+                self.fw_path = os.environ['OPENWSN_FW_BASE']
+            except KeyError:
+                log.critical("Neither OPENWSN_FW_BASE or '--fw-path' was specified.")
+                os.kill(os.getpid(), signal.SIGTERM)
 
         # local variables
         self.ebm = eventbusmonitor.EventBusMonitor()
@@ -143,7 +152,12 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             self.simengine.start()
 
             # in "simulator" mode, motes are emulated
-            self.temp_dir = OpenVisualizerServer.copy_sim_fw()
+            self.temp_dir = self.copy_sim_fw()
+
+            if self.temp_dir is None:
+                log.critical("Failed to import simulation files! Exiting now!")
+                os.kill(os.getpid(), signal.SIGTERM)
+
             sys.path.append(os.path.join(self.temp_dir))
             motehandler.read_notif_ids(os.path.join(self.temp_dir, 'openwsnmodule_obj.h'))
 
@@ -172,7 +186,13 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             ]
 
         # create a MoteConnector for each MoteProbe
-        fw_defines = OpenVisualizerServer.extract_stack_defines()
+        try:
+            fw_defines = self.extract_stack_defines()
+        except IOError as err:
+            log.critical("Could not updated firmware definitions: {}".format(err))
+            os.kill(os.getpid(), signal.SIGTERM)
+            return
+
         self.mote_connectors = [moteconnector.MoteConnector(mp, fw_defines) for mp in self.mote_probes]
 
         # create a MoteState for each MoteConnector
@@ -216,8 +236,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             log.verbose("Cleaning up files: {}".format(f))
             shutil.rmtree(f, ignore_errors=True)
 
-    @staticmethod
-    def copy_sim_fw():
+    def copy_sim_fw(self):
         hosts = ['amd64-linux', 'x86-linux', 'amd64-windows', 'x86-windows']
         if os.name == 'nt':
             index = 2 if platform.architecture()[0] == '64bit' else 3
@@ -227,14 +246,16 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         host = hosts[index]
 
         # in openwsn-fw, directory containing 'openwsnmodule_obj.h'
-        inc_dir = os.path.join(os.environ['OPENWSN_FW_BASE'], 'bsp', 'boards', 'python')
+        inc_dir = os.path.join(self.fw_path, 'bsp', 'boards', 'python')
         if not os.path.exists(inc_dir):
             log.error("Path '{}' does not exist".format(inc_dir))
+            return
 
         # in openwsn-fw, directory containing extension library
-        lib_dir = os.path.join(os.environ['OPENWSN_FW_BASE'], 'build', 'python_gcc', 'projects', 'common')
+        lib_dir = os.path.join(self.fw_path, 'build', 'python_gcc', 'projects', 'common')
         if not os.path.exists(lib_dir):
             log.error("Path '{}' does not exist".format(lib_dir))
+            return
 
         temp_dir = tempfile.mkdtemp()
 
@@ -273,23 +294,22 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
 
         return temp_dir
 
-    @staticmethod
-    def extract_stack_defines():
+    def extract_stack_defines(self):
         log.info('Extracting firmware definitions.')
         definitions = {
-            "components": extract_component_codes(),
-            "log_descriptions": extract_log_descriptions(),
-            "sixtop_returncodes": extract_6top_rcs(),
-            "sixtop_states": extract_6top_states()
+            "components": extract_component_codes(os.path.join(self.fw_path, 'inc', 'opendefs.h')),
+            "log_descriptions": extract_log_descriptions(os.path.join(self.fw_path, 'inc', 'opendefs.h')),
+            "sixtop_returncodes": extract_6top_rcs(os.path.join(self.fw_path, 'openstack', '02b-MAChigh', 'sixtop.h')),
+            "sixtop_states": extract_6top_states(os.path.join(self.fw_path, 'openstack', '02b-MAChigh', 'sixtop.h'))
         }
 
         return definitions
 
-    # ======================== remotely callable ================================
+    # ======================== RPC functions ================================
 
     def shutdown(self):
         """ Closes all thread-based components. """
-        log.info('RPC: {}'.format(self.shutdown.__name__))
+        log.debug('RPC: {}'.format(self.shutdown.__name__))
 
         self.opentun.close()
         self.rpl.close()
@@ -461,6 +481,13 @@ def _add_parser_args(parser):
     )
 
     parser.add_argument(
+        '--fw-path',
+        dest='fw_path',
+        type=str,
+        help='Provide the path to the OpenWSN firmware. This option overrides the OPENWSN_FW_BASE environment variable.'
+    )
+
+    parser.add_argument(
         '-o', '--simtopo',
         dest='sim_topology',
         default='',
@@ -591,6 +618,16 @@ def main():
     if args.webserver:
         options.append('webserver port          = {0}'.format(args.webserver))
 
+    if args.fw_path:
+        options.append('firmware path           = {0}'.format(args.fw_path))
+    else:
+        try:
+            options.append('firmware path           = {0}'.format(os.environ['OPENWSN_FW_BASE']))
+        except KeyError:
+            log.warning(
+                "Unknown openwsn-fw location, specify with option '--fw-path' or by exporting the OPENWSN_FW_BASE "
+                "environment variable.")
+
     if args.simulator_mode:
         options.append('simulation              = {0}'.format(args.simulator_mode)),
         if args.sim_topology:
@@ -622,6 +659,7 @@ def main():
         testbed_motes=args.testbed_motes,
         mqtt_broker=args.mqtt_broker,
         opentun=args.opentun,
+        fw_path=args.fw_path,
     )
 
     try:

@@ -112,8 +112,8 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
     Class implements and RPC server that allows monitoring and (remote) management of a mesh network.
     """
 
-    def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog, use_page_zero, sim_topology, iotlab_motes, testbed_motes,
-                 mqtt_broker, opentun, fw_path):
+    def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog, use_page_zero, sim_topology, iotlab_motes,
+                 testbed_motes, mqtt_broker, opentun, fw_path, auto_boot):
 
         # store params
         self.host = host
@@ -127,6 +127,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.vcdlog = vcdlog
         self.fw_path = fw_path
         self.dagroot = None
+        self.auto_boot = auto_boot
 
         if self.fw_path is None:
             try:
@@ -215,6 +216,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.register_function(self.get_ebm_wireshark_enabled)
         self.register_function(self.get_ebm_stats)
 
+        if self.simulator_mode and self.auto_boot:
+            self.boot_motes(['all'])
+
         if self.webserver:
             web_server = bottle.Bottle()
             WebServer(web_server, (self.host, self.port))
@@ -229,6 +233,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
                 }
             )
             web_thread.start()
+
+        if self.simulator_mode and self.auto_boot:
+            self.boot_motes(['all'])
 
     @staticmethod
     def cleanup_temporary_files(files):
@@ -586,6 +593,14 @@ def _add_parser_args(parser):
         help='port number for the webserver'
     )
 
+    parser.add_argument(
+        '--no-boot',
+        dest='auto_boot',
+        default=True,
+        action='store_false',
+        help='disables automatic boot of emulated motes'
+    )
+
 
 # ============================ main ============================================
 
@@ -638,6 +653,8 @@ def main():
         else:
             options.append('simulation topology     = {0}'.format('Pister-hack'))
 
+        options.append('auto-boot sim motes     = {0}'.format(args.auto_boot))
+
     options.append('use page zero           = {0}'.format(args.use_page_zero))
     options.append('use VCD logger          = {0}'.format(args.vcdlog))
 
@@ -663,6 +680,7 @@ def main():
         mqtt_broker=args.mqtt_broker,
         opentun=args.opentun,
         fw_path=args.fw_path,
+        auto_boot=args.auto_boot
     )
 
     try:

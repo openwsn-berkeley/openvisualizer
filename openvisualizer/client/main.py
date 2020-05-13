@@ -143,14 +143,11 @@ def view(plugins, list):
         click.echo(click.get_current_context().get_help())
 
 
-@click.command()
-@click.argument("mote", nargs=1, type=str)
-@pass_plugins
-@pass_proxy
-def macstats(proxy, plugins, mote):
-    view_thread = plugins.views[click.get_current_context().info_name](proxy, mote)
+def start_view(plugins, proxy, mote, refresh_rate):
+    subcommand_name = click.get_current_context().info_name
+    view_thread = plugins.views[subcommand_name](proxy, mote, refresh_rate)
     view_thread.daemon = True
-    logging.info("Calling view thread from main client")
+    logging.info("Calling {} view thread from main client".format(subcommand_name))
     view_thread.start()
 
     try:
@@ -159,11 +156,31 @@ def macstats(proxy, plugins, mote):
     except KeyboardInterrupt:
         view_thread.close()
 
-    logging.info("Joining view thread from main client")
+    logging.info("Joining {} view thread from main client".format(subcommand_name))
     view_thread.join()
 
     if view_thread.error_msg != '':
         click.secho(view_thread.error_msg, fg='red')
+
+
+@click.command()
+@click.argument("mote", nargs=1, type=str)
+@click.option('--refresh-rate', default=1.0, help='Set the refresh rate of the view (in seconds)', type=float,
+              show_default=True)
+@pass_plugins
+@pass_proxy
+def macstats(proxy, plugins, mote, refresh_rate):
+    start_view(plugins, proxy, mote, refresh_rate)
+
+
+@click.command()
+@click.option('--refresh-rate', default=1.0, help='Set the refresh rate of the view (in seconds)', type=float,
+              show_default=True)
+@click.argument("mote", nargs=1, type=str)
+@pass_plugins
+@pass_proxy
+def pktqueue(proxy, plugins, mote, refresh_rate):
+    start_view(plugins, proxy, mote, refresh_rate)
 
 
 cli.add_command(shutdown)
@@ -174,3 +191,4 @@ cli.add_command(root)
 cli.add_command(view)
 
 view.add_command(macstats)
+view.add_command(pktqueue)

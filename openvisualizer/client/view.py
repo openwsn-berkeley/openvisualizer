@@ -15,7 +15,7 @@ from blessed import Terminal
 class View(threading.Thread):
     __metaclass__ = ABCMeta
 
-    def __init__(self, proxy, mote_id, refresh_rate=1, host='localhost', port=9000):
+    def __init__(self, proxy, mote_id, refresh_rate):
         super(View, self).__init__()
 
         self.rpc_server = proxy.rpc_server
@@ -39,7 +39,7 @@ class View(threading.Thread):
                 if errno.ECONNREFUSED:
                     logging.error("Connection refused error")
                     self.print_connrefused_msg()
-                    time.sleep(0.5)
+                    time.sleep(1)
                 else:
                     logging.critical("Unknown socket error")
                     print(self.term.home + self.term.red_on_black + err)
@@ -51,8 +51,10 @@ class View(threading.Thread):
         logging.info("Returning from thread")
 
     @abstractmethod
-    def render(self, ms):
-        raise NotImplementedError()
+    def render(self, ms=None):
+        print(self.term.home + self.term.clear())
+        print(self.term.home, end='')
+        self.print_banner()
 
     def close(self):
         logging.info("Closing thread")
@@ -64,15 +66,17 @@ class View(threading.Thread):
 
     def print_banner(self):
         w = self.term.width
-        time = "last update: " + datetime.datetime.now().strftime("%H:%M:%S")
-        print(self.term.bold_white_on_seagreen + '[{}]'.format(self.title) + self.term.normal, end='')
-        print(self.term.white_on_seagreen + time.rjust(w - int(len(time) / 2)), end='')
+        time = "last update: " + datetime.datetime.now().strftime("%H:%M:%S,%f")
+        title = '[{}]'.format(self.title)
+        print(self.term.bold_white_on_seagreen + title + self.term.normal, end='')
+        print(self.term.white_on_seagreen + '{:>{}}'.format(time, w - len(title)), end='')
         print(self.term.clear_eol() + self.term.normal + '\n')
 
     def print_connrefused_msg(self):
         w = self.term.width
         msg = "connection failed"
+        title = '[{}]'.format(self.title)
         print(self.term.home + self.term.clear())
-        print(self.term.home + self.term.bold_white_on_indianred + '[{}]'.format(self.title), end='')
-        print(msg.rjust(w - 10), end='')
+        print(self.term.home + self.term.bold_white_on_indianred + title + self.term.normal, end='')
+        print(self.term.white_on_indianred + '{:>{}}'.format(msg, w - len(title)), end='')
         print(self.term.clear_eol() + self.term.normal + '\n')

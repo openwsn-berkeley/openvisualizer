@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import json
 import logging
+import sys
 
 from openvisualizer.client.view import View
 from openvisualizer.motehandler.motestate.motestate import MoteState
@@ -25,16 +26,13 @@ class Plugins(object):
 
 @Plugins.record_view("macstats")
 class MacStats(View):
-    def __init__(self, proxy, mote_id):
-        super(MacStats, self).__init__(proxy, mote_id)
+    def __init__(self, proxy, mote_id, refresh_rate):
+        super(MacStats, self).__init__(proxy, mote_id, refresh_rate)
 
         self.title = 'macstats'
 
-    def render(self, ms):
-        print(self.term.home + self.term.clear())
-        print(self.term.home, end='')
-        self.print_banner()
-
+    def render(self, ms=None):
+        super(MacStats, self).render()
         state_dict = json.loads(ms[MoteState.ST_MACSTATS])[0]
         for stat in state_dict:
             print('{:>13}:{:>20}'.format(str(stat), str(state_dict[stat])))
@@ -44,3 +42,24 @@ class MacStats(View):
         with self.term.fullscreen(), self.term.cbreak(), self.term.hidden_cursor():
             super(MacStats, self).run()
         logging.debug("Exiting blessed fullscreen")
+
+
+@Plugins.record_view("pktqueue")
+class PktQueue(View):
+    def __init__(self, proxy, mote_id, refresh_rate):
+        super(PktQueue, self).__init__(proxy, mote_id, refresh_rate)
+
+        self.title = 'pktqueue'
+
+    def render(self, ms=None):
+        super(PktQueue, self).render()
+        queue = json.loads(ms[MoteState.ST_QUEUE])
+        width = int(self.term.width / 2)
+        print('{:>{}}    {}    {}'.format('OWNER', width - 5, '|', 'CREATOR'))
+
+        bar = '----------------------------'
+        print('{:>{}}'.format(bar, width + int(len(bar) / 2)))
+        for row in queue:
+            print('{:>{}}    {}    {}'.format(row['owner'], width - 5, '|', row['creator']))
+
+        sys.stdout.flush()

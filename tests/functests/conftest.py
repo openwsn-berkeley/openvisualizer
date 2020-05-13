@@ -2,7 +2,9 @@ import logging
 import os
 import select
 import struct
+import time
 from fcntl import ioctl
+from subprocess import Popen
 
 import pytest
 from ipaddr import IPv6Address
@@ -11,12 +13,32 @@ from scapy.layers.inet6 import IPv6
 log = logging.getLogger(__name__)
 
 
+# ============================= defines =======================================
+
 # ============================= fixtures ======================================
 
 
 @pytest.fixture(scope="session")
 def etun():
     return TunInterface()
+
+
+@pytest.fixture()
+def server():
+    arguments = ['openv-server', '--sim=2', '--no-boot']
+    server_proc = Popen(arguments, shell=False)
+    time.sleep(2)
+    yield server_proc
+    server_proc.terminate()
+
+
+@pytest.fixture()
+def server_booted():
+    arguments = ['openv-server', '--sim=2']
+    server_proc = Popen(arguments, shell=False)
+    time.sleep(2)
+    yield server_proc
+    server_proc.terminate()
 
 
 # ============================= helpers =======================================

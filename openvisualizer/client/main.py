@@ -115,7 +115,7 @@ def root(proxy, port_or_address):
     """Set a mote as dagroot."""
 
     try:
-        mote_dict = proxy.rpc_server.get_mote_dict()
+        _ = proxy.rpc_server.set_root(port_or_address)
     except socket.error as err:
         if errno.ECONNREFUSED:
             click.secho("Connection refused. Is server running?", fg='red')

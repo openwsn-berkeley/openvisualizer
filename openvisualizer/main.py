@@ -15,6 +15,7 @@ import signal
 import sys
 import tempfile
 import threading
+import time
 from ConfigParser import SafeConfigParser
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from argparse import ArgumentParser
@@ -113,7 +114,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
     """
 
     def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog, use_page_zero, sim_topology, iotlab_motes,
-                 testbed_motes, mqtt_broker, opentun, fw_path, auto_boot):
+                 testbed_motes, mqtt_broker, opentun, fw_path, auto_boot, root):
 
         # store params
         self.host = host
@@ -234,8 +235,12 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             )
             web_thread.start()
 
-        if self.simulator_mode and self.auto_boot:
-            self.boot_motes(['all'])
+        time.sleep(1)
+        if root is not None:
+            if self.simulator_mode and self.auto_boot is False:
+                log.warning("Cannot set root when motes are not booted!")
+            else:
+                self.set_root(root)
 
     @staticmethod
     def cleanup_temporary_files(files):
@@ -506,6 +511,14 @@ def _add_parser_args(parser):
     )
 
     parser.add_argument(
+        '--root',
+        dest='set_root',
+        action='store',
+        type=str,
+        help='Set a simulated or hardware mote as root, specify the mote\'s port or address'
+    )
+
+    parser.add_argument(
         '-d', '--debug',
         dest='debug',
         action='store',
@@ -655,6 +668,9 @@ def main():
 
         options.append('auto-boot sim motes     = {0}'.format(args.auto_boot))
 
+    if args.set_root:
+        options.append('set root                = {0}'.format(args.set_root))
+
     options.append('use page zero           = {0}'.format(args.use_page_zero))
     options.append('use VCD logger          = {0}'.format(args.vcdlog))
 
@@ -680,7 +696,8 @@ def main():
         mqtt_broker=args.mqtt_broker,
         opentun=args.opentun,
         fw_path=args.fw_path,
-        auto_boot=args.auto_boot
+        auto_boot=args.auto_boot,
+        root=args.set_root
     )
 
     try:

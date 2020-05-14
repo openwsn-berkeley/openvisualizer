@@ -1,8 +1,11 @@
+import errno
 import logging
 import os
 import select
+import socket
 import struct
 import time
+import xmlrpclib
 from fcntl import ioctl
 from subprocess import Popen
 
@@ -12,36 +15,43 @@ from scapy.layers.inet6 import IPv6
 
 log = logging.getLogger(__name__)
 
+# ============================ helpers & setup code =============================
 
-# ============================= defines =======================================
+HOST = "localhost"
+PORT = 9000
+PREFIX = "bbbb:0:0:0:1415:92cc:0:"
 
-# ============================= fixtures ======================================
+ADDRESSES = []
+
+# Connect to a running instance of openv-server and retrieve the addresses of the motes in the network
+url = 'http://{}:{}'.format(HOST, str(PORT))
+try:
+    rpc_server = xmlrpclib.ServerProxy(url)
+    mote_ids = rpc_server.get_mote_dict().keys()
+except socket.error as err:
+    if errno.ECONNREFUSED:
+        log.warning(
+            "If you are trying to run a firmware test you need a running instance of openv-server with the options "
+            "'--sim=<x> --simtopo=linear --root', otherwise you can ignore this warning")
+    else:
+        log.error(err)
+else:
+    try:
+        root = ''.join(['%02x' % b for b in rpc_server.get_dagroot()])
+    except TypeError:
+        pytest.exit("Openvisualizer has no dagroot configured!")
+    else:
+        mote_ids.remove(root)
+    ADDRESSES.extend([PREFIX + str(int(id)) for id in mote_ids])
 
 
-@pytest.fixture(scope="session")
-def etun():
-    return TunInterface()
-
-
-@pytest.fixture()
-def server():
-    arguments = ['openv-server', '--sim=2', '--no-boot']
-    server_proc = Popen(arguments, shell=False)
-    time.sleep(2)
-    yield server_proc
-    server_proc.terminate()
-
-
-@pytest.fixture()
-def server_booted():
-    arguments = ['openv-server', '--sim=2']
-    server_proc = Popen(arguments, shell=False)
-    time.sleep(2)
-    yield server_proc
-    server_proc.terminate()
-
-
-# ============================= helpers =======================================
+def is_my_icmpv6(ipv6_pkt, his_address, my_address, next_header):
+    if IPv6Address(ipv6_pkt.src).exploded == IPv6Address(his_address).exploded and \
+            IPv6Address(ipv6_pkt.dst).exploded == IPv6Address(my_address).exploded and \
+            ipv6_pkt.nh == next_header:
+        return True
+    else:
+        return False
 
 
 class TunInterface:
@@ -106,3 +116,33 @@ class TunInterface:
             os.write(self.tun_iff, data)
         except Exception as err:
             print("write failed")
+
+
+# ============================= fixtures ======================================
+
+@pytest.fixture(params=ADDRESSES)
+def mote_addr(request):
+    return request.param
+
+
+@pytest.fixture(scope="session")
+def etun():
+    return TunInterface()
+
+
+@pytest.fixture()
+def server():
+    arguments = ['openv-server', '--sim=2', '--no-boot']
+    server_proc = Popen(arguments, shell=False)
+    time.sleep(2)
+    yield server_proc
+    server_proc.terminate()
+
+
+@pytest.fixture()
+def server_booted():
+    arguments = ['openv-server', '--sim=2']
+    server_proc = Popen(arguments, shell=False)
+    time.sleep(2)
+    yield server_proc
+    server_proc.terminate()

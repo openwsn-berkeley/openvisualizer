@@ -189,7 +189,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
                 moteprobe.MoteProbe(mqtt_broker, serial_port=p)
                 for p in moteprobe.find_serial_ports(port_mask=self.port_mask,
                                                      baudrate=self.baudrate)
-           ]
+            ]
 
         # create a MoteConnector for each MoteProbe
         try:
@@ -239,11 +239,13 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             )
             web_thread.start()
 
-        time.sleep(1)
         if root is not None:
             if self.simulator_mode and self.auto_boot is False:
                 log.warning("Cannot set root when motes are not booted!")
             else:
+                log.info("Setting root...")
+                # make sure that the simulated motes are booted and the hardware motes have communicated there mote ID
+                time.sleep(1.5)
                 self.set_root(root)
 
     @staticmethod

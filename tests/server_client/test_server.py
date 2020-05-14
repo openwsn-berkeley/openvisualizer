@@ -29,7 +29,7 @@ def test_start_server(option, log):
     if opts != ['']:
         arguments.extend(opts)
     p = Popen(arguments)
-    time.sleep(2)
+    time.sleep(3)
     p.terminate()
 
     with open(LOG_FILE, 'r') as f:

@@ -114,7 +114,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
     """
 
     def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog, use_page_zero, sim_topology, iotlab_motes,
-                 testbed_motes, mqtt_broker, opentun, fw_path, auto_boot, root, port_mask):
+                 testbed_motes, mqtt_broker, opentun, fw_path, auto_boot, root, port_mask, baudrate):
 
         # store params
         self.host = host
@@ -187,7 +187,8 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
 
             self.mote_probes = [
                 moteprobe.MoteProbe(mqtt_broker, serial_port=p)
-                for p in moteprobe.find_serial_ports(port_mask=self.port_mask)
+                for p in moteprobe.find_serial_ports(port_mask=self.port_mask,
+                                                     baudrate=self.baudrate)
            ]
 
         # create a MoteConnector for each MoteProbe
@@ -618,6 +619,15 @@ def _add_parser_args(parser):
     )
 
     parser.add_argument(
+        '--baudrate',
+        dest='baudrate',
+        default=[115200],
+        action='store',
+        nargs='+',
+        help='List of baudrates to probe for, e.g 115200 500000'
+    )
+
+    parser.add_argument(
         '--no-boot',
         dest='auto_boot',
         default=True,
@@ -685,8 +695,10 @@ def main():
     options.append('use page zero           = {0}'.format(args.use_page_zero))
     options.append('use VCD logger          = {0}'.format(args.vcdlog))
 
-    if args.port_mask:
+    if not args.simulator_mode and args.port_mask:
         options.append('serial port mask        = {0}'.format(args.port_mask))
+    if not args.simulator_mode and args.baudrate:
+        options.append('baudrates to probe      = {0}'.format(args.baudrate))
 
     if args.testbed_motes:
         options.append('opentestbed             = {0}'.format(args.testbed_motes))
@@ -706,6 +718,7 @@ def main():
         vcdlog=args.vcdlog,
         sim_topology=args.sim_topology,
         port_mask=args.port_mask,
+        baudrate=args.baudrate,
         iotlab_motes=args.iotlab_motes,
         testbed_motes=args.testbed_motes,
         mqtt_broker=args.mqtt_broker,

@@ -1,90 +1,81 @@
 OpenVisualizer
 ==============
 
-OpenVisualizer (OV) is part of UC Berkeley's OpenWSN project. It provides 
-monitoring, visualization, and debugging for an OpenWSN-based wireless sensor
-network. See the project [home page][] for more information.
+![](https://img.shields.io/badge/python-2.7-green)
 
-User Manual
------------
 
-**Run at Local**
+OpenVisualizer (OV) is part of UC Berkeley's OpenWSN project. It provides monitoring, visualization and simulation of 
+OpenWSN-based wireless sensor network. See the project [home page][] for more information.
 
-If you have the wireless sensor nodes on your local, you can use the following command to start the OpenVisualizer:
+## Table of Contents
+* [Installation](#installation)
+    - [Setting up the virtualenv](#setting-up-the-virtualenv)
+    - [Installing on OSX or Linux](#installing-on-osx-or-linux)
+    - [Installing on Windows](#installing-on-windows)
+* [Background](#background)
+* [Usage](#usage)
+    - [Prerequisites](#prerequisites)
+    - [Real hardware](#real-hardware)
+    - [Simulation mode](#simulation-mode)
+    - [Other useful options](#other-useful-options)
+* [Testing](#testing)
+* [Contact](#contact)
 
-```
-    > cd OpenVisualizer
-    > scons runweb
-``` 
 
-Then the OV starts a web server at [localhost:8080][] where you can see the mote information.
-A online dashboard at [openwsn-dashboard][] is available for everyone to check the end-to-end performance at real-time.
-The performance showing on the dashboard is based on the `uinject` application available in OpenWSN Firmware.
-So just make sure uinject is enabled when you program your wireless sensor nodes.
+## Installation <a name="installation"></a>
+OpenVisualizer is distributed through [PyPi][]. The only thing you need is a working Python 2.7 installation and pip.
+We recommend installing OpenVisualizer in a virtual environment. If something goes wrong you can simply delete
+the virtual environment without affecting your OS.
 
-**Run at Local without internet**
+#### Setting up the virtualenv <a name="setting-up-the-virtualenv"></a>
+Install the virtualenv package, in case you do not already have it:
 
-In case you don't have the internet access at the moment, you can disable the OV to connect to the dashboard by starting with following command:
+`> pip install virtualenv`
 
-```
-    > scons runweb --mqtt-broker-address=null
-```
+Create a virtual environment (the name can be anything, here we use the name _**venv**_):
 
-**Run with OpenTestbed**
+`> python -m virtualenv <NAME_OF_YOUR_VIRTUAL_ENV>`
 
-If you have programmed the OpenWSN firmware over the [OpenTestbed][], you can run OV with following command to monitor the nodes:
+Once installed you need to activate it (on Linux or OSX):
 
-```
-    > scons runweb --opentestbed --opentun-null
-```
+`> source venv/bin/activate`
 
-Installation
-------------
-You may install OpenVisualizer with the standard pip command line, as shown
-below. See the pip [installation instructions][] if it is not installed 
-already. You must be logged in with Windows administrator or Linux superuser
-privileges to install to system-level directories.
+Once installed you need to activate it (on Windows):
 
-```
-    > pip install openVisualizer
-```
+`> .\venv\Scripts\activate`
+
+#### Installing on OSX or Linux
+Once you have your virtualenv set up you can simply type:
+
+`(venv) > pip install openvisualizer`
+
+Pip will download and install all the dependancies. 
+
+#### Installing on Windows
+On Windows the instructions are almost the same.
+
+`(venv) > pip install openvisualizer`
+
+After installing you need to uninstall the package `pyreadline`. This package gets installed by `coloredlogs` which we 
+use to provide coloring of the logs that are streamed to your terminal. However its is outdated and buggy on Windows 10. 
+To prevent issues, you should remove it, the log coloring will still work without it.
+
+`pip uninstall pyrreadline`
+
+## Background
+
+## Usage
+#### Prerequisites
+#### Real hardware
+#### Simulation mode
+#### Other useful options
+
+## Testing
     
-Alternatively, you may download the OpenVisualizer archive, extract it, and
-install with the standard Python setup.py command line, as shown below. This
-command uses pip to retrieve other required Python libraries.
-
-```
-    > python setup.py install
-```
-    
-Dependencies
-------------
-You also may need to separately install a driver for a USB-connected mote.
-On Windows, a couple of other tools are required. See the OpenVisualizer 
-[installation page][] for a list.
-
-Running and Uninstalling
-------------------------
-Once everything is installed, you may run the web interface, GUI, or command 
-line utiltity as described on the OpenVisualizer home page. 
-
-To uninstall a pip-based installation, use the command line::
-
-    > pip uninstall openVisualizer
-    
-Contact
--------
-
-Please contact us via the [mailing list][] or an [issue report][] if you 
-have any questions or suggestions.
-
-Thanks!
 
 [home page]: https://openwsn.atlassian.net/wiki/display/OW/OpenVisualizer
 
-[installation instructions]: http://www.pip-installer.org/en/latest/installing.html
-
-[installation page]: https://openwsn.atlassian.net/wiki/display/OW/Installation+and+Dependencies
+[PyPi]: https://pypi.org/
 
 [mailing list]: https://openwsn.atlassian.net/wiki/display/OW/Mailing+List
 

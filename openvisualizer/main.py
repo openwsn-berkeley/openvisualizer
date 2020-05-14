@@ -114,7 +114,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
     """
 
     def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog, use_page_zero, sim_topology, iotlab_motes,
-                 testbed_motes, mqtt_broker, opentun, fw_path, auto_boot, root):
+                 testbed_motes, mqtt_broker, opentun, fw_path, auto_boot, root, port_mask):
 
         # store params
         self.host = host
@@ -126,6 +126,8 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.iotlab_motes = iotlab_motes
         self.testbed_motes = testbed_motes
         self.vcdlog = vcdlog
+        self.port_mask = port_mask
+        self.baudrate = baudrate
         self.fw_path = fw_path
         self.dagroot = None
         self.auto_boot = auto_boot
@@ -184,8 +186,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             # in "hardware" mode, motes are connected to the serial port
 
             self.mote_probes = [
-                moteprobe.MoteProbe(mqtt_broker, serial_port=p) for p in moteprobe.find_serial_ports()
-            ]
+                moteprobe.MoteProbe(mqtt_broker, serial_port=p)
+                for p in moteprobe.find_serial_ports(port_mask=self.port_mask)
+           ]
 
         # create a MoteConnector for each MoteProbe
         try:
@@ -605,6 +608,14 @@ def _add_parser_args(parser):
         action='store',
         help='port number for the webserver'
     )
+    parser.add_argument(
+        '--port-mask',
+        dest='port_mask',
+        type=str,
+        action='store',
+        nargs='+',
+        help='port mask for serial port detection, e.g: /dev/tty/USB*'
+    )
 
     parser.add_argument(
         '--no-boot',
@@ -674,6 +685,9 @@ def main():
     options.append('use page zero           = {0}'.format(args.use_page_zero))
     options.append('use VCD logger          = {0}'.format(args.vcdlog))
 
+    if args.port_mask:
+        options.append('serial port mask        = {0}'.format(args.port_mask))
+
     if args.testbed_motes:
         options.append('opentestbed             = {0}'.format(args.testbed_motes))
         options.append('mqtt broker             = {0}'.format(args.mqtt_broker))
@@ -691,6 +705,7 @@ def main():
         use_page_zero=args.use_page_zero,
         vcdlog=args.vcdlog,
         sim_topology=args.sim_topology,
+        port_mask=args.port_mask,
         iotlab_motes=args.iotlab_motes,
         testbed_motes=args.testbed_motes,
         mqtt_broker=args.mqtt_broker,

@@ -6,7 +6,7 @@ import xmlrpclib
 
 import click
 
-from openvisualizer.client.plugins.plugins import Plugins
+from openvisualizer.client.plugins.plugin import Plugin
 
 
 class Proxy(object):
@@ -16,7 +16,7 @@ class Proxy(object):
 
 
 pass_proxy = click.make_pass_decorator(Proxy, ensure=True)
-pass_plugins = click.make_pass_decorator(Plugins, ensure=True)
+pass_plugins = click.make_pass_decorator(Plugin, ensure=True)
 
 
 @click.group()
@@ -146,9 +146,9 @@ def view(plugins, list):
 def start_view(plugins, proxy, mote, refresh_rate, graphic=None):
     subcommand_name = click.get_current_context().info_name
     if graphic is not None:
-        view_thread = plugins.views[subcommand_name](proxy, mote, refresh_rate, graphic)
+        view_thread = Plugin.views[subcommand_name](proxy, mote, refresh_rate, graphic)
     else:
-        view_thread = plugins.views[subcommand_name](proxy, mote, refresh_rate)
+        view_thread = Plugin.views[subcommand_name](proxy, mote, refresh_rate)
     view_thread.daemon = True
     logging.info("Calling {} view thread from main client".format(subcommand_name))
     view_thread.start()

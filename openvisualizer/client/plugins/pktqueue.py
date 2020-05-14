@@ -5,47 +5,12 @@ import logging
 import sys
 from collections import deque
 
+from openvisualizer.client.plugins.plugin import Plugin
 from openvisualizer.client.view import View
 from openvisualizer.motehandler.motestate.motestate import MoteState
 
 
-class Plugins(object):
-    views = {}
-
-    @classmethod
-    def record_view(cls, view_id):
-        """Decorator to record all the supported views dynamically"""
-
-        def decorator(the_class):
-            if not issubclass(the_class, View):
-                raise ValueError("Can only decorate subclass of View")
-            cls.views[view_id] = the_class
-            return the_class
-
-        return decorator
-
-
-@Plugins.record_view("macstats")
-class MacStats(View):
-    def __init__(self, proxy, mote_id, refresh_rate):
-        super(MacStats, self).__init__(proxy, mote_id, refresh_rate)
-
-        self.title = 'macstats'
-
-    def render(self, ms=None):
-        super(MacStats, self).render()
-        state_dict = json.loads(ms[MoteState.ST_MACSTATS])[0]
-        for stat in state_dict:
-            print('{:>13}:{:>20}'.format(str(stat), str(state_dict[stat])))
-
-    def run(self):
-        logging.debug("Enabling blessed fullscreen")
-        with self.term.fullscreen(), self.term.cbreak(), self.term.hidden_cursor():
-            super(MacStats, self).run()
-        logging.debug("Exiting blessed fullscreen")
-
-
-@Plugins.record_view("pktqueue")
+@Plugin.record_view("pktqueue")
 class PktQueue(View):
     def __init__(self, proxy, mote_id, refresh_rate, graphic=False):
         super(PktQueue, self).__init__(proxy, mote_id, refresh_rate)
@@ -56,6 +21,12 @@ class PktQueue(View):
         # graphical view
         self.pkt_history = None
         self._build_pkt_history()
+
+    def run(self):
+        logging.debug("Enabling blessed fullscreen")
+        with self.term.fullscreen(), self.term.cbreak(), self.term.hidden_cursor():
+            super(PktQueue, self).run()
+        logging.debug("Exiting blessed fullscreen")
 
     def _build_pkt_history(self):
         self.prv_width = self.term.width

@@ -143,9 +143,12 @@ def view(plugins, list):
         click.echo(click.get_current_context().get_help())
 
 
-def start_view(plugins, proxy, mote, refresh_rate):
+def start_view(plugins, proxy, mote, refresh_rate, graphic=None):
     subcommand_name = click.get_current_context().info_name
-    view_thread = plugins.views[subcommand_name](proxy, mote, refresh_rate)
+    if graphic is not None:
+        view_thread = plugins.views[subcommand_name](proxy, mote, refresh_rate, graphic)
+    else:
+        view_thread = plugins.views[subcommand_name](proxy, mote, refresh_rate)
     view_thread.daemon = True
     logging.info("Calling {} view thread from main client".format(subcommand_name))
     view_thread.start()
@@ -176,11 +179,12 @@ def macstats(proxy, plugins, mote, refresh_rate):
 @click.command()
 @click.option('--refresh-rate', default=1.0, help='Set the refresh rate of the view (in seconds)', type=float,
               show_default=True)
+@click.option('--graphic', is_flag=True, help='Enables a graphic view of pktqueue')
 @click.argument("mote", nargs=1, type=str)
 @pass_plugins
 @pass_proxy
-def pktqueue(proxy, plugins, mote, refresh_rate):
-    start_view(plugins, proxy, mote, refresh_rate)
+def pktqueue(proxy, plugins, mote, graphic, refresh_rate):
+    start_view(plugins, proxy, mote, refresh_rate, graphic)
 
 
 cli.add_command(shutdown)

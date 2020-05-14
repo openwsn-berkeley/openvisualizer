@@ -43,7 +43,7 @@ class View(threading.Thread):
                 else:
                     logging.critical("Unknown socket error")
                     print(self.term.home + self.term.red_on_black + err)
-                    self.spin_block()
+                    View.block()
             else:
                 self.render(mote_state)
                 time.sleep(self.refresh_rate)
@@ -60,27 +60,31 @@ class View(threading.Thread):
         logging.info("Closing thread")
         self.quit = True
 
-    def spin_block(self):
+    @staticmethod
+    def block():
         while True:
             time.sleep(1)
 
     def print_banner(self):
-        w = self.term.width
-        time = "last update: " + datetime.datetime.now().strftime("%H:%M:%S,%f")
-        title = '[{}] MOTE: {}'.format(self.title, self.mote_id)
-        print(self.term.bold_white_on_seagreen + title + self.term.normal, end='')
-        print(self.term.white_on_seagreen + '{:>{}}'.format(time, w - len(title)), end='')
+        time = datetime.datetime.now().strftime("%H:%M:%S,%f")
+        title, meta, ma, ra = self._build_banner()
+        print(self.term.home + self.term.bold_white_on_seagreen + title + self.term.normal, end='')
+        print(self.term.white_on_seagreen + meta.rjust(ma), end='')
+        print(self.term.white_on_seagreen + '{:>{}}'.format(time, ra), end='')
         print(self.term.clear_eol() + self.term.normal + '\n')
 
     def print_connrefused_msg(self):
+        msg = "CONN. REFUSED"
+        title, meta, ma, ra = self._build_banner()
+        print(self.term.home + self.term.bold_white_on_indianred + title + self.term.normal, end='')
+        print(self.term.white_on_indianred + meta.rjust(ma), end='')
+        print(self.term.white_on_indianred + '{:>{}}'.format(msg, ra), end='')
+        print(self.term.clear_eol() + self.term.normal + '\n')
+
+    def _build_banner(self):
         w = self.term.width
-        msg = "connection failed"
-        title = '[{}] '.format(self.title, self.mote_id)
-        meta_info = 'MOTE-ID: {} -- REFRESH-RATE: {}'.format(self.mote_id, self.refresh_rate)
+        title = '[{}]'.format(self.title)
+        meta_info = 'MOTE-ID: {} -- RR: {}'.format(self.mote_id, self.refresh_rate)
         middle_aligned = abs(int(w / 2) + int(len(meta_info) / 2) - len(title))
         right_aligned = abs(int(w / 2) - int(len(meta_info) / 2))
-        print(self.term.home + self.term.clear())
-        print(self.term.home + self.term.bold_white_on_indianred + title + self.term.normal, end='')
-        print(self.term.white_on_indianred + meta_info.rjust(middle_aligned), end='')
-        print(self.term.white_on_indianred + '{:>{}}'.format(msg, right_aligned), end='')
-        print(self.term.clear_eol() + self.term.normal + '\n')
+        return title, meta_info, middle_aligned, right_aligned

@@ -11,7 +11,7 @@ cbor
 hkdf
 paho-mqtt
 scapy
-pytest
+pytest==4.6.9
 coloredlogs
 verboselogs
 click

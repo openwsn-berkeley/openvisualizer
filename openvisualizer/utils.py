@@ -246,9 +246,9 @@ def extract_component_codes(fw_definitions_path):
             try:
                 code = int(m.group(2), 16)
             except ValueError:
-                log.warning("For component {} - {} is not a hex number".format(name, m.group(2)))
+                log.warning("For component '{}' - {} is not a hex number".format(name, m.group(2)))
             else:
-                log.debug("Extracted component {} with code {}".format(name, code))
+                log.debug("Extracted component '{}' with code {}".format(name, code))
                 codes_found[code] = name
 
     return codes_found
@@ -256,7 +256,7 @@ def extract_component_codes(fw_definitions_path):
 
 def extract_log_descriptions(fw_definitions_path):
     # find error codes in opendefs.h
-    log.verbose("Generating firmware log descriptions.")
+    log.verbose("Extracting firmware log descriptions.")
 
     codes_found = {}
     for line in open(fw_definitions_path, 'r'):
@@ -266,9 +266,9 @@ def extract_log_descriptions(fw_definitions_path):
             try:
                 code = int(m.group(1), 16)
             except ValueError:
-                log.warning("For log description {} - {} is not a hex number".format(desc, m.group(2)))
+                log.warning("For log description '{}' - {} is not a hex number".format(desc, m.group(2)))
             else:
-                log.debug("Extracted log description {} with code {}".format(desc, code))
+                log.debug("Extracted log description '{}' with code {}".format(desc, code))
                 codes_found[code] = desc
 
     return codes_found
@@ -286,9 +286,9 @@ def extract_6top_rcs(fw_6top_definitions_path):
             try:
                 code = int(m.group(2), 16)
             except ValueError:
-                log.warning("For return code {}: {} is not a hex number".format(name, m.group(2)))
+                log.warning("For return code '{}': {} is not a hex number".format(name, m.group(2)))
             else:
-                log.debug("Extracted 6top RC {} with code {}".format(name, code))
+                log.debug("Extracted 6top RC '{}' with code {}".format(name, code))
                 codes_found[code] = name
 
     return codes_found
@@ -306,9 +306,9 @@ def extract_6top_states(fw_6top_definitions_path):
             try:
                 code = int(m.group(2), 16)
             except ValueError:
-                log.warning("For state {} - {} is not a hex number".format(name, m.group(2)))
+                log.warning("For state '{}' - {} is not a hex number".format(name, m.group(2)))
             else:
-                log.debug("Extracted 6top state {} with code {}".format(name, code))
+                log.debug("Extracted 6top state '{}' with code {}".format(name, code))
                 codes_found[code] = name
 
     return codes_found

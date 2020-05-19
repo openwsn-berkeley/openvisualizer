@@ -1,4 +1,5 @@
 import errno
+import json
 import logging
 import socket
 import time
@@ -7,6 +8,8 @@ import xmlrpclib
 import click
 
 from openvisualizer.client.plugins.plugin import Plugin
+from openvisualizer.client.utils import transform_into_ipv6
+from openvisualizer.motehandler.motestate.motestate import MoteState
 
 
 class Proxy(object):
@@ -71,20 +74,37 @@ def list_methods(proxy):
 
 @click.command()
 @pass_proxy
-def get_motes(proxy):
+def motes(proxy):
     """Print the address and serial-port of each mote connected to the Openvisualizer server."""
-
     try:
-        mote_dict = proxy.rpc_server.get_mote_dict()
+        temp_mote_dict = proxy.rpc_server.get_mote_dict()
+        addr_port_dict = {}
+
+        # if we have all the info resolve the entire IPv6 address
+        if None not in temp_mote_dict.values():
+            for addr in temp_mote_dict:
+                mote_state = proxy.rpc_server.get_mote_state(addr)
+                id_manager = json.loads(mote_state[MoteState.ST_IDMANAGER])[0]
+                full_addr = transform_into_ipv6(id_manager['myPrefix'][:-9] + '-' + id_manager['my64bID'][:-5])
+                addr_port_dict[full_addr] = temp_mote_dict[addr]
     except socket.error as err:
         if errno.ECONNREFUSED:
             click.secho("Connection refused. Is server running?", fg='red')
         else:
             click.echo(err)
+    except xmlrpclib.Fault as err:
+        click.secho("Caught server fault -- {}".format(err), fg='red')
     else:
-        click.secho("Attached motes:", bold=True, underline=True)
-        for addr, port in mote_dict.items():
-            click.echo(" - {}\t [{}]".format(addr, port))
+        # if we were unable to resolve all the IPv6 addresses, use the intermediate results
+        if len(addr_port_dict) != len(temp_mote_dict):
+            addr_port_dict = temp_mote_dict
+
+        click.secho("Attached motes (address | port):", bold=True, underline=True)
+        for addr, port in addr_port_dict.items():
+            if port is None:
+                click.echo("- {} {:>25}".format(port, addr))
+            else:
+                click.echo("- {} {:>25}".format(addr, port))
 
 
 @click.command()
@@ -101,7 +121,7 @@ def boot(proxy, mote):
         else:
             click.echo(err)
     except xmlrpclib.Fault as err:
-        click.secho("A fault occurred: {}".format(err.faultString), fg='red')
+        click.secho("Caught server fault -- {}".format(err.faultString), fg='red')
     else:
         for a in addresses:
             click.echo("Booting mote: {} ... ".format(a), nl=False)
@@ -109,24 +129,51 @@ def boot(proxy, mote):
 
 
 @click.command()
-@click.argument("port_or_address", nargs=1, type=str)
+@click.argument("port_or_address", nargs=1, type=str, required=False)
 @pass_proxy
 def root(proxy, port_or_address):
-    """Set a mote as dagroot."""
+    """Set a mote as dagroot or get the current's DAG root address."""
 
-    try:
-        _ = proxy.rpc_server.set_root(port_or_address)
-    except socket.error as err:
-        if errno.ECONNREFUSED:
-            click.secho("Connection refused. Is server running?", fg='red')
+    if port_or_address is None:
+        try:
+            dag_root = proxy.rpc_server.get_dagroot()
+
+            if dag_root is None:
+                click.echo("No DAG root configured\n")
+                click.echo(click.get_current_context().get_help())
+                return
+
+            dag_root = "".join('%02x' % b for b in dag_root)
+            mote_state = proxy.rpc_server.get_mote_state(dag_root)
+        except socket.error as err:
+            if errno.ECONNREFUSED:
+                click.secho("Connection refused. Is server running?", fg='red')
+            else:
+                click.echo(err)
+            return
+        except xmlrpclib.Fault as err:
+            click.secho("Caught server fault -- {}".format(err.faultString), fg='red')
         else:
-            click.echo(err)
-        return
-    except xmlrpclib.Fault as err:
-        click.secho("Something went wrong -- {}".format(err.faultString), fg='red')
-        return
+            id_manager = json.loads(mote_state[MoteState.ST_IDMANAGER])[0]
 
-    click.secho('Ok!', fg='green', bold=True)
+            click.echo('Current DAG root: {}'.format(
+                transform_into_ipv6(id_manager['myPrefix'][:-9] + '-' + id_manager['my64bID'][:-5])))
+
+    else:
+        try:
+            _ = proxy.rpc_server.set_root(port_or_address)
+        except socket.error as err:
+            if errno.ECONNREFUSED:
+                click.secho("Connection refused. Is server running?", fg='red')
+            else:
+                click.echo(err)
+            return
+        except xmlrpclib.Fault as err:
+            click.secho("Caught server fault -- {}".format(err.faultString), fg='red')
+            click.secho("\nProvide a 16B mote address or a port ID to set the DAG root.", fg='red')
+            return
+
+        click.secho('Ok!', fg='green', bold=True)
 
 
 @click.group(invoke_without_command=True)
@@ -143,12 +190,14 @@ def view(plugins, list):
         click.echo(click.get_current_context().get_help())
 
 
-def start_view(plugins, proxy, mote, refresh_rate, graphic=None):
+def start_view(proxy, mote, refresh_rate, graphic=None):
     subcommand_name = click.get_current_context().info_name
+
     if graphic is not None:
         view_thread = Plugin.views[subcommand_name](proxy, mote, refresh_rate, graphic)
     else:
         view_thread = Plugin.views[subcommand_name](proxy, mote, refresh_rate)
+
     view_thread.daemon = True
     logging.info("Calling {} view thread from main client".format(subcommand_name))
     view_thread.start()
@@ -170,10 +219,9 @@ def start_view(plugins, proxy, mote, refresh_rate, graphic=None):
 @click.argument("mote", nargs=1, type=str)
 @click.option('--refresh-rate', default=1.0, help='Set the refresh rate of the view (in seconds)', type=float,
               show_default=True)
-@pass_plugins
 @pass_proxy
-def macstats(proxy, plugins, mote, refresh_rate):
-    start_view(plugins, proxy, mote, refresh_rate)
+def macstats(proxy, mote, refresh_rate):
+    start_view(proxy, mote, refresh_rate)
 
 
 @click.command()
@@ -181,45 +229,41 @@ def macstats(proxy, plugins, mote, refresh_rate):
               show_default=True)
 @click.option('--graphic', is_flag=True, help='Enables a graphic view of pktqueue')
 @click.argument("mote", nargs=1, type=str)
-@pass_plugins
 @pass_proxy
-def pktqueue(proxy, plugins, mote, graphic, refresh_rate):
-    start_view(plugins, proxy, mote, refresh_rate, graphic)
+def pktqueue(proxy, mote, graphic, refresh_rate):
+    start_view(proxy, mote, refresh_rate, graphic)
 
 
 @click.command()
 @click.option('--refresh-rate', default=1.0, help='Set the refresh rate of the view (in seconds)', type=float,
               show_default=True)
 @click.argument("mote", nargs=1, type=str)
-@pass_plugins
 @pass_proxy
-def schedule(proxy, plugins, mote, refresh_rate):
-    start_view(plugins, proxy, mote, refresh_rate)
+def schedule(proxy, mote, refresh_rate):
+    start_view(proxy, mote, refresh_rate)
 
 
 @click.command()
 @click.option('--refresh-rate', default=1.0, help='Set the refresh rate of the view (in seconds)', type=float,
               show_default=True)
 @click.argument("mote", nargs=1, type=str)
-@pass_plugins
 @pass_proxy
-def motestatus(proxy, plugins, mote, refresh_rate):
-    start_view(plugins, proxy, mote, refresh_rate)
+def motestatus(proxy, mote, refresh_rate):
+    start_view(proxy, mote, refresh_rate)
 
 
 @click.command()
 @click.option('--refresh-rate', default=1.0, help='Set the refresh rate of the view (in seconds)', type=float,
               show_default=True)
 @click.argument("mote", nargs=1, type=str)
-@pass_plugins
 @pass_proxy
-def msf(proxy, plugins, mote, refresh_rate):
-    start_view(plugins, proxy, mote, refresh_rate)
+def msf(proxy, mote, refresh_rate):
+    start_view(proxy, mote, refresh_rate)
 
 
 cli.add_command(shutdown)
 cli.add_command(list_methods)
-cli.add_command(get_motes)
+cli.add_command(motes)
 cli.add_command(boot)
 cli.add_command(root)
 cli.add_command(view)

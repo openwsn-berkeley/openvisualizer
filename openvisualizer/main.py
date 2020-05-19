@@ -395,7 +395,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
                 if ms.mote_connector.serialport == port:
                     ms.trigger_action(MoteState.TRIGGER_DAGROOT)
                     self.dagroot = ms.get_state_elem(ms.ST_IDMANAGER).get_16b_addr()
-                    log.info('Setting mote {} as root'.format(''.join(['%02d' % b for b in self.dagroot])))
+                    log.success('Setting mote {} as root'.format(''.join(['%02x' % b for b in self.dagroot])))
                     return True
             except ValueError as err:
                 log.error(err)

@@ -338,6 +338,17 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         if self.simulator_mode:
             OpenVisualizerServer.cleanup_temporary_files([self.temp_dir])
 
+        # delete the lock file, so we can start a new instance of openv-server later
+        lock_file = "openv-server.pid"
+        temp_dir = tempfile.gettempdir()
+
+        log.verbose('Deleting lock file: {}'.format(os.path.join(temp_dir, lock_file)))
+
+        try:
+            os.remove(os.path.join(temp_dir, lock_file))
+        except OSError as err:
+            log.error(err)
+
         os.kill(os.getpid(), signal.SIGTERM)
 
     def get_dag(self):
@@ -668,6 +679,28 @@ def main():
     else:
         log.error("Could not load logging configuration.")
 
+    # before continuing, check if openv-server is not already running somewhere
+    lock_file = "openv-server.pid"
+    temp_dir = tempfile.gettempdir()
+
+    lock_file_path = os.path.join(temp_dir, lock_file)
+
+    if os.path.isfile(lock_file_path):
+        with open(lock_file_path, 'r') as f:
+            pid = f.read()
+            log.critical("Detected a running instance of openv-server with PID: {}".format(pid))
+
+            output_msg = [""]
+            output_msg += ["If openv-server crashed, the lock file was probably not deleted properly."]
+            output_msg += ["You can delete it manually at: {}".format(str(lock_file_path))]
+            log.critical("\n".join(output_msg))
+
+        sys.exit()
+
+    # if no other openv-server instance is detected create the file lock
+    with open(lock_file_path, 'w') as f:
+        f.write(str(os.getpid()))
+
     options = ['host address server     = {0}'.format(args.host), 'port number server      = {0}'.format(args.port)]
 
     if args.webserver:
@@ -736,4 +769,5 @@ def main():
         server.serve_forever()
     except KeyboardInterrupt:
         pass
+
     server.shutdown()

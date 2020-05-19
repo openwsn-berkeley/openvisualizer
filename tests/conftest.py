@@ -5,6 +5,7 @@ import os
 import select
 import socket
 import struct
+import tempfile
 import time
 import xmlrpclib
 from fcntl import ioctl
@@ -155,15 +156,27 @@ def etun():
 def server():
     arguments = ['openv-server', '--sim=2', '--no-boot']
     server_proc = Popen(arguments, shell=False)
-    time.sleep(2)
+
+    # give openv-server time to boot
+    time.sleep(3)
+
     yield server_proc
+
+    # kill the server and remove the file lock
     server_proc.terminate()
+    os.remove(os.path.join(tempfile.gettempdir(), 'openv-server.pid'))
 
 
 @pytest.fixture()
 def server_booted():
     arguments = ['openv-server', '--sim=2']
     server_proc = Popen(arguments, shell=False)
-    time.sleep(2)
+
+    # give openv-server time to boot
+    time.sleep(3)
+
     yield server_proc
+
+    # kill the server and remove the file lock
     server_proc.terminate()
+    os.remove(os.path.join(tempfile.gettempdir(), 'openv-server.pid'))

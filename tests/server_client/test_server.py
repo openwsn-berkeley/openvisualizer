@@ -1,5 +1,6 @@
 import logging
 import os
+import tempfile
 import time
 from subprocess import Popen
 
@@ -29,8 +30,13 @@ def test_start_server(option, log):
     if opts != ['']:
         arguments.extend(opts)
     p = Popen(arguments)
+
+    # give the server time to boot
     time.sleep(3)
+
+    # kill server and remove lock
     p.terminate()
+    os.remove(os.path.join(tempfile.gettempdir(), 'openv-server.pid'))
 
     with open(LOG_FILE, 'r') as f:
         logs = "".join(f.readlines())

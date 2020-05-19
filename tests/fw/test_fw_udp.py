@@ -31,7 +31,7 @@ def test_udp_echo(etun, mote_addr, payload_len):
     pkt.add_payload(payload)
 
     etun.write(list(bytearray(raw(pkt))))
-    received = etun.read(dest=LOCAL_ADDR, timeout=5)
+    received = etun.read(dest=LOCAL_ADDR, timeout=15)
 
     timeout = True
     for recv_pkt in received:
@@ -44,7 +44,7 @@ def test_udp_echo(etun, mote_addr, payload_len):
 
     if timeout:
         # node to failed to respond with an ICMPv6 echo before timeout
-        pytest.fail("Timeout on ICMPv6 Echo Response!")
+        pytest.fail("Timeout on UDP Echo!")
 
 
 @pytest.mark.xfail(reason='Invalid checksum')
@@ -57,11 +57,11 @@ def test_udp_checksum(etun, mote_addr):
 
     payload = "".join([chr(randint(0, 255))] * 30)
     pkt.add_payload(payload)
-    logger.info("Reseting checksum")
+    logger.info("Resetting checksum")
     pkt[UDP].chksum = 0
 
     etun.write(list(bytearray(raw(pkt))))
-    received = etun.read(dest=LOCAL_ADDR, timeout=10)
+    received = etun.read(dest=LOCAL_ADDR, timeout=15)
 
     timeout = True
     for recv_pkt in received:
@@ -74,4 +74,4 @@ def test_udp_checksum(etun, mote_addr):
 
     if timeout:
         # node to failed to respond with an ICMPv6 echo before timeout
-        pytest.fail("Timeout on ICMPv6 Echo Response!")
+        pytest.fail("Timeout on UDP Echo!")

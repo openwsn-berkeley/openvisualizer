@@ -1,4 +1,5 @@
 import errno
+import json
 import logging
 import os
 import select
@@ -13,13 +14,15 @@ import pytest
 from ipaddr import IPv6Address
 from scapy.layers.inet6 import IPv6
 
+from openvisualizer.client.utils import transform_into_ipv6
+from openvisualizer.motehandler.motestate.motestate import MoteState
+
 log = logging.getLogger(__name__)
 
 # ============================ helpers & setup code =============================
 
 HOST = "localhost"
 PORT = 9000
-PREFIX = "bbbb:0:0:0:1415:92cc:0:"
 
 ADDRESSES = []
 
@@ -28,21 +31,39 @@ url = 'http://{}:{}'.format(HOST, str(PORT))
 try:
     rpc_server = xmlrpclib.ServerProxy(url)
     mote_ids = rpc_server.get_mote_dict().keys()
+
+    if None not in mote_ids:
+        for addr in mote_ids:
+            mote_state = rpc_server.get_mote_state(addr)
+            id_manager = json.loads(mote_state[MoteState.ST_IDMANAGER])[0]
+            ipv6_addr = transform_into_ipv6(id_manager['myPrefix'][:-9] + '-' + id_manager['my64bID'][:-5])
+            if ipv6_addr[:4] == 'fe80':
+                pytest.exit("Is the network running? Mote has link local address'")
+            else:
+                ADDRESSES.append(ipv6_addr)
+    else:
+        pytest.exit("Is the network running? Mote address resolve to 'None'")
+
+    # remove dagroot from address list, since it only relays packet
+    dag_root = rpc_server.get_dagroot()
+    if dag_root is None:
+        pytest.exit("There is no DAG root configured in the network")
+
+    dag_root = "".join('%02x' % b for b in dag_root)
+
+    for addr in ADDRESSES:
+        if addr[-4:] == dag_root:
+            ADDRESSES.remove(addr)
+
 except socket.error as err:
     if errno.ECONNREFUSED:
         log.warning(
-            "If you are trying to run a firmware test you need a running instance of openv-server with the options "
-            "'--sim=<x> --simtopo=linear --root', otherwise you can ignore this warning")
+            "If you are trying to run a firmware test you need a running instance of openv-server with the option "
+            "'--opentun'")
     else:
         log.error(err)
-else:
-    try:
-        root = ''.join(['%02x' % b for b in rpc_server.get_dagroot()])
-    except TypeError:
-        pytest.exit("Openvisualizer has no dagroot configured!")
-    else:
-        mote_ids.remove(root)
-    ADDRESSES.extend([PREFIX + str(int(id)) for id in mote_ids])
+except xmlrpclib as err:
+    log.error("Caught server fault -- {}".format(err))
 
 
 def is_my_icmpv6(ipv6_pkt, his_address, my_address, next_header):

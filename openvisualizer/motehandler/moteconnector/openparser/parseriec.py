@@ -66,7 +66,7 @@ class ParserInfoErrorCritical(Parser):
         else:
             self.error_info[(component, error_code)] = 1
 
-        if error_code == 37:
+        if error_code == 0x27:
             # replace args of sixtop command/return code id by string
             arg1 = self.stack_defines["sixtop_returncodes"][arg1]
             arg2 = self.stack_defines["sixtop_states"][arg2]

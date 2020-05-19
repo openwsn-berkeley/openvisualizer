@@ -1,3 +1,4 @@
-import macstats
-import pktqueue
-import schedule
+from . import macstats
+from . import motestatus
+from . import pktqueue
+from . import schedule

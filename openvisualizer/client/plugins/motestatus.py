@@ -4,6 +4,7 @@ import json
 import logging
 
 from openvisualizer.client.plugins.plugin import Plugin
+from openvisualizer.client.utils import transform_into_ipv6
 from openvisualizer.client.view import View
 from openvisualizer.motehandler.motestate.motestate import MoteState
 
@@ -38,7 +39,7 @@ class MoteStatus(View):
         print(_str.format('PAN ID', id_manager['myPANID'][:-8]))
         _str = self._build_str(6)
         print(_str.format('IPv6 address',
-                          MoteStatus._transform_ipv6(id_manager['myPrefix'][:-9] + '-' + id_manager['my64bID'][:-5])))
+                          transform_into_ipv6(id_manager['myPrefix'][:-9] + '-' + id_manager['my64bID'][:-5])))
 
         print('\n', end='')
         _str = self._build_str(7)
@@ -47,15 +48,6 @@ class MoteStatus(View):
         print('\n', end='')
         _str = self._build_str(9)
         print(_str.format('KA Period', kaperiod['kaPeriod']))
-
-    @staticmethod
-    def _transform_ipv6(ipv6_str):
-        for i in range(16):
-            if i % 2 == 0:
-                ipv6_str = ipv6_str.replace('-', '', 1)
-            else:
-                ipv6_str = ipv6_str.replace('-', ':', 1)
-        return ipv6_str
 
     def _build_str(self, offset, flag=None):
         b = self.term.bold

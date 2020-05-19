@@ -129,6 +129,19 @@ class StateJoined(StateElem):
         self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1, notif.joinedAsn_2_3, notif.joinedAsn_4)
 
 
+class StateMSF(StateElem):
+    def update(self, notif=None, creator=None, owner=None):
+        super(StateMSF, self).update()
+
+        assert notif
+
+        if len(self.data) == 0:
+            self.data.append({})
+
+        self.data[0]['numCellsUsed_tx'] = notif.numCellsUsed_tx
+        self.data[0]['numCellsUsed_rx'] = notif.numCellsUsed_rx
+
+
 class StateMacStats(StateElem):
     def update(self, notif=None, creator=None, owner=None):
         super(StateMacStats, self).update()

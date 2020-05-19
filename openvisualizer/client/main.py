@@ -206,6 +206,17 @@ def schedule(proxy, plugins, mote, refresh_rate):
 def motestatus(proxy, plugins, mote, refresh_rate):
     start_view(plugins, proxy, mote, refresh_rate)
 
+
+@click.command()
+@click.option('--refresh-rate', default=1.0, help='Set the refresh rate of the view (in seconds)', type=float,
+              show_default=True)
+@click.argument("mote", nargs=1, type=str)
+@pass_plugins
+@pass_proxy
+def msf(proxy, plugins, mote, refresh_rate):
+    start_view(plugins, proxy, mote, refresh_rate)
+
+
 cli.add_command(shutdown)
 cli.add_command(list_methods)
 cli.add_command(get_motes)
@@ -217,3 +228,4 @@ view.add_command(macstats)
 view.add_command(pktqueue)
 view.add_command(schedule)
 view.add_command(motestatus)
+view.add_command(msf)

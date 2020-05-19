@@ -16,7 +16,7 @@ from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.motehandler.moteconnector.openparser import parserstatus
 from openvisualizer.motehandler.motestate.elements import StateOutputBuffer, StateAsn, StateJoined, StateMacStats, \
     StateTable, StateScheduleRow, StateBackoff, StateQueue, StateNeighborsRow, StateIsSync, StateIdManager, \
-    StateMyDagRank, StateKaPeriod
+    StateMyDagRank, StateKaPeriod, StateMSF
 
 log = logging.getLogger('MoteState')
 log.setLevel(logging.ERROR)
@@ -39,6 +39,7 @@ class MoteState(EventBusClient):
     ST_MYDAGRANK = 'MyDagRank'
     ST_KAPERIOD = 'kaPeriod'
     ST_JOINED = 'Joined'
+    ST_MSF = 'MSF'
     ST_ALL = [
         ST_OUPUTBUFFER,
         ST_ASN,
@@ -52,6 +53,7 @@ class MoteState(EventBusClient):
         ST_MYDAGRANK,
         ST_KAPERIOD,
         ST_JOINED,
+        ST_MSF
     ]
 
     TRIGGER_DAGROOT = 'DAGroot'
@@ -121,6 +123,7 @@ class MoteState(EventBusClient):
         self.state[self.ST_OUPUTBUFFER] = StateOutputBuffer()
         self.state[self.ST_ASN] = StateAsn()
         self.state[self.ST_JOINED] = StateJoined()
+        self.state[self.ST_MSF] = StateMSF()
         self.state[self.ST_MACSTATS] = StateMacStats()
         self.state[self.ST_SCHEDULE] = StateTable(
             StateScheduleRow,
@@ -197,6 +200,8 @@ class MoteState(EventBusClient):
                 self.state[self.ST_KAPERIOD].update,
             self.parser_status.named_tuple[self.ST_JOINED]:
                 self.state[self.ST_JOINED].update,
+            self.parser_status.named_tuple[self.ST_MSF]:
+                self.state[self.ST_MSF].update,
 
         }
 

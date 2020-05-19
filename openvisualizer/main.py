@@ -487,6 +487,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             ms.ST_QUEUE: ms.get_state_elem(ms.ST_QUEUE).to_json('data'),
             ms.ST_NEIGHBORS: ms.get_state_elem(ms.ST_NEIGHBORS).to_json('data'),
             ms.ST_JOINED: ms.get_state_elem(ms.ST_JOINED).to_json('data'),
+            ms.ST_MSF: ms.get_state_elem(ms.ST_MSF).to_json('data'),
         }
         return states
 

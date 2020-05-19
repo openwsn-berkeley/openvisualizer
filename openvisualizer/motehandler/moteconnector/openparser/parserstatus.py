@@ -256,6 +256,16 @@ class ParserStatus(parser.Parser):
                 'joinedAsn_0_1',  # H
             ],
         )
+        self._add_fields_parser(
+            3,
+            12,
+            'MSF',
+            '<BB',
+            [
+                'numCellsUsed_tx',  # B
+                'numCellsUsed_rx',  # B
+            ],
+        )
 
     # ======================== public ==========================================
 
@@ -268,21 +278,21 @@ class ParserStatus(parser.Parser):
 
         header_bytes = data[:3]
 
-        # extract moteId and statusElem
+        # extract moteId and status_elem
         try:
-            (moteId, statusElem) = struct.unpack('<HB', ''.join([chr(c) for c in header_bytes]))
+            (moteId, status_elem) = struct.unpack('<HB', ''.join([chr(c) for c in header_bytes]))
         except struct.error:
             raise ParserException(ParserException.ExceptionType.DESERIALIZE.value,
                                   "could not extract moteId and statusElem from {0}".format(header_bytes))
 
-        log.debug("moteId={0} statusElem={1}".format(moteId, statusElem))
+        log.debug("moteId={0} statusElem={1}".format(moteId, status_elem))
 
         # jump the header bytes
         data = data[3:]
 
         # call the next header parser
         for key in self.fields_parsing_keys:
-            if statusElem == key.val:
+            if status_elem == key.val:
 
                 # log
                 log.debug("parsing {0}, ({1} bytes) as {2}".format(data, len(data), key.name))
@@ -311,9 +321,8 @@ class ParserStatus(parser.Parser):
                 return 'status', return_tuple
 
         # if you get here, no key was found
-        raise ParserException(ParserException.ExceptionType.NO_KEY.value, "type={0} (\"{1}\")".format(
-            data[0],
-            chr(data[0])))
+        raise ParserException(ParserException.ExceptionType.NO_KEY.value,
+                              "type={0} (\"{1}\")".format(data[0], chr(data[0])))
 
     # ======================== private =========================================
 

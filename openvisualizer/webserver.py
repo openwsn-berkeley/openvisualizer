@@ -280,13 +280,12 @@ class WebServer(EventBusClient):
         """ Retrieve the topology data, in JSON format, and download it. """
         data = self._topology_data()
         now = datetime.datetime.now()
-        dagroot_list = []
 
-        dagroot = self.rpc_server.get_dagroot()[1]
+        dagroot = self.rpc_server.get_dagroot()
         if dagroot is not None:
-            dagroot_list.append(dagroot)
+            dagroot = ''.join('%02x' % b for b in dagroot)
 
-        data['DAGrootList'] = dagroot_list
+        data['DAGroot'] = dagroot
 
         bottle.response.headers['Content-disposition'] = 'attachment; filename=topology_data_' + now.strftime(
             "%d-%m-%y_%Hh%M") + '.json'

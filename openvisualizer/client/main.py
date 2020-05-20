@@ -170,7 +170,8 @@ def root(proxy, port_or_address):
             return
         except xmlrpclib.Fault as err:
             click.secho("Caught server fault -- {}".format(err.faultString), fg='red')
-            click.secho("\nProvide a 16B mote address or a port ID to set the DAG root.", fg='red')
+            click.secho("\nMake sure the motes are booted and provide a 16B mote address or a port ID to set the DAG "
+                        "root.", fg='red')
             return
 
         click.secho('Ok!', fg='green', bold=True)
@@ -261,6 +262,15 @@ def msf(proxy, mote, refresh_rate):
     start_view(proxy, mote, refresh_rate)
 
 
+@click.command()
+@click.option('--refresh-rate', default=1.0, help='Set the refresh rate of the view (in seconds)', type=float,
+              show_default=True)
+@click.argument("mote", nargs=1, type=str)
+@pass_proxy
+def neighbors(proxy, mote, refresh_rate):
+    start_view(proxy, mote, refresh_rate)
+
+
 cli.add_command(shutdown)
 cli.add_command(list_methods)
 cli.add_command(motes)
@@ -273,3 +283,4 @@ view.add_command(pktqueue)
 view.add_command(schedule)
 view.add_command(motestatus)
 view.add_command(msf)
+view.add_command(neighbors)

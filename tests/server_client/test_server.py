@@ -11,15 +11,32 @@ LOG_FILE = 'openv-server.log'
 logger = logging.getLogger(__name__)
 
 
-@mark.parametrize('option, log',
-                  [('', 'discovered following serial-port(s):'),
-                   ('--sim=2', '- simulation              = 2'),
-                   ('--sim=2', '[OPENWSN] booted'),
-                   param('--sim=2 --no-boot', '[OPENWSN] booted', marks=mark.xfail(reason='motes not booted')),
-                   ('--sim=2 --root=0001', 'Setting mote 0001 as root'),
-                   ('--sim=2 --root=0001 --no-boot', 'Cannot set root')
+@mark.parametrize('option, logs',
+                  [('', ['discovered following serial-port(s):']),  # testing plain openv-server boot (1)
+                   ('--sim=2',  # boot openv-server with 2 emulated motes (2)
+                    ['- simulation              = 2',
+                     '- simulation topology     = Pister-hack',
+                     '- auto-boot sim motes     = True',
+                     '[OPENWSN] booted']),
+                   # verify emulated moted do not boot
+                   param('--sim=2 --no-boot', ['[OPENWSN] booted'], marks=mark.xfail(reason='motes not booted')),
+                   ('--simtopo=linear',  # specify a simulation topology but do not set a number of emulated motes (3)
+                    ['Simulation topology specified but no --sim=<x> given, switching to hardware mode',
+                     'discovered following serial-port(s):']),
+                   ('--sim=5 --root=0001',  # set simulation with five motes and specify root mote (4)
+                    ['Setting mote 0001 as root',
+                     '- simulation topology     = Pister-hack',
+                     '- auto-boot sim motes     = True',
+                     '- simulation              = 5']),
+                   ('--sim=2 --root=0001 --no-boot',  # do not boot motes but try to set root (5)
+                    ['Cannot set root',
+                     '- set root                = 0001',
+                     '- auto-boot sim motes     = False']),
+                   ('--sim=2 --no-boot --load-topology=0002-star.json',  # specify sim options and load topology (6)
+                    ['options or root option might be overwritten by the configuration in \'0002-star.json\''
+                     '- load topology from file = 0002-star.json']),
                    ])
-def test_start_server(option, log):
+def test_start_server(option, logs):
     try:
         os.remove(LOG_FILE)
     except OSError:
@@ -39,6 +56,7 @@ def test_start_server(option, log):
     os.remove(os.path.join(tempfile.gettempdir(), 'openv-server.pid'))
 
     with open(LOG_FILE, 'r') as f:
-        logs = "".join(f.readlines())
-        assert log in logs
-        assert 'Starting RPC server' in logs
+        output = "".join(f.readlines())
+        for log in logs:
+            assert log in output
+    assert 'Starting RPC server' in output

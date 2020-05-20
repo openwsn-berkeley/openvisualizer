@@ -22,10 +22,11 @@ with open(os.path.join('requirements.txt')) as f:
 
 setup(
     name=PACKAGE_NAME,
-    packages=find_packages(exclude=['tests', 'docs']),
+    packages=find_packages(exclude=['tests', 'docs', 'images']),
     package_data={
         'openvisualizer': [
             'config/*.conf',
+            'topologies/*',
             '/'.join([web_static, 'css', '*']),
             '/'.join([web_static, 'font-awesome', 'css', '*']),
             '/'.join([web_static, 'font-awesome', 'fonts', '*']),
@@ -35,7 +36,8 @@ setup(
             '/'.join([web_templates, '*'])
         ],
         '': [
-            'requirements.txt'
+            'requirements.txt',
+            'images/*.png'
         ]
     },
     entry_points={

@@ -7,7 +7,7 @@
 """
 Contains application model for OpenVisualizer. Expects to be called by top-level UI module.  See main() for startup use.
 """
-
+import json
 import logging.config
 import platform
 import shutil
@@ -114,13 +114,26 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
     """
 
     def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog, use_page_zero, sim_topology, iotlab_motes,
-                 testbed_motes, mqtt_broker, opentun, fw_path, auto_boot, root, port_mask, baudrate):
+                 testbed_motes, mqtt_broker, opentun, fw_path, auto_boot, root, port_mask, baudrate, topo_file):
 
         # store params
         self.host = host
-        self.port = port
-        self.webserver = webserver
-        self.simulator_mode = simulator_mode
+
+        try:
+            self.port = int(port)
+            if webserver:
+                self.webserver = int(webserver)
+            else:
+                self.webserver = None
+            self.simulator_mode = int(simulator_mode)
+        except ValueError as err:
+            log.error(err)
+
+        if self.simulator_mode == 0 and sim_topology is not None:
+            log.warning("Simulation topology specified but no --sim=<x> given, switching to hardware mode")
+
+        self.sim_topology = sim_topology
+
         self.debug = debug
         self.use_page_zero = use_page_zero
         self.iotlab_motes = iotlab_motes
@@ -129,8 +142,14 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.port_mask = port_mask
         self.baudrate = baudrate
         self.fw_path = fw_path
+        self.root = root
         self.dagroot = None
         self.auto_boot = auto_boot
+        self.topo_file = topo_file
+
+        # if a topology file is specified, overwrite the simulation and topology options
+        if self.topo_file:
+            self.load_motes_from_topology_file()
 
         if self.fw_path is None:
             try:
@@ -145,17 +164,15 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.rpl = rpl.RPL()
         self.jrc = jrc.JRC()
         self.topology = topology.Topology()
-        self.dagroot_list = []
         self.mote_probes = []
 
         # create opentun call last since indicates prefix
         self.opentun = OpenTun.create(opentun)
 
         if self.simulator_mode:
-            self.simengine = simengine.SimEngine(sim_topology)
+            self.simengine = simengine.SimEngine(self.sim_topology)
             self.simengine.start()
 
-            # in "simulator" mode, motes are emulated
             self.temp_dir = self.copy_sim_fw()
 
             if self.temp_dir is None:
@@ -172,10 +189,15 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
                 mote_handler = motehandler.MoteHandler(oos_openwsn.OpenMote(), self.vcdlog)
                 self.simengine.indicate_new_mote(mote_handler)
                 self.mote_probes += [moteprobe.MoteProbe(mqtt_broker, emulated_mote=mote_handler)]
+
+            # load the saved topology from the topology file
+            if self.topo_file:
+                self.load_topology()
+
         elif self.iotlab_motes:
             # in "IoT-LAB" mode, motes are connected to TCP ports
-
             self.mote_probes = [moteprobe.MoteProbe(mqtt_broker, iotlab_mote=p) for p in self.iotlab_motes.split(',')]
+
         elif self.testbed_motes:
             motes_finder = moteprobe.OpentestbedMoteFinder(mqtt_broker)
             self.mote_probes = [
@@ -184,14 +206,12 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
 
         else:
             # in "hardware" mode, motes are connected to the serial port
-
             self.mote_probes = [
                 moteprobe.MoteProbe(mqtt_broker, serial_port=p)
-                for p in moteprobe.find_serial_ports(port_mask=self.port_mask,
-                                                     baudrate=self.baudrate)
+                for p in moteprobe.find_serial_ports(port_mask=self.port_mask, baudrate=self.baudrate)
             ]
 
-        # create a MoteConnector for each MoteProbe
+        # update firmware definitions for the OV parser
         try:
             fw_defines = self.extract_stack_defines()
         except IOError as err:
@@ -221,9 +241,11 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.register_function(self.get_ebm_wireshark_enabled)
         self.register_function(self.get_ebm_stats)
 
+        # boot all simulated motes
         if self.simulator_mode and self.auto_boot:
             self.boot_motes(['all'])
 
+        # Run the web server is specified
         if self.webserver:
             web_server = bottle.Bottle()
             WebServer(web_server, (self.host, self.port))
@@ -239,22 +261,99 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             )
             web_thread.start()
 
-        if root is not None:
+        # set a mote (hardware or emulated) as DAG root of the network
+        if self.root is not None:
             if self.simulator_mode and self.auto_boot is False:
-                log.warning("Cannot set root when motes are not booted!")
+                log.warning("Cannot set root when motes are not booted! ")
             else:
-                log.info("Setting root...")
+                log.info("Setting DAG root...")
                 # make sure that the simulated motes are booted and the hardware motes have communicated there mote ID
                 time.sleep(1.5)
-                self.set_root(root)
+                self.set_root(self.root)
 
     @staticmethod
     def cleanup_temporary_files(files):
+        """ Clean up temporary simulation files """
         for f in files:
             log.verbose("Cleaning up files: {}".format(f))
             shutil.rmtree(f, ignore_errors=True)
 
+    def load_motes_from_topology_file(self):
+        """ Import the number of motes from the topology file. """
+        topo_config = self._load_saved_topology()
+        if topo_config is None:
+            return
+
+        # set/override the amount of simulated motes and set temporary topology to fully-meshed (otherwise
+        # connections might be deleted due to pdr == 0 in Pister-hack model)
+        self.simulator_mode = len(topo_config['motes'])
+        self.sim_topology = 'fully-meshed'
+
+    def load_topology(self):
+        """ Import the network topology from a json file. """
+
+        log.info("Loading topology from file.")
+
+        topo_config = self._load_saved_topology()
+        if topo_config is None:
+            return
+
+        # delete each connections automatically established during motes creation
+        connections_to_delete = self.simengine.propagation.retrieve_connections()
+        for co in connections_to_delete:
+            from_mote = int(co['fromMote'])
+            to_mote = int(co['toMote'])
+            self.simengine.propagation.delete_connection(from_mote, to_mote)
+
+        motes = topo_config['motes']
+        for mote in motes:
+            mh = self.simengine.get_mote_handler_by_id(mote['id'])
+            mh.set_location(mote['lat'], mote['lon'])
+
+        # implements new connections
+        connect = topo_config['connections']
+        for co in connect:
+            from_mote = int(co['fromMote'])
+            to_mote = int(co['toMote'])
+            pdr = float(co['pdr'])
+            self.simengine.propagation.create_connection(from_mote, to_mote)
+            self.simengine.propagation.update_connection(from_mote, to_mote, pdr)
+
+        try:
+            # recover dagroot
+            self.root = topo_config['DAGroot']
+        except KeyError:
+            pass
+
+    def _load_saved_topology(self):
+        """ Check if we can find the file locally, if not search the example directory. """
+
+        local_path = os.path.join('topologies', self.topo_file)
+
+        try:
+            if os.path.isfile(self.topo_file):
+                filename = self.topo_file
+                f = open(filename, 'r')
+            elif pkg_resources.resource_exists(PACKAGE_NAME, local_path):
+                f = pkg_resources.resource_stream(PACKAGE_NAME, local_path)
+            else:
+                log.error('Could not open file: {}'.format(self.topo_file))
+                return
+
+            topo_config = json.load(f)
+            f.close()
+        except (IOError, ValueError) as err:
+            log.error('Failed to load topology from file: {}'.format(err))
+            return
+
+        return topo_config
+
     def copy_sim_fw(self):
+        """
+        Copy simulation files from build folder in openwsn-fw to a temporary directory.
+        The latter is subsequently added to the python path.
+        """
+
         hosts = ['amd64-linux', 'x86-linux', 'amd64-windows', 'x86-windows']
         if os.name == 'nt':
             index = 2 if platform.architecture()[0] == '64bit' else 3
@@ -313,6 +412,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         return temp_dir
 
     def extract_stack_defines(self):
+        """ Extract firmware definitions for the OpenVisualizer parser from the OpenWSN-FW files. """
         log.info('Extracting firmware definitions.')
         definitions = {
             "components": extract_component_codes(os.path.join(self.fw_path, 'inc', 'opendefs.h')),
@@ -510,22 +610,22 @@ def _add_parser_args(parser):
         dest='simulator_mode',
         default=0,
         type=int,
-        help='Run a simulation with the given amount of emulated motes'
+        help='Run a simulation with the given amount of emulated motes.'
     )
 
     parser.add_argument(
         '--fw-path',
         dest='fw_path',
         type=str,
-        help='Provide the path to the OpenWSN firmware. This option overrides the OPENWSN_FW_BASE environment variable.'
+        help='Provide the path to the OpenWSN firmware. This option overrides the optional OPENWSN_FW_BASE environment '
+             'variable.'
     )
 
     parser.add_argument(
         '-o', '--simtopo',
         dest='sim_topology',
-        default='',
         action='store',
-        help='force a certain topology (simulation mode only)'
+        help='Force a predefined topology (linear or fully-meshed). Only available in simulation mode.'
     )
 
     parser.add_argument(
@@ -533,7 +633,7 @@ def _add_parser_args(parser):
         dest='set_root',
         action='store',
         type=str,
-        help='Set a simulated or hardware mote as root, specify the mote\'s port or address'
+        help='Set a simulated or hardware mote as root, specify the mote\'s port or address.'
     )
 
     parser.add_argument(
@@ -547,7 +647,7 @@ def _add_parser_args(parser):
         '-l', '--lconf',
         dest='lconf',
         action='store',
-        help='Provide a logging configuration'
+        help='Provide a logging configuration.'
     )
 
     parser.add_argument(
@@ -555,7 +655,7 @@ def _add_parser_args(parser):
         dest='vcdlog',
         default=False,
         action='store_true',
-        help='use VCD logger'
+        help='Use VCD logger.'
     )
 
     parser.add_argument(
@@ -563,7 +663,7 @@ def _add_parser_args(parser):
         dest='use_page_zero',
         default=False,
         action='store_true',
-        help='use page number 0 in page dispatch (only works with one-hop)'
+        help='Use page number 0 in page dispatch (only works with one-hop).'
     )
 
     parser.add_argument(
@@ -571,7 +671,7 @@ def _add_parser_args(parser):
         dest='iotlab_motes',
         default='',
         action='store',
-        help='comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
+        help='Comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3").'
     )
 
     parser.add_argument(
@@ -579,7 +679,7 @@ def _add_parser_args(parser):
         dest='testbed_motes',
         default=False,
         action='store_true',
-        help='connect motes from opentestbed'
+        help='Connect to motes from opentestbed over the MQTT server (see option \'--mqtt-broker\')'
     )
 
     parser.add_argument(
@@ -595,7 +695,7 @@ def _add_parser_args(parser):
         dest='opentun',
         default=False,
         action='store_true',
-        help='use TUN device to route packets to the Internet'
+        help='Use a TUN device to route packets to the Internet.'
     )
 
     parser.add_argument(
@@ -604,7 +704,7 @@ def _add_parser_args(parser):
         dest='host',
         default='localhost',
         action='store',
-        help='host address'
+        help='Host address for the RPC address.'
     )
 
     parser.add_argument(
@@ -613,7 +713,7 @@ def _add_parser_args(parser):
         dest='port',
         default=9000,
         action='store',
-        help='port number'
+        help='Port number for the RPC server.'
     )
 
     parser.add_argument(
@@ -621,7 +721,7 @@ def _add_parser_args(parser):
         '--webserver',
         dest='webserver',
         action='store',
-        help='port number for the webserver'
+        help='Port number for the webserver.'
     )
     parser.add_argument(
         '--port-mask',
@@ -629,7 +729,7 @@ def _add_parser_args(parser):
         type=str,
         action='store',
         nargs='+',
-        help='port mask for serial port detection, e.g: /dev/tty/USB*'
+        help='Port mask for serial port detection, e.g, /dev/tty/USB*.'
     )
 
     parser.add_argument(
@@ -638,7 +738,7 @@ def _add_parser_args(parser):
         default=[115200],
         action='store',
         nargs='+',
-        help='List of baudrates to probe for, e.g 115200 500000'
+        help='List of baudrates to probe for, e.g 115200 500000.'
     )
 
     parser.add_argument(
@@ -646,14 +746,23 @@ def _add_parser_args(parser):
         dest='auto_boot',
         default=True,
         action='store_false',
-        help='disables automatic boot of emulated motes'
+        help='Disables automatic boot of emulated motes.'
+    )
+
+    parser.add_argument(
+        '--load-topology',
+        dest='topo_file',
+        type=str,
+        action='store',
+        help='Provide a topology for the simulation, when in use this option will override all the other '
+             'simulation options.'
     )
 
 
 # ============================ main ============================================
 
 def main():
-    """ Entry point for the openvisualizer server. """
+    """ Entry point for the OpenVisualizer server. """
 
     banner = [""]
     banner += [" ___                 _ _ _  ___  _ _ "]
@@ -740,6 +849,13 @@ def main():
         options.append('opentestbed             = {0}'.format(args.testbed_motes))
         options.append('mqtt broker             = {0}'.format(args.mqtt_broker))
 
+    if args.topo_file:
+        options.append('load topology from file = {0}'.format(args.topo_file))
+
+    if args.topo_file and (args.simulator_mode or args.sim_topology or args.set_root):
+        log.warning("The simulation options or root option might be overwritten by the configuration in '{}'".format(
+            args.topo_file))
+
     log.info('Initializing OV Server with options:\n\t- {0}'.format('\n\t- '.join(options)))
 
     log.debug('sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path)))
@@ -761,7 +877,8 @@ def main():
         opentun=args.opentun,
         fw_path=args.fw_path,
         auto_boot=args.auto_boot,
-        root=args.set_root
+        root=args.set_root,
+        topo_file=args.topo_file
     )
 
     try:

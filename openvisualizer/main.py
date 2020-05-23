@@ -26,11 +26,14 @@ import coloredlogs
 import pkg_resources
 import verboselogs
 
+from iotlabcli.parser import common
+
 from openvisualizer import *
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
 from openvisualizer.motehandler.moteprobe.serialmoteprobe import SerialMoteProbe
+from openvisualizer.motehandler.moteprobe.iotlabmoteprobe import IotlabMoteProbe
 from openvisualizer.motehandler.moteprobe import emulatedmoteprobe
 from openvisualizer.motehandler.moteprobe import testbedmoteprobe
 from openvisualizer.motehandler.motestate import motestate
@@ -118,7 +121,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
     def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog,
                  use_page_zero, sim_topology, testbed_motes, mqtt_broker,
                  opentun, fw_path, auto_boot, root, port_mask, baudrate,
-                 topo_file, iotlab_motes):
+                 topo_file, iotlab_motes, iotlab_passwd, iotlab_user):
 
         # store params
         self.host = host
@@ -194,13 +197,16 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
                 self.load_topology()
         elif iotlab_motes:
             # in "IoT-LAB" mode, motes are connected to TCP ports
-            self.mote_probes = [moteprobe.MoteProbe(mqtt_broker, iotlab_mote=p) for p in self.iotlab_motes.split(',')]
+            self.mote_probes = IotlabMoteProbe.probe_iotlab_motes(
+                iotlab_motes=iotlab_motes,
+                iotlab_user=iotlab_user,
+                iotlab_passwd=iotlab_passwd,
+                )
         elif testbed_motes:
             motes_finder = testbedmoteprobe.OpentestbedMoteFinder(mqtt_broker)
             self.mote_probes = [
                 testbedmoteprobe.OpentestbedMoteProbe(mqtt_broker, testbedmote_eui64=p) for p in motes_finder.get_opentestbed_motelist()
             ]
-
         else:
             # in "hardware" mode, motes are connected to the serial port
             self.mote_probes = SerialMoteProbe.probe_serial_ports(
@@ -601,6 +607,26 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         return states
 
 
+def _add_iotlab_parser_args(parser):
+    """ Adds arguments specific to IotLab Support """
+    description = """
+    Commands for motes running on IotLab (iot-lab_A8-M3 excluded).
+    For large experiments run directly on the ssh frontend to not open multiple
+    connections.
+    When not already authenticated (use iotlab-auth) and iotlab account
+    USERNAME and PASSWORD must be provided.
+    """
+    iotlab_parser = parser.add_argument_group('iotlab', description)
+    iotlab_parser.add_argument(
+        '--iotlab-motes',
+        default='',
+        type=str,
+        nargs='+',
+        help='comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
+    )
+    common.add_auth_arguments(iotlab_parser, False)
+
+
 def _add_parser_args(parser):
     """ Adds arguments specific to the OpenVisualizer application """
     parser.add_argument(
@@ -662,14 +688,6 @@ def _add_parser_args(parser):
         default=False,
         action='store_true',
         help='Use page number 0 in page dispatch (only works with one-hop).'
-    )
-
-    parser.add_argument(
-        '-i', '--iotlab',
-        dest='iotlab_motes',
-        default='',
-        action='store',
-        help='Comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3").'
     )
 
     parser.add_argument(
@@ -774,6 +792,7 @@ def main():
 
     parser = ArgumentParser()
     _add_parser_args(parser)
+    _add_iotlab_parser_args(parser)
     args = parser.parse_args()
 
     # loading the logging configuration
@@ -869,14 +888,16 @@ def main():
         sim_topology=args.sim_topology,
         port_mask=args.port_mask,
         baudrate=args.baudrate,
-        iotlab_motes=args.iotlab_motes,
         testbed_motes=args.testbed_motes,
         mqtt_broker=args.mqtt_broker,
         opentun=args.opentun,
         fw_path=args.fw_path,
         auto_boot=args.auto_boot,
         root=args.set_root,
-        topo_file=args.topo_file
+        topo_file=args.topo_file,
+        iotlab_motes=args.iotlab_motes,
+        iotlab_user=args.username,
+        iotlab_passwd=args.password,
     )
 
     try:

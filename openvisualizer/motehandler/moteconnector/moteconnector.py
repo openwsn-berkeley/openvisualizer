@@ -32,8 +32,14 @@ class MoteConnector(EventBusClient):
         # store params
         self.serialport = self.mote_probe.portname
 
+        if hasattr(mote_probe, 'mqtt_broker_address'):
+            mqtt_broker_address = mote_probe.mqtt_broker_address
+        else:
+            mqtt_broker_address = None
+
+
         # local variables
-        self.parser = openparser.OpenParser(mote_probe.mqtt_broker_address, stack_defines)
+        self.parser = openparser.OpenParser(mqtt_broker_address, stack_defines)
         self.state_lock = threading.Lock()
         self.network_prefix = None
         self._subscribed_data_for_dagroot = False

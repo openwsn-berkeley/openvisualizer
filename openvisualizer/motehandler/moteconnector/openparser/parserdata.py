@@ -42,7 +42,7 @@ class ParserData(parser.Parser):
         self.broker = mqtt_broker_address
         self.mqtt_connected = False
 
-        if not self.broker == 'null':
+        if self.broker:
 
             # connect to MQTT
             self.mqtt_client = mqtt.Client()

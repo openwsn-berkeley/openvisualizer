@@ -30,7 +30,9 @@ from openvisualizer import *
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
-from openvisualizer.motehandler.moteprobe import moteprobe
+from openvisualizer.motehandler.moteprobe.serialmoteprobe import SerialMoteProbe
+from openvisualizer.motehandler.moteprobe import emulatedmoteprobe
+from openvisualizer.motehandler.moteprobe import testbedmoteprobe
 from openvisualizer.motehandler.motestate import motestate
 from openvisualizer.motehandler.motestate.motestate import MoteState
 from openvisualizer.openlbr import openlbr
@@ -113,8 +115,10 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
     Class implements and RPC server that allows monitoring and (remote) management of a mesh network.
     """
 
-    def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog, use_page_zero, sim_topology, iotlab_motes,
-                 testbed_motes, mqtt_broker, opentun, fw_path, auto_boot, root, port_mask, baudrate, topo_file):
+    def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog,
+                 use_page_zero, sim_topology, testbed_motes, mqtt_broker,
+                 opentun, fw_path, auto_boot, root, port_mask, baudrate,
+                 topo_file, iotlab_motes):
 
         # store params
         self.host = host
@@ -136,11 +140,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
 
         self.debug = debug
         self.use_page_zero = use_page_zero
-        self.iotlab_motes = iotlab_motes
-        self.testbed_motes = testbed_motes
         self.vcdlog = vcdlog
-        self.port_mask = port_mask
-        self.baudrate = baudrate
         self.fw_path = fw_path
         self.root = root
         self.dagroot = None
@@ -188,30 +188,26 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             for _ in range(self.simulator_mode):
                 mote_handler = motehandler.MoteHandler(oos_openwsn.OpenMote(), self.vcdlog)
                 self.simengine.indicate_new_mote(mote_handler)
-                self.mote_probes += [moteprobe.MoteProbe(mqtt_broker, emulated_mote=mote_handler)]
-
+                self.mote_probes += [emulatedmoteprobe.EmulatedMoteProbe(emulated_mote=mote_handler)]
             # load the saved topology from the topology file
             if self.topo_file:
                 self.load_topology()
-
-        elif self.iotlab_motes:
+        elif iotlab_motes:
             # in "IoT-LAB" mode, motes are connected to TCP ports
             self.mote_probes = [moteprobe.MoteProbe(mqtt_broker, iotlab_mote=p) for p in self.iotlab_motes.split(',')]
-
-        elif self.testbed_motes:
-            motes_finder = moteprobe.OpentestbedMoteFinder(mqtt_broker)
+        elif testbed_motes:
+            motes_finder = testbedmoteprobe.OpentestbedMoteFinder(mqtt_broker)
             self.mote_probes = [
-                moteprobe.MoteProbe(mqtt_broker, testbedmote_eui64=p) for p in motes_finder.get_opentestbed_motelist()
+                testbedmoteprobe.OpentestbedMoteProbe(mqtt_broker, testbedmote_eui64=p) for p in motes_finder.get_opentestbed_motelist()
             ]
 
         else:
             # in "hardware" mode, motes are connected to the serial port
-            self.mote_probes = [
-                moteprobe.MoteProbe(mqtt_broker, serial_port=p)
-                for p in moteprobe.find_serial_ports(port_mask=self.port_mask, baudrate=self.baudrate)
-            ]
-
-        # update firmware definitions for the OV parser
+            self.mote_probes = SerialMoteProbe.probe_serial_ports(
+                port_mask=port_mask,
+                baudrate=baudrate
+                )
+        # create a MoteConnector for each MoteProbe
         try:
             fw_defines = self.extract_stack_defines()
         except IOError as err:
@@ -434,6 +430,8 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.jrc.close()
         for probe in self.mote_probes:
             probe.close()
+            if probe.daemon is False:
+                probe.join()
 
         if self.simulator_mode:
             OpenVisualizerServer.cleanup_temporary_files([self.temp_dir])

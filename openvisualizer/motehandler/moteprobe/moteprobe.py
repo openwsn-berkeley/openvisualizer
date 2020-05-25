@@ -4,6 +4,7 @@
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
+import abc
 import logging
 import sys
 import threading
@@ -26,9 +27,11 @@ class MoteProbeNoData(Exception):
     """ No data received from serial pipe """
     pass
 
+
 # ============================ class ===================================
 
 class MoteProbe(threading.Thread):
+    __metaclass__ = abc.ABCMeta
 
     XOFF = 0x13
     XON = 0x11
@@ -42,15 +45,6 @@ class MoteProbe(threading.Thread):
     def __init__(self, portname, daemon=False):
         # initialize the parent class
         super(MoteProbe, self).__init__()
-
-        if not hasattr(self, '_send_data'):
-            raise SystemError()
-        if not hasattr(self, '_rcv_data'):
-            raise SystemError()
-        if not hasattr(self, '_detach'):
-            raise SystemError()
-        if not hasattr(self, '_attach'):
-            raise SystemError()
 
         self._portname = portname
         self.data_lock = threading.Lock()
@@ -133,6 +127,22 @@ class MoteProbe(threading.Thread):
         return tester.get_stats()['numOk'] >= 1
 
     # ======================== private =================================
+
+    @abc.abstractmethod
+    def _attach(self):
+        raise NotImplementedError("Should be implemented by child class")
+
+    @abc.abstractmethod
+    def _detach(self):
+        raise NotImplementedError("Should be implemented by child class")
+
+    @abc.abstractmethod
+    def _send_data(self, data):
+        raise NotImplementedError("Should be implemented by child class")
+
+    @abc.abstractmethod
+    def _rcv_data(self):
+        raise NotImplementedError("Should be implemented by child class")
 
     def _handle_frame(self):
         """ Handles a hdlc frame """

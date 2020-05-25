@@ -13,7 +13,7 @@ from moteprobe import MoteProbe, MoteProbeNoData
 
 try:
     import _winreg as winreg
-except:
+except ImportError:
     import glob
     import platform
 
@@ -66,7 +66,7 @@ class SerialMoteProbe(MoteProbe):
                         probe.join()
                     log.error(e)
         except KeyboardInterrupt:
-            # gracefull exit
+            # graceful exit
             for mote in mote_probes:
                 mote.close()
                 mote.join()

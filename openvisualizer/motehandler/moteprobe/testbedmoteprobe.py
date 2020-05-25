@@ -4,7 +4,9 @@
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
+import json
 import logging
+import Queue
 import time
 
 import paho.mqtt.client as mqtt

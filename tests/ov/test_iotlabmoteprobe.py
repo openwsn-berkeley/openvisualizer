@@ -2,16 +2,12 @@
 #!/usr/bin/env python2
 
 import logging.handlers
-
 import mock
-
+import pytest
 import socket
 import time
 
-from openvisualizer.motehandler.moteprobe import moteprobe
-
 from openvisualizer.motehandler.moteprobe.iotlabmoteprobe import IotlabMoteProbe
-from openvisualizer.motehandler.moteprobe.iotlabmoteprobe import MoteProbe
 
 # ============================ defines =================================
 
@@ -33,7 +29,7 @@ def test_iotlabmoteprobe__get_free_port():
     except Exception:
         pass
     else:
-        assert is_open == True
+        assert is_open
     finally:
         s.close()
 
@@ -62,12 +58,3 @@ def test_iotlabmoteprobe__attach_error_on_frontend(caplog):
         mote.close()
         mote.join()
         raise e
-
-
-def test_probe_iotlab_motes():
-    # valid probes
-    # interrupted when valid
-    # keyboard interrupt list of valid nodes already
-    # non valid probes
-    # socket timeout
-    # ssh timeout

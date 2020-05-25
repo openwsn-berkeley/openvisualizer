@@ -1,15 +1,10 @@
-
 #!/usr/bin/env python2
 
 import logging.handlers
-
 import mock
-
+import pytest
 import time
 
-from openvisualizer.motehandler.moteprobe import moteprobe
-
-from openvisualizer.motehandler.moteprobe.moteprobe import MoteProbe
 from openvisualizer.motehandler.moteprobe.mockmoteprobe import MockMoteProbe
 
 # ============================ logging =================================

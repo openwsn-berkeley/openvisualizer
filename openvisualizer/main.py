@@ -225,7 +225,12 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.mote_states = [motestate.MoteState(mc) for mc in self.mote_connectors]
 
         # set up RPC server
-        SimpleXMLRPCServer.__init__(self, (self.host, self.port), allow_none=True, logRequests=False)
+        try:
+            SimpleXMLRPCServer.__init__(self, (self.host, self.port), allow_none=True, logRequests=False)
+        except Exception as e:
+            log.critical(e)
+            self.shutdown()
+            return
 
         self.register_introspection_functions()
 
@@ -711,6 +716,7 @@ def _add_parser_args(parser):
         '-P',
         '--port',
         dest='port',
+        type=int,
         default=9000,
         action='store',
         help='Port number for the RPC server.'

@@ -98,7 +98,7 @@ e.g. on ssh frontend:
 
     $ openv-server --iotlab-motes m3-4 m3-5.
 
-e.g. on ssh frontend:
+e.g. locally:
 
     $ openv-server --iotlab-motes m3-4.grenoble.iot-lab.info m3-5.grenoble.iot-lab.info
 

@@ -4,21 +4,30 @@ from setuptools import setup, find_packages
 
 from openvisualizer import VERSION, PACKAGE_NAME
 
-web_static = 'web_files/static'
-web_templates = 'web_files/templates'
+
+# Cannot create this list with pip.req.parse_requirements() because it requires
+# the pwd module, which is Unix only.
+def _read_requirements(file_name):
+    """
+    Returns list of required modules for 'install_requires' parameter. Assumes
+    requirements file contains only module lines and comments.
+    """
+    requirements = []
+    with open(os.path.join(file_name)) as f:
+        for line in f:
+            if not line.startswith('#'):
+                requirements.append(line)
+    return requirements
+
+
+INSTALL_REQUIREMENTS = _read_requirements('requirements.txt')
+TESTS_REQUIREMENTS = _read_requirements('tests-requirements.txt')
+
+WEB_STATIC = 'web_files/static'
+WEB_TEMPLATES = 'web_files/templates'
 
 with open('README.md') as f:
     LONG_DESCRIPTION = f.read()
-
-# Create list of required modules for 'install_requires' parameter. Cannot create this list with
-# pip.req.parse_requirements() because it requires the pwd module, which is Unix only. Assumes requirements file
-# contains only module lines and comments.
-
-dep_list = []
-with open(os.path.join('requirements.txt')) as f:
-    for line in f:
-        if not line.startswith('#'):
-            dep_list.append(line)
 
 setup(
     name=PACKAGE_NAME,
@@ -27,13 +36,13 @@ setup(
         'openvisualizer': [
             'config/*.conf',
             'topologies/*',
-            '/'.join([web_static, 'css', '*']),
-            '/'.join([web_static, 'font-awesome', 'css', '*']),
-            '/'.join([web_static, 'font-awesome', 'fonts', '*']),
-            '/'.join([web_static, 'images', '*']),
-            '/'.join([web_static, 'js', '*.js']),
-            '/'.join([web_static, 'js', 'plugins', 'metisMenu', '*']),
-            '/'.join([web_templates, '*'])
+            '/'.join([WEB_STATIC, 'css', '*']),
+            '/'.join([WEB_STATIC, 'font-awesome', 'css', '*']),
+            '/'.join([WEB_STATIC, 'font-awesome', 'fonts', '*']),
+            '/'.join([WEB_STATIC, 'images', '*']),
+            '/'.join([WEB_STATIC, 'js', '*.js']),
+            '/'.join([WEB_STATIC, 'js', 'plugins', 'metisMenu', '*']),
+            '/'.join([WEB_TEMPLATES, '*'])
         ],
         '': [
             'requirements.txt',
@@ -46,7 +55,9 @@ setup(
             'openv-client = openvisualizer.client.main:cli'
         ]
     },
-    install_requires=dep_list,
+    install_requires=INSTALL_REQUIREMENTS,
+    tests_require=TESTS_REQUIREMENTS,
+    extras_require={'test': TESTS_REQUIREMENTS},
     # Must extract zip to edit conf files.
     zip_safe=False,
     version=VERSION,

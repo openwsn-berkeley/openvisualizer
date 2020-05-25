@@ -10,12 +10,12 @@ pycryptodome
 cbor
 hkdf
 paho-mqtt
-scapy
-pytest==4.6.9
 coloredlogs
 verboselogs
 click
 blessed
 ipaddr
+sshtunnel
+iotlabcli
 pywin32; sys_platform == 'win32'
 colorama; sys_platform == 'win32'

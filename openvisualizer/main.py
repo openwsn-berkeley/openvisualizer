@@ -807,7 +807,7 @@ def main():
         log.verbose("Loading logging configuration: {}".format(DEFAULT_LOGGING_CONF))
     elif args.lconf:
         logging.config.fileConfig(args.lconf)
-        log.verbose("Loading logging configuration: {}".format(args.logconf))
+        log.verbose("Loading logging configuration: {}".format(args.lconf))
     else:
         log.error("Could not load logging configuration.")
 

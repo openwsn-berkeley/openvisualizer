@@ -6,6 +6,7 @@
 
 from moteprobe import MoteProbe
 
+
 # ============================ class ===================================
 
 class MockMoteProbe(MoteProbe):

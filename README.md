@@ -4,7 +4,7 @@ OpenVisualizer
 ![](https://img.shields.io/badge/python-2.7-green)
 
 
-OpenVisualizer (OV) is part of UC Berkeley's OpenWSN project. It provides monitoring, visualization and simulation of OpenWSN-based wireless sensor network. See the project [home page][] for more information.
+OpenVisualizer (OV) is part of UC Berkeley's OpenWSN project. It provides monitoring, visualization and simulation of OpenWSN-based wireless sensor network. See the project [home page][] for more information. The project works in tandem with the OpenWSN firmware hosted at [openwsn-fw][]. OpenVisualizer interfaces with locally connected hardware, the OpenTestBed infrastructure, [IoT-LAB][] or an emulated OpenWSN network.
 
 ## Table of Contents
 * [Installation](#installation)
@@ -12,11 +12,12 @@ OpenVisualizer (OV) is part of UC Berkeley's OpenWSN project. It provides monito
     - [Installing on OSX or Linux](#installing-on-osx-or-linux)
     - [Installing on Windows](#installing-on-windows)
 * [Architecture](#architecture)
-* [Usage](#usage)
-    - [Prerequisites](#prerequisites)
+* [Manual](#manual)
+    - [Quick Start](#quick-start)
     - [Real hardware](#real-hardware)
-    - [Simulation mode](#simulation-mode)
-    - [Other useful options](#other-useful-options)
+    - [Mote emulation & network simulation](#simulation-mode)
+    - [IoT-LAB](#iotlab)
+    - [OpenTestBed](#opentestbed) 
 * [Testing](#testing)
 * [Contact](#contact)
 
@@ -24,110 +25,143 @@ OpenVisualizer (OV) is part of UC Berkeley's OpenWSN project. It provides monito
 ## Installation <a name="installation"></a>
 OpenVisualizer is distributed through [PyPi][]. The only thing you need is a working Python 2.7 installation and pip. We recommend installing OpenVisualizer in a virtual environment. If something goes wrong you can simply delete the virtual environment without affecting your OS.
 
-#### Setting up the virtualenv <a name="setting-up-the-virtualenv"></a>
+### Setting up the virtualenv <a name="setting-up-the-virtualenv"></a>
 Install the virtualenv package, in case you do not already have it:
 
-`> pip install virtualenv`
+```bash
+> pip install virtualenv
+```
 
 Create a virtual environment (the name can be anything, here we use the name _**venv**_):
 
-`> python -m virtualenv <NAME_OF_YOUR_VIRTUAL_ENV>`
+```bash
+> python -m virtualenv <NAME_OF_YOUR_VIRTUAL_ENV>
+```
 
-Once installed you need to activate it. On Linux or OSX:
+Once installed you need to activate the virtual environment. On Linux or OSX:
 
-`> source venv/bin/activate`
+```bash
+> source venv/bin/activate
+```
 
-On Windows:
+On Windows (when you are using PowerShell, you might have to change the execution policy):
 
-`> .\venv\Scripts\activate`
+```bash
+> .\venv\Scripts\activate
+```
 
-#### Installing on OSX or Linux
+### Installing on OSX or Linux
 Once you have your virtualenv set up you can simply type:
 
-`(venv) > pip install openvisualizer`
+```bash
+(venv) > pip install openvisualizer
+```
 
 Pip will download and install all the dependencies. 
 
-#### Installing on Windows
+### Installing on Windows
 On Windows the instructions are almost the same.
 
-`(venv) > pip install openvisualizer`
+```bash
+(venv) > pip install openvisualizer
+```
 
-After installing OpenVisualizer you need to remove the package `pyreadline`. The latter gets installed by the `coloredlogs` package which is used to support colored logs in the terminal. However, the `pyreadline` package is outdated and buggy on Windows 10. To prevent issues, you should remove it, the log coloring will still work without `pyreadline` installed.
+After installing OpenVisualizer you need to remove the package `pyreadline`. The latter is a dependency of the `coloredlogs` package which is used to enabled colored logging output in OpenVisualizer. However, the `pyreadline` package is outdated and buggy on Windows 10. To prevent issues, you should remove it, the log coloring will still work without `pyreadline` installed.
 
-`(venv) > pip uninstall pyreadline`
+```bash
+(venv) > pip uninstall pyreadline
+```
 
 ## Architecture <a name="architecture"></a>
 
 ![openvisualizer-architecture](images/ov_arch.png)
 
-The architecture of OpenVisualizer is split up in two main components:
+The architecture of OpenVisualizer is split into two main components:
 
 * **OpenVisualizer Server**
 * **OpenVisualizer Client**
 
-#### OpenVisualizer Server
-The _OpenVisualizer Server_ contains all the code to manage and interact with a mesh network consisting of motes running the OpenWSN firmware. The server can also run the firmware on emulated motes. Mote emulation is particulary useful when you don't have the appropriate hardware or for debugging purposes. Inside the `openvisualizer` Python package there are several subpackages. All of the subpackages, with exception of the package called `client`, implement different parts of the OpenVisualizer Server. Some important components are:
+### OpenVisualizer Server
+The _OpenVisualizer Server_ contains all the code to interface with a mesh network consisting of motes running the OpenWSN firmware. The server can also simulate a network and run the firmware code on emulated motes. To achieve mote emulation, the OpenWSN firmware is compiled as a Python C extension. Mote emulation is particulary useful when you don't have the appropriate hardware or for debugging purposes. Inside the `openvisualizer` Python package there are several subpackages. All of the subpackages, with exception of the package called `client`, implement different parts of the _OpenVisualizer Server_. Some important components are:
 
 * **motehandler** package enables direct communication between the motes, other components of the _OpenVisualizer Server_ and the _OpenVisualizer Clients_. The motehandler package maintains important information about each mote in the network and provides parsing of the network and mote logs.
 * **jrc** package provides an implementation of the "Join Request Proxy". The JRC plays an important role when nodes want to join an existing network securely.
-* **rpl** package implements source routing for the motes in the network and provides the user with topology information.
-* **opentun & openlbr** are packages that parse network traffic between the mesh network and the Internet. The opentun package specifically allows OpenVisualizer to route network traffic between the Internet and the mesh.
+* **rpl** package implements RPL source routing for the mesh and provides the user with network topology information.
+* **opentun & openlbr** are packages that parse network traffic between the mesh and the Internet. The opentun package specifically allows OpenVisualizer to route network traffic between the Internet and the mesh.
 
 The _OpenVisualizer Server_ is a remote procedure call (RPC) server. It exposes a set of methods that are used by _OpenVisualizer Clients_ to inspect, monitor and manipulate the network or individual motes. 
 
-#### OpenVisualizer Client
-There are two types of clients: the "terminal client" and the "web interface client". Both clients connect to the OpenVisualizer Server and use it RPCs to interact with the network and the motes.
+### OpenVisualizer Client
+There are two types of clients: the _terminal client_ and the _web interface client_. Both clients are started with the same command and connect to the _OpenVisualizer Server_. They subsequently use RPC calls to interact with the network and the motes. They query the server for network and mote status information and display the results either directly in the terminal or through the web interface.
 
 
-## Usage
+## Manual <a name="manual"></a>
 
+### Quick Start <a name="quick-start"></a>
 #### Prerequisites
-#### Real hardware
-#### Simulation mode
-#### IotLab support
+OpenVisualizer is depend on the firmware code hosted in the [openwsn-fw][] repository. Before you can run OpenVisualizer you should clone you the [openwsn-fw][] and define an environment variable called **OPENWSN_FW_BASE** which points to the root of the clone [openwsn-fw][] directory.
 
+```bash
+> git clone git@github.com:openwsn-berkeley/openwsn-fw.git
+> export OPENWSN_FW_BASE=<PATH_TO_OPENWSN-FW>`
+```
 
-##### Prerequisites
+Alternatively you could use the `--fw-path` option when you launch the _OpenVisualizer Server_.
 
-    - Valid Iot-Lab [account](https://www.iot-lab.info/testbed/signup)
-    - Running experiment with already flashed nodes, this can be done directly
-      on the web interface or using the cli tools. (refer to IoT-Lab
-      [documentation](https://www.iot-lab.info/tutorials/iotlab-experimenttools-client/) for this)
+#### Usage
+There are two basic commands:
 
-##### Usage
+* **openv-server** 
+* **openv-client**
 
-Its possible to interface with nodes running on [Iot-Lab](https://www.iot-lab.info/).
+The _openv-server_ command starts the _OpenVisualizer Server_, and depending on the provide options, scans the local serial ports for connected hardware, launches an emulated mesh network, connects to IoTLab or use Inria's OpenTestBed. All the options can be listed as follows:
 
-A description of how the connection is set can be found below.
+```bash
+> (venv) openv-server --help
+```
+
+The _openv-client_ command can change the parameters of the network and the server of display information. It takes several options and subcommands. More information can be displayed as follows:
+
+```bash
+> (venv) openv-client --help
+```
+
+### Real hardware <a name="real-hardware"></a>
+### Simulation mode <a name="simulation-mode"></a>
+### IoT-LAB <a name="iotlab"></a>
+#### Prerequisites
+
+- A valid IoT-LAB [account](https://www.iot-lab.info/testbed/signup)
+- A set of flashed nodes. You can flash IoT-LAB directly on the web interface or through the CLI tools. (refer to IoT-LAB [documentation](https://www.iot-lab.info/tutorials/iotlab-experimenttools-client/) for this)
+
+#### Usage
+
+Its possible to interface with nodes running on [IoT-LAB][]. A depiction of how the connection is set up can be found below.
 
 ![](https://www.iot-lab.info/wp-content/uploads/2017/06/tuto_m3_clitools_exp.jpg)
 
-When not on the ssh-frontend (see figure above) a ssh-tunnel is opened to connect
-to the motes tcp port.
+When OpenVisualizer is not running on the SSH frontend (see figure above) a ssh-tunnel is opened to connect
+to the IoT-LAB motes' TCP port.
 
-You can specify the motes to connect to with `--iotlab-motes` option, it receives
-a list of iotlab motes `network_address` such as `m3-4.grenoble.iot-lab.info`,
-when connecting directly on the ssh frontend you can pass the shortened version
-`m3-4`.
+You can specify the motes to connect to by using the `--iotlab-motes` option, it receives a list of IoT-LAB motes'`network_addresses` (e.g.,  `m3-4.grenoble.iot-lab.info`).
 
-e.g. on ssh frontend:
+When OpenVisualizer Server runs directly on the SSH frontend you can use the short address notation, e.g., `m3-4`.
+
+- SSH frontend:
 
     $ openv-server --iotlab-motes m3-4 m3-5.
 
-e.g. locally:
+- Locally:
 
     $ openv-server --iotlab-motes m3-4.grenoble.iot-lab.info m3-5.grenoble.iot-lab.info
 
-You can authenticate your iotlab before hand by running:
+You can authenticate to IoT-LAB upfront by running:
 
     $  iotlab-auth -u <login>
 
 Otherwise you need to pass your username and password as additional parameters:
 
     $ openv-server --iotlab-motes m3-10 m3-11 --user <USERNAME> --password <PASSWORD>
-
-#### Other useful options
 
 ## Testing
 
@@ -139,6 +173,10 @@ Otherwise you need to pass your username and password as additional parameters:
 [mailing list]: https://openwsn.atlassian.net/wiki/display/OW/Mailing+List
 
 [issue report]: https://openwsn.atlassian.net
+
+[IoT-LAB]: https://www.iot-lab.info/
+
+[openwsn-fw]: https://github.com/openwsn-berkeley/openwsn-fw
 
 [openwsn-dashboard]: https://openwsn-dashboard.eu-gb.mybluemix.net/ui/
 

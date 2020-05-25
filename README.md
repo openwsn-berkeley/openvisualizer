@@ -68,6 +68,48 @@ To prevent issues, you should remove it, the log coloring will still work withou
 #### Prerequisites
 #### Real hardware
 #### Simulation mode
+#### IotLab support
+
+
+##### Prerequisites
+
+    - Valid Iot-Lab [account](https://www.iot-lab.info/testbed/signup)
+    - Running experiment with already flashed nodes, this can be done directly
+      on the web interface or using the cli tools. (refer to IoT-Lab
+      [documentation](https://www.iot-lab.info/tutorials/iotlab-experimenttools-client/) for this)
+
+##### Usage
+
+Its possible to interface with nodes running on [Iot-Lab](https://www.iot-lab.info/).
+
+A description of how the connection is set can be found below.
+
+![](https://www.iot-lab.info/wp-content/uploads/2017/06/tuto_m3_clitools_exp.jpg)
+
+When not on the ssh-frontend (see figure above) a ssh-tunnel is opened to connect
+to the motes tcp port.
+
+You can specify the motes to connect to with `--iotlab-motes` option, it receives
+a list of iotlab motes `network_address` such as `m3-4.grenoble.iot-lab.info`,
+when connecting directly on the ssh frontend you can pass the shortened version
+`m3-4`.
+
+e.g. on ssh frontend:
+
+    $ openv-server --iotlab-motes m3-4 m3-5.
+
+e.g. on ssh frontend:
+
+    $ openv-server --iotlab-motes m3-4.grenoble.iot-lab.info m3-5.grenoble.iot-lab.info
+
+You can authenticate your iotlab before hand by running:
+
+    $  iotlab-auth -u <login>
+
+Otherwise you need to pass your username and password as additional parameters:
+
+    $ openv-server --iotlab-motes m3-10 m3-11 --user <USERNAME> --password <PASSWORD>
+
 #### Other useful options
 
 ## Testing

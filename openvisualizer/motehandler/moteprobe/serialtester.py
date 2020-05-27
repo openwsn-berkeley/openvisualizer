@@ -50,7 +50,7 @@ class SerialTester(EventBusClient):
         self.mote_probe.send_to_parser = self._receive_data_from_mote_serial
 
     def quit(self):
-        self.goOn = False
+        self.go_on = False
 
     # ======================== public ==========================================
 

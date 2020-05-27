@@ -6,8 +6,9 @@
 
 import logging
 import os
-import serial
 import signal
+
+import serial
 
 from moteprobe import MoteProbe, MoteProbeNoData
 
@@ -105,13 +106,9 @@ class SerialMoteProbe(MoteProbe):
             self._serial.close()
 
     def _attach(self):
-        self._serial = serial.Serial(
-            self._port,
-            self._baudrate,
-            timeout=1,
-            xonxoff=True,
-            rtscts=False,
-            dsrdtr=False)
+        log.info("attaching to serial port: {} @ {}".format(self._port, self._baudrate))
+        self._serial = serial.Serial(self._port, self._baudrate, timeout=1, xonxoff=True, rtscts=False, dsrdtr=False)
+        log.info("self._serial: {}".format(self._serial))
 
     @staticmethod
     def _get_ports_from_mask(port_mask=None):

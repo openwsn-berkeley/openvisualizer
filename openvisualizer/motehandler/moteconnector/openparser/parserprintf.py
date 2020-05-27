@@ -5,6 +5,7 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
 import logging
+import sys
 
 from openvisualizer.motehandler.moteconnector.openparser import parser
 
@@ -52,7 +53,9 @@ class ParserPrintf(parser.Parser):
 
         addr = ParserPrintf.bytes_to_addr(data[0:2])
         asn = ParserPrintf.bytes_to_string(data[2:7])
-        log.info("(asn={0}) from {1}: {2}".format(asn, addr, "".join([chr(c) for c in data[7:]])))
+
+        sys.stdout.write("{}".format("".join([chr(c) for c in data[7:]])))
+        sys.stdout.flush()
 
         # everything was fine
         return 'error', data

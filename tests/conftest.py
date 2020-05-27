@@ -5,7 +5,6 @@ import os
 import select
 import socket
 import struct
-import tempfile
 import time
 import xmlrpclib
 from fcntl import ioctl
@@ -162,9 +161,8 @@ def server():
 
     yield server_proc
 
-    # kill the server and remove the file lock
+    # kill the server
     server_proc.terminate()
-    os.remove(os.path.join(tempfile.gettempdir(), 'openv-server.pid'))
 
 
 @pytest.fixture()
@@ -177,6 +175,5 @@ def server_booted():
 
     yield server_proc
 
-    # kill the server and remove the file lock
+    # kill the server
     server_proc.terminate()
-    os.remove(os.path.join(tempfile.gettempdir(), 'openv-server.pid'))

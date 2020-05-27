@@ -25,17 +25,16 @@ import bottle
 import coloredlogs
 import pkg_resources
 import verboselogs
-
 from iotlabcli.parser import common
 
 from openvisualizer import *
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
-from openvisualizer.motehandler.moteprobe.serialmoteprobe import SerialMoteProbe
-from openvisualizer.motehandler.moteprobe.iotlabmoteprobe import IotlabMoteProbe
 from openvisualizer.motehandler.moteprobe import emulatedmoteprobe
 from openvisualizer.motehandler.moteprobe import testbedmoteprobe
+from openvisualizer.motehandler.moteprobe.iotlabmoteprobe import IotlabMoteProbe
+from openvisualizer.motehandler.moteprobe.serialmoteprobe import SerialMoteProbe
 from openvisualizer.motehandler.motestate import motestate
 from openvisualizer.motehandler.motestate.motestate import MoteState
 from openvisualizer.openlbr import openlbr
@@ -201,18 +200,19 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
                 iotlab_motes=iotlab_motes,
                 iotlab_user=iotlab_user,
                 iotlab_passwd=iotlab_passwd,
-                )
+            )
         elif testbed_motes:
             motes_finder = testbedmoteprobe.OpentestbedMoteFinder(mqtt_broker)
             self.mote_probes = [
-                testbedmoteprobe.OpentestbedMoteProbe(mqtt_broker, testbedmote_eui64=p) for p in motes_finder.get_opentestbed_motelist()
+                testbedmoteprobe.OpentestbedMoteProbe(mqtt_broker, testbedmote_eui64=p) for p in
+                motes_finder.get_opentestbed_motelist()
             ]
         else:
             # in "hardware" mode, motes are connected to the serial port
             self.mote_probes = SerialMoteProbe.probe_serial_ports(
                 port_mask=port_mask,
                 baudrate=baudrate
-                )
+            )
         # create a MoteConnector for each MoteProbe
         try:
             fw_defines = self.extract_stack_defines()
@@ -446,17 +446,6 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
 
         if self.simulator_mode:
             OpenVisualizerServer.cleanup_temporary_files([self.temp_dir])
-
-        # delete the lock file, so we can start a new instance of openv-server later
-        lock_file = "openv-server.pid"
-        temp_dir = tempfile.gettempdir()
-
-        log.verbose('Deleting lock file: {}'.format(os.path.join(temp_dir, lock_file)))
-
-        try:
-            os.remove(os.path.join(temp_dir, lock_file))
-        except OSError as err:
-            log.error(err)
 
         os.kill(os.getpid(), signal.SIGTERM)
 
@@ -810,28 +799,6 @@ def main():
         log.verbose("Loading logging configuration: {}".format(args.lconf))
     else:
         log.error("Could not load logging configuration.")
-
-    # before continuing, check if openv-server is not already running somewhere
-    lock_file = "openv-server.pid"
-    temp_dir = tempfile.gettempdir()
-
-    lock_file_path = os.path.join(temp_dir, lock_file)
-
-    if os.path.isfile(lock_file_path):
-        with open(lock_file_path, 'r') as f:
-            pid = f.read()
-            log.critical("Detected a running instance of openv-server with PID: {}".format(pid))
-
-            output_msg = [""]
-            output_msg += ["If openv-server crashed, the lock file was probably not deleted properly."]
-            output_msg += ["You can delete it manually at: {}".format(str(lock_file_path))]
-            log.critical("\n".join(output_msg))
-
-        sys.exit()
-
-    # if no other openv-server instance is detected create the file lock
-    with open(lock_file_path, 'w') as f:
-        f.write(str(os.getpid()))
 
     options = ['host address server     = {0}'.format(args.host), 'port number server      = {0}'.format(args.port)]
 

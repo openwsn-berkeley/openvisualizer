@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @mark.parametrize('option, logs',
-                  [('', ['discovered following serial-port(s):']),  # testing plain openv-server boot (1)
+                  [('', ['Discovered serial-port(s):']),  # testing plain openv-server boot (1)
                    ('--sim=2',  # boot openv-server with 2 emulated motes (2)
                     ['- simulation              = 2',
                      '- simulation topology     = Pister-hack',
@@ -32,8 +32,7 @@ logger = logging.getLogger(__name__)
                      '- set root                = 0001',
                      '- auto-boot sim motes     = False']),
                    ('--sim=2 --no-boot --load-topology=0002-star.json',  # specify sim options and load topology (6)
-                    ['options or root option might be overwritten by the configuration in \'0002-star.json\''
-                     '- load topology from file = 0002-star.json']),
+                    ['option might be overwritten by the configuration in \'0002-star.json\'']),
                    ])
 def test_start_server(option, logs):
     try:

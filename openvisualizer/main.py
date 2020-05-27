@@ -372,13 +372,13 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         # in openwsn-fw, directory containing 'openwsnmodule_obj.h'
         inc_dir = os.path.join(self.fw_path, 'bsp', 'boards', 'python')
         if not os.path.exists(inc_dir):
-            log.error("Path '{}' does not exist".format(inc_dir))
+            log.critical("Path '{}' does not exist".format(inc_dir))
             return
 
         # in openwsn-fw, directory containing extension library
         lib_dir = os.path.join(self.fw_path, 'build', 'python_gcc', 'projects', 'common')
         if not os.path.exists(lib_dir):
-            log.error("Path '{}' does not exist".format(lib_dir))
+            log.critical("Path '{}' does not exist".format(lib_dir))
             return
 
         temp_dir = tempfile.mkdtemp()
@@ -390,7 +390,12 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         dest_name = 'oos_openwsn-{0}.{1}'.format(arch_and_os[0], lib_ext)
         dest_dir = os.path.join(temp_dir, arch_and_os[1])
 
-        shutil.copy(os.path.join(inc_dir, 'openwsnmodule_obj.h'), temp_dir)
+        try:
+            shutil.copy(os.path.join(inc_dir, 'openwsnmodule_obj.h'), temp_dir)
+        except IOError:
+            log.critical("Could not find {} file".format('openwsnmodule_obj.h'))
+            return
+
         log.verbose(
             "Copying '{}' to temporary dir '{}'".format(os.path.join(inc_dir, 'openwsnmodule_obj.h'), temp_dir))
 
@@ -399,7 +404,12 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         except OSError:
             pass
 
-        shutil.copy(os.path.join(lib_dir, source_name), os.path.join(dest_dir, dest_name))
+        try:
+            shutil.copy(os.path.join(lib_dir, source_name), os.path.join(dest_dir, dest_name))
+        except IOError:
+            log.critical("Could not find: {}".format(str(os.path.join(lib_dir, source_name))))
+            return
+
         log.verbose(
             "Copying '{}' to '{}'".format(os.path.join(lib_dir, source_name), os.path.join(dest_dir, dest_name)))
 
@@ -414,7 +424,11 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             os_match = os.name == 'posix'
 
         if arch_match and os_match:
-            shutil.copy(os.path.join(lib_dir, source_name), temp_dir)
+            try:
+                shutil.copy(os.path.join(lib_dir, source_name), temp_dir)
+            except IOError:
+                log.critical("Could not find {}".format(str(os.path.join(lib_dir, source_name))))
+                return
 
         return temp_dir
 

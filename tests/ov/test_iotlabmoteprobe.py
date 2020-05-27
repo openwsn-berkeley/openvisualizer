@@ -1,17 +1,17 @@
-
-#!/usr/bin/env python2
+# !/usr/bin/env python2
 
 import logging.handlers
-import mock
-import pytest
 import socket
 import time
+
+import mock
 
 from openvisualizer.motehandler.moteprobe.iotlabmoteprobe import IotlabMoteProbe
 
 # ============================ defines =================================
 
 MODULE_PATH = 'openvisualizer.motehandler.moteprobe.iotlabmoteprobe'
+
 
 # ============================ fixtures ================================
 
@@ -20,13 +20,13 @@ MODULE_PATH = 'openvisualizer.motehandler.moteprobe.iotlabmoteprobe'
 
 def test_iotlabmoteprobe__get_free_port():
     port = IotlabMoteProbe._get_free_port()
-    is_open = False
     # No context manager for sockets in python2.7
+
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(('', port))
         is_open = True
-    except Exception:
+    except socket.error:
         pass
     else:
         assert is_open
@@ -41,6 +41,7 @@ def test_iotlabmoteprobe___init__(m_parent_init, m_detach, m_attach):
     test_node_url = 'm3-10'
     mote = IotlabMoteProbe(test_node_url)
     assert not hasattr(mote, 'iotlab_site')
+
     test_node_url = 'm3-10.saclay.iot-lab.info'
     mote = IotlabMoteProbe(test_node_url)
     assert mote.iotlab_site == 'saclay'

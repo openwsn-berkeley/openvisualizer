@@ -40,6 +40,10 @@ class SerialMoteProbe(MoteProbe):
         with self.data_lock:
             return self._baudrate
 
+    @property
+    def serial(self):
+        return self._serial
+
     @classmethod
     def probe_serial_ports(cls, baudrate, port_mask=None):
         ports = cls._get_ports_from_mask(port_mask)
@@ -75,7 +79,7 @@ class SerialMoteProbe(MoteProbe):
                 probe.join()
             os.kill(os.getpid(), signal.SIGTERM)
         valid_motes = ['{0}'.format(p._portname) for p in mote_probes]
-        log.success("Discovered following serial-port(s): {0}".format(valid_motes))
+        log.success("Discovered serial-port(s): {0}".format(valid_motes))
 
         return mote_probes
 

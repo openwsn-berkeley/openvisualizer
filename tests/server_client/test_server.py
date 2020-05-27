@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
                    param('--sim=2 --no-boot', ['[OPENWSN] booted'], marks=mark.xfail(reason='motes not booted')),
                    ('--simtopo=linear',  # specify a simulation topology but do not set a number of emulated motes (3)
                     ['Simulation topology specified but no --sim=<x> given, switching to hardware mode',
-                     'discovered following serial-port(s):']),
+                     'Discovered serial-port(s):']),
                    ('--sim=5 --root=0001',  # set simulation with five motes and specify root mote (4)
                     ['Setting mote 0001 as root',
                      '- simulation topology     = Pister-hack',

@@ -65,15 +65,11 @@ class MoteProbe(threading.Thread):
         # give this thread a name
         self.name = 'MoteProbe@' + self._portname
 
-        # Non-daemonized MoteProbe does not consistently die on close(),
-        # so ensure MoteProbe does not persist.
+        # Non-daemonized MoteProbe does not consistently die on close(), so ensure MoteProbe does not persist.
         self.daemon = daemon
 
         # connect to dispatcher
-        dispatcher.connect(
-            self._send_data,
-            signal='fromMoteConnector@' + self._portname
-            )
+        dispatcher.connect(self._send_data, signal='fromMoteConnector@' + self._portname)
 
         # start myself
         self.start()
@@ -97,7 +93,7 @@ class MoteProbe(threading.Thread):
                     break
                 else:
                     self._parse_bytes(rx_bytes)
-                if hasattr(self, 'emulatedMote'):
+                if hasattr(self, 'emulated_mote'):
                     self.serial.done_reading()
             log.warning('{}; exit loop'.format(self._portname))
         except Exception as err:
@@ -108,6 +104,10 @@ class MoteProbe(threading.Thread):
             self._detach()
 
     # ======================== public ==================================
+
+    @property
+    def serial(self):
+        raise NotImplementedError("Should be implemented by child class")
 
     @property
     def portname(self):
@@ -145,28 +145,29 @@ class MoteProbe(threading.Thread):
         raise NotImplementedError("Should be implemented by child class")
 
     def _handle_frame(self):
-        """ Handles a hdlc frame """
+        """ Handles a HDLC frame """
         valid_frame = False
         temp_buf = self.rx_buf
         try:
             self.rx_buf = self.hdlc.dehdlcify(self.rx_buf)
+
             if log.isEnabledFor(logging.DEBUG):
                 log.debug("{}: {} dehdlcized input: {}".format(
                     self.name,
                     format_string_buf(temp_buf),
                     format_string_buf(self.rx_buf)))
+
             if self.send_to_parser:
                 self.send_to_parser([ord(c) for c in self.rx_buf])
+
             valid_frame = True
         except openhdlc.HdlcException as err:
-            log.warning('{}: invalid serial frame: {} {}'.format(
-                self.name,
-                format_string_buf(temp_buf),
-                err))
+            log.warning('{}: invalid serial frame: {} {}'.format(self.name, format_string_buf(temp_buf), err))
+
         return valid_frame
 
     def _rx_buf_add(self, byte):
-        """ Adds byte to buffer according on escaping """
+        """ Adds byte to buffer and escapes the XONXOFF bytes """
         if byte == chr(self.XONXOFF_ESCAPE):
             self.xonxoff_escaping = True
         else:
@@ -176,14 +177,14 @@ class MoteProbe(threading.Thread):
             elif byte != chr(self.XON) and byte != chr(self.XOFF):
                 self.rx_buf += byte
 
-    def _parse_bytes(self, bytes):
+    def _parse_bytes(self, octets):
         """ Parses bytes received from serial pipe """
-        for byte in bytes:
+        for byte in octets:
             if not self.receiving:
                 if self.hdlc_flag and byte != self.hdlc.HDLC_FLAG:
                     # start of frame
                     if log.isEnabledFor(logging.DEBUG):
-                        log.debug("{}: start of hdlc frame {} {}".format(
+                        log.debug("{}: start of HDLC frame {} {}".format(
                             self.name,
                             format_string_buf(self.hdlc.HDLC_FLAG),
                             format_string_buf(byte))
@@ -207,13 +208,13 @@ class MoteProbe(threading.Thread):
                 else:
                     # end of frame, received self.hdlc_flag
                     if log.isEnabledFor(logging.DEBUG):
-                        log.debug("{}: end of hdlc frame {}".format(
-                            self.name,
-                            format_string_buf(byte)))
+                        log.debug("{}: end of hdlc frame {}".format(self.name, format_string_buf(byte)))
+
                     self.hdlc_flag = True
                     self.receiving = False
                     self._rx_buf_add(byte)
                     valid_frame = self._handle_frame()
+
                     if valid_frame:
                         # discard valid frame self.hdlc_flag
                         self.hdlc_flag = False

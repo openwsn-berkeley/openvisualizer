@@ -33,6 +33,10 @@ class MockMoteProbe(MoteProbe):
             self._buffer = value
 
     @property
+    def serial(self):
+        return None
+
+    @property
     def blocking(self):
         with self.data_lock:
             return self._blocking

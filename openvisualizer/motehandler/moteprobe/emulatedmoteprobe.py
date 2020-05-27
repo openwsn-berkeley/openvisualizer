@@ -12,6 +12,7 @@ log = logging.getLogger('MoteProbe')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
+
 # ============================ functions ===============================
 
 
@@ -19,12 +20,13 @@ log.addHandler(logging.NullHandler())
 
 class EmulatedMoteProbe(MoteProbe):
     def __init__(self, emulated_mote):
-        self.emulatedMote = emulated_mote
+        self.emulated_mote = emulated_mote
+        self._serial = None
 
-        if not self.emulatedMote:
+        if not self.emulated_mote:
             raise SystemError()
 
-        name = 'emulated{0}'.format(self.emulatedMote.get_id())
+        name = 'emulated{0}'.format(self.emulated_mote.get_id())
         # initialize the parent class
         MoteProbe.__init__(self, portname=name, daemon=True)
 
@@ -42,5 +44,9 @@ class EmulatedMoteProbe(MoteProbe):
     def _detach(self):
         pass
 
+    @property
+    def serial(self):
+        return self._serial
+
     def _attach(self):
-        self.serial = self.emulatedMote.bsp_uart
+        self._serial = self.emulated_mote.bsp_uart

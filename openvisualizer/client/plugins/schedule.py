@@ -24,7 +24,7 @@ class Schedule(View):
         columns = []
         columns += ['|' + yb + '  Type  ' + n]
         columns += ['|' + yb + ' S ' + n]
-        columns += ['|' + yb + ' A ' + n]
+        # columns += ['|' + yb + ' A ' + n]
         columns += ['|' + yb + '  Nb  ' + n]
         columns += ['|' + yb + ' SlotOf ' + n]
         columns += ['|' + yb + ' ChOf ' + n]
@@ -55,10 +55,11 @@ class Schedule(View):
 
         for r in active_cells:
             c, shift = self._get_row_color(str(r['type'])[2:])
-            r_str = '|{}{:^8s}{}|{:^3s}|{:^3s}|{:^6s}|{:^8s}|{:^6s}|{:^14s}|{:^5s}|{:^9s}|{:^5s}|'.format(
+            # r_str = '|{}{:^8s}{}|{:^3s}|{:^3s}|{:^6s}|{:^8s}|{:^6s}|{:^14s}|{:^5s}|{:^9s}|{:^5s}|'.format(
+            r_str = '|{}{:^8s}{}|{:^3s}|{:^6s}|{:^8s}|{:^6s}|{:^14s}|{:^5s}|{:^9s}|{:^5s}|'.format(
                 c, str(r['type'])[2:], n,
                 'X' if int(r['shared']) else ' ',
-                'X' if int(r['isAutoCell']) else ' ',
+                # 'X' if int(r['isAutoCell']) else ' ',
                 'ANY' if 'anycast' in str(r['neighbor']) else str(r['neighbor'])[-11:-6].replace('-', ''),
                 str(r['slotOffset']),
                 str(r['channelOffset']),
@@ -72,7 +73,7 @@ class Schedule(View):
         print(HDR_LINE.rjust(abs(w + int(len(HDR_LINE) / 2))))
         print('\n')
         print('{}{}:{}{:>15}'.format(yb, 'S', n, 'Shared cell?'))
-        print('{}{}:{}{:>19}'.format(yb, 'A', n, 'Autonomous cell?'))
+        # print('{}{}:{}{:>19}'.format(yb, 'A', n, 'Autonomous cell?'))
         print('{}{}:{}{:>20}'.format(yb, 'Nb', n, '16-bit Neighbor ID'))
 
     def run(self):

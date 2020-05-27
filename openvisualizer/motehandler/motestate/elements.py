@@ -181,7 +181,7 @@ class StateScheduleRow(StateElem):
 
         self.data[0]['type'].update(notif.type)
         self.data[0]['shared'] = notif.shared
-        self.data[0]['isAutoCell'] = notif.isAutoCell
+        # self.data[0]['isAutoCell'] = notif.isAutoCell
         self.data[0]['channelOffset'] = notif.channelOffset
 
         if 'neighbor' not in self.data[0]:

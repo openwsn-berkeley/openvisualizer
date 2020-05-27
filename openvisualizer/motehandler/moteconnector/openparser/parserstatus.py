@@ -129,13 +129,14 @@ class ParserStatus(parser.Parser):
             3,
             6,
             'ScheduleRow',
-            '<BHBBBBBQQBBBBHH',
+            # '<BHBBBBBQQBBBBHH',
+            '<BHBBBBQQBBBBHH',
             [
                 'row',  # B
                 'slotOffset',  # H
                 'type',  # B
                 'shared',  # B
-                'isAutoCell',  # B
+                # 'isAutoCell',  # B
                 'channelOffset',  # B
                 'neighbor_type',  # B
                 'neighbor_bodyH',  # Q

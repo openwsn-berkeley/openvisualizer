@@ -18,7 +18,7 @@ class MSF(View):
     def render(self, ms=None):
         super(MSF, self).render()
         msf_values = json.loads(ms[MoteState.ST_MSF])
-        print(msf_values)
+        print(self.term.bold_red + "Currently unavailable! Requires firmware update!" + self.term.normal)
 
     def run(self):
         logging.debug("Enabling blessed fullscreen")

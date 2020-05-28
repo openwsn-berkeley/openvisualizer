@@ -33,6 +33,10 @@ class Neighbors(View):
             if int(nb['used']):
                 neighbor_rows.append(nb)
 
+        if len(neighbor_rows) == 0:
+            print(self.term.red_bold + 'No neighbors for this mote' + self.term.normal)
+            return
+
         addr_headers, stable_neighbor, join_prio = [], [], []
         secure, rssi, backoff, dagrank = [], [], [], []
 

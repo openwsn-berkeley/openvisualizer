@@ -28,7 +28,9 @@ TESTS_REQUIREMENTS = _read_requirements('tests-requirements.txt')
 WEB_STATIC = 'web_files/static'
 WEB_TEMPLATES = 'web_files/templates'
 
-with open('README.md') as f:
+# read the contents of your README file
+this_directory = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(this_directory, 'README.md')) as f:
     LONG_DESCRIPTION = f.read()
 
 setup(
@@ -66,7 +68,8 @@ setup(
     version=VERSION,
     author='Thomas Watteyne',
     author_email='watteyne@eecs.berkeley.edu',
-    description='Wireless sensor network monitoring, visualization, and debugging tool',
+    description='Wireless sensor network monitoring and visualization tool',
+    long_description_content_type='text/markdown',
     long_description=LONG_DESCRIPTION,
     url='https://openwsn.atlassian.net/wiki/display/OW/OpenVisualizer',
     keywords=['6TiSCH', 'Internet of Things', '6LoWPAN', '802.15.4e', 'sensor', 'mote'],

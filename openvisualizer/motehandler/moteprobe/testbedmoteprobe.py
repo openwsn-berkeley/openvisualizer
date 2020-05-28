@@ -4,12 +4,13 @@
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
+import Queue
 import json
 import logging
-import Queue
 import time
 
 import paho.mqtt.client as mqtt
+
 from moteprobe import MoteProbe
 
 log = logging.getLogger('MoteProbe')
@@ -23,15 +24,11 @@ log.addHandler(logging.NullHandler())
 # ============================ class ===================================
 
 class OpentestbedMoteProbe(MoteProbe):
-
     BASE_TOPIC = 'opentestbed/deviceType/mote/deviceId'
 
-    def __init__(self, testbedmote_eui64, mqtt_broker):
-        self.testbedmote_eui64 = testbedmote_eui64
+    def __init__(self, mqtt_broker, testbedmote_eui64):
         self.mqtt_broker = mqtt_broker
-
-        if not self.emulatedMote:
-            raise SystemError()
+        self.testbedmote_eui64 = testbedmote_eui64
 
         name = 'opentestbed_{0}'.format(testbedmote_eui64)
         # initialize the parent class
@@ -44,7 +41,7 @@ class OpentestbedMoteProbe(MoteProbe):
         payload_buffer = {
             'token': 123,
             'serialbytes': [ord(i) for i in hdlc_data]
-            }
+        }
 
         # publish the cmd message
         self.mqtt_client.publish(
@@ -75,7 +72,6 @@ class OpentestbedMoteProbe(MoteProbe):
 
         self.mqtt_serial_queue = self.serialbytes_queue
 
-
     # ==== mqtt callback functions =====================================
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
@@ -89,14 +85,14 @@ class OpentestbedMoteProbe(MoteProbe):
 
         try:
             serial_bytes = json.loads(message.payload)['serialbytes']
-        except:
+        except json.JSONDecodeError:
             log.error("failed to parse message payload {}".format(
                 message.payload))
         else:
             try:
                 self.serialbytes_queue.put(serial_bytes, block=False)
-            except:
-                log.warning("queue overflow")
+            except Queue.Full:
+                log.warning("queue overflow/full")
 
 
 # ============================ class ===========================================

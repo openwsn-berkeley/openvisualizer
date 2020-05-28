@@ -206,10 +206,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
             )
         elif testbed_motes:
             motes_finder = testbedmoteprobe.OpentestbedMoteFinder(mqtt_broker)
-            self.mote_probes = [
-                testbedmoteprobe.OpentestbedMoteProbe(mqtt_broker, testbedmote_eui64=p) for p in
-                motes_finder.get_opentestbed_motelist()
-            ]
+            mote_list = motes_finder.get_opentestbed_motelist()
+            for p in mote_list:
+                self.mote_probes.append(testbedmoteprobe.OpentestbedMoteProbe(mqtt_broker, testbedmote_eui64=p))
         else:
             # in "hardware" mode, motes are connected to the serial port
             self.mote_probes = SerialMoteProbe.probe_serial_ports(

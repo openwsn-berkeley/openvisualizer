@@ -5,7 +5,9 @@ import socket
 import time
 import xmlrpclib
 
+import bottle
 import click
+from openvisualizer.client.webserver import WebServer
 
 from openvisualizer.client.plugins.plugin import Plugin
 from openvisualizer.client.utils import transform_into_ipv6
@@ -126,6 +128,28 @@ def boot(proxy, mote):
         for a in addresses:
             click.echo("Booting mote: {} ... ".format(a), nl=False)
             click.secho("Ok!", bold=True, fg='green')
+
+
+@click.command()
+@click.option('--rpc-host', default='localhost', help='Host address for webserver', show_default=True)
+@click.option('--rpc-port', default='9000', help='Port number for webserver', show_default=True)
+@click.option('--web-host', default='localhost', help='Host address for webserver', show_default=True)
+@click.option('--web-port', default='8080', help='Port number for webserver', show_default=True)
+@click.option('--debug', default='DEBUG', help='provide debug level [DEBUG, INFO, WARNING, ERROR, CRITICAL]',
+              show_default=True)
+def web(rpc_host, rpc_port, web_port, web_host, debug):
+    """ Start a web server which acts as an RPC client for OpenVisualizer Server."""
+
+    bottle_server = bottle.Bottle()
+
+    WebServer(bottle_server, (rpc_host, rpc_port), debug)
+
+    if debug != 'DEBUG':
+        bottle.debug(False)
+        bottle_server.run(host=web_host, port=web_port, quiet=True)
+    else:
+        bottle.debug(True)
+        bottle_server.run(host=web_host, port=web_port)
 
 
 @click.command()
@@ -284,3 +308,4 @@ view.add_command(schedule)
 view.add_command(motestatus)
 view.add_command(msf)
 view.add_command(neighbors)
+view.add_command(web)

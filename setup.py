@@ -4,6 +4,8 @@ from setuptools import setup, find_packages
 
 from openvisualizer import VERSION, PACKAGE_NAME
 
+web_static = 'client/web_files/static'
+web_templates = 'client/web_files/templates'
 
 # Cannot create this list with pip.req.parse_requirements() because it requires
 # the pwd module, which is Unix only.

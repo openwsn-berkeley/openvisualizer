@@ -14,14 +14,12 @@ import shutil
 import signal
 import sys
 import tempfile
-import threading
 import time
 from ConfigParser import SafeConfigParser
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from argparse import ArgumentParser
 from xmlrpclib import Fault
 
-import bottle
 import coloredlogs
 import pkg_resources
 import verboselogs
@@ -29,6 +27,7 @@ from iotlabcli.parser import common
 
 from openvisualizer import *
 from openvisualizer.eventbus import eventbusmonitor
+from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
 from openvisualizer.motehandler.moteprobe import emulatedmoteprobe
@@ -43,7 +42,6 @@ from openvisualizer.rpl import topology, rpl
 from openvisualizer.simengine import simengine, motehandler
 from openvisualizer.utils import extract_component_codes, extract_log_descriptions, extract_6top_rcs, \
     extract_6top_states
-from openvisualizer.webserver import WebServer
 
 verboselogs.install()
 
@@ -112,12 +110,12 @@ class ColoredFormatter(coloredlogs.ColoredFormatter):
         return res
 
 
-class OpenVisualizerServer(SimpleXMLRPCServer):
+class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
     """
     Class implements and RPC server that allows monitoring and (remote) management of a mesh network.
     """
 
-    def __init__(self, host, port, webserver, simulator_mode, debug, vcdlog,
+    def __init__(self, host, port, simulator_mode, debug, vcdlog,
                  use_page_zero, sim_topology, testbed_motes, mqtt_broker,
                  opentun, fw_path, auto_boot, root, port_mask, baudrate,
                  topo_file, iotlab_motes, iotlab_passwd, iotlab_user):
@@ -127,10 +125,6 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
 
         try:
             self.port = int(port)
-            if webserver:
-                self.webserver = int(webserver)
-            else:
-                self.webserver = None
             self.simulator_mode = int(simulator_mode)
         except ValueError as err:
             log.error(err)
@@ -143,11 +137,20 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.debug = debug
         self.use_page_zero = use_page_zero
         self.vcdlog = vcdlog
-        self.fw_path = fw_path
+
+        if fw_path is not None:
+            self.fw_path = os.path.expanduser(fw_path)
+        else:
+            self.fw_path = fw_path
+
         self.root = root
         self.dagroot = None
         self.auto_boot = auto_boot
-        self.topo_file = topo_file
+
+        if topo_file is not None:
+            self.topo_file = os.path.expanduser(topo_file)
+        else:
+            self.topo_file = topo_file
 
         # if a topology file is specified, overwrite the simulation and topology options
         if self.topo_file:
@@ -226,6 +229,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         # create a MoteState for each MoteConnector
         self.mote_states = [motestate.MoteState(mc) for mc in self.mote_connectors]
 
+        # set up EventBusClient
+        EventBusClient.__init__(self, name='OpenVisualizerServer', registrations=[])
+
         # set up RPC server
         try:
             SimpleXMLRPCServer.__init__(self, (self.host, self.port), allow_none=True, logRequests=False)
@@ -247,26 +253,16 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
         self.register_function(self.get_motes_connectivity)
         self.register_function(self.get_ebm_wireshark_enabled)
         self.register_function(self.get_ebm_stats)
+        self.register_function(self.get_network_topology)
+        self.register_function(self.update_network_topology)
+        self.register_function(self.create_motes_connection)
+        self.register_function(self.update_motes_connection)
+        self.register_function(self.delete_motes_connection)
+        self.register_function(self.retrieve_routing_path)
 
         # boot all simulated motes
         if self.simulator_mode and self.auto_boot:
             self.boot_motes(['all'])
-
-        # Run the web server is specified
-        if self.webserver:
-            web_server = bottle.Bottle()
-            WebServer(web_server, (self.host, self.port))
-
-            # start web interface in a separate thread
-            web_thread = threading.Thread(
-                target=web_server.run,
-                kwargs={
-                    'host': self.host,
-                    'port': self.webserver,
-                    'quiet': True,
-                }
-            )
-            web_thread.start()
 
         # set a mote (hardware or emulated) as DAG root of the network
         if self.root is not None:
@@ -299,7 +295,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
     def load_topology(self):
         """ Import the network topology from a json file. """
 
-        log.info("Loading topology from file.")
+        log.success("Loading topology from file.")
 
         topo_config = self._load_saved_topology()
         if topo_config is None:
@@ -580,6 +576,53 @@ class OpenVisualizerServer(SimpleXMLRPCServer):
             states.append(d)
         return states, edges
 
+    def update_network_topology(self, connections):
+        connections = json.loads(connections)
+
+        for (_, v) in connections.items():
+            mh = self.simengine.get_mote_handler_by_id(v['id'])
+            mh.set_location(v['lat'], v['lon'])
+
+        return True
+
+    def get_network_topology(self):
+        motes = []
+        rank = 0
+        while True:
+            try:
+                mh = self.simengine.get_mote_handler(rank)
+                mote_id = mh.get_id()
+                (lat, lon) = mh.get_location()
+                motes += [{'id': mote_id, 'lat': lat, 'lon': lon}]
+                rank += 1
+            except IndexError:
+                break
+
+        # connections
+        connections = self.simengine.propagation.retrieve_connections()
+
+        data = {'motes': motes, 'connections': connections}
+        return data
+
+    def create_motes_connection(self, from_mote, to_mote):
+        self.simengine.propagation.create_connection(from_mote, to_mote)
+        return True
+
+    def update_motes_connection(self, from_mote, to_mote, pdr):
+        self.simengine.propagation.update_connection(from_mote, to_mote, pdr)
+        return True
+
+    def delete_motes_connection(self, from_mote, to_mote):
+        self.simengine.propagation.delete_connection(from_mote, to_mote)
+        return True
+
+    def retrieve_routing_path(self, destination):
+        route = self._dispatch_and_get_result(signal='getSourceRoute', data=destination)
+        route = [r[-1] for r in route]
+        data = {'route': route}
+
+        return data
+
     def get_mote_dict(self):
         """ Returns a dictionary with key-value entry: (mote_id: serialport) """
         log.debug('RPC: {}'.format(self.get_mote_dict.__name__))
@@ -742,13 +785,6 @@ def _add_parser_args(parser):
     )
 
     parser.add_argument(
-        '-w',
-        '--webserver',
-        dest='webserver',
-        action='store',
-        help='Port number for the webserver.'
-    )
-    parser.add_argument(
         '--port-mask',
         dest='port_mask',
         type=str,
@@ -816,9 +852,6 @@ def main():
 
     options = ['host address server     = {0}'.format(args.host), 'port number server      = {0}'.format(args.port)]
 
-    if args.webserver:
-        options.append('webserver port          = {0}'.format(args.webserver))
-
     if args.fw_path:
         options.append('firmware path           = {0}'.format(args.fw_path))
     else:
@@ -867,7 +900,6 @@ def main():
     server = OpenVisualizerServer(
         host=args.host,
         port=args.port,
-        webserver=args.webserver,
         simulator_mode=args.simulator_mode,
         debug=args.debug,
         use_page_zero=args.use_page_zero,

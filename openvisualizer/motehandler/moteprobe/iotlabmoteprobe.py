@@ -31,7 +31,8 @@ class IotlabMoteProbe(MoteProbe):
 
     IOTLAB_FRONTEND_BASE_URL = 'iot-lab.info'
 
-    def __init__(self, iotlab_mote, iotlab_user=None, iotlab_passwd=None):
+    def __init__(self, iotlab_mote, iotlab_user=None, iotlab_passwd=None,
+                 iotlab_key_file=None, iotlab_key_pas=None):
         self.iotlab_mote = iotlab_mote
 
         if self.IOTLAB_FRONTEND_BASE_URL in self.iotlab_mote:
@@ -39,7 +40,10 @@ class IotlabMoteProbe(MoteProbe):
             self.iotlab_user, self.iotlab_passwd = auth.get_user_credentials(
                 iotlab_user,
                 iotlab_passwd
-            )
+                )
+            # Recover ssh key and password
+            self.iotlab_key_file = iotlab_key_file
+            self.iotlab_key_pas = iotlab_key_pas
             # match the site from the mote's address
             reg = r'[0-9a-zA-Z\-]+-\d+\.([a-z]+)'
             match = re.search(reg, iotlab_mote)
@@ -53,7 +57,8 @@ class IotlabMoteProbe(MoteProbe):
     # ======================== public ==================================
 
     @classmethod
-    def probe_iotlab_motes(cls, iotlab_motes, iotlab_user, iotlab_passwd):
+    def probe_iotlab_motes(cls, iotlab_motes, iotlab_user, iotlab_passwd,
+                           iotlab_key_file, iotlab_key_pas):
         mote_probes = []
         probe = None
         log.debug("Probing motes: {}".format(iotlab_motes))
@@ -64,7 +69,9 @@ class IotlabMoteProbe(MoteProbe):
                     probe = cls(
                         iotlab_mote=mote,
                         iotlab_user=iotlab_user,
-                        iotlab_passwd=iotlab_passwd)
+                        iotlab_passwd=iotlab_passwd,
+                        iotlab_key_file=iotlab_key_file,
+                        iotlab_key_pas=iotlab_key_pas,)
                     while probe.socket is None and probe.isAlive():
                         pass
                     if probe.test_serial(pkts=2):
@@ -129,12 +136,16 @@ class IotlabMoteProbe(MoteProbe):
         if hasattr(self, 'iotlab_site'):
             port = self._get_free_port()
             sshtunnel.SSH_TIMEOUT = self.IOTLAB_SSH_TIMEOUT
-            self.iotlab_tunnel = sshtunnel.open_tunnel('{}.{}'.format(self.iotlab_site, self.IOTLAB_FRONTEND_BASE_URL),
-                                                       ssh_username=self.iotlab_user,
-                                                       ssh_password=self.iotlab_passwd,
-                                                       remote_bind_address=(
-                                                           self.iotlab_mote, self.IOTLAB_MOTE_TCP_PORT),
-                                                       local_bind_address=('0.0.0.0', port))
+            self.iotlab_tunnel = sshtunnel.open_tunnel(
+                '{}.{}'.format(self.iotlab_site,
+                               self.IOTLAB_FRONTEND_BASE_URL),
+                ssh_pkey=self.iotlab_key_file,
+                ssh_private_key_password=self.iotlab_key_pas,
+                ssh_username=self.iotlab_user,
+                ssh_password=self.iotlab_passwd,
+                remote_bind_address=(self.iotlab_mote,
+                                     self.IOTLAB_MOTE_TCP_PORT),
+                local_bind_address=('0.0.0.0', port))
             self.iotlab_tunnel.start()
             time.sleep(0.1)
 

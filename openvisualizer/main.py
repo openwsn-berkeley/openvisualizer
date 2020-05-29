@@ -119,7 +119,8 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
     def __init__(self, host, port, simulator_mode, debug, vcdlog,
                  use_page_zero, sim_topology, testbed_motes, mqtt_broker,
                  opentun, fw_path, auto_boot, root, port_mask, baudrate,
-                 topo_file, iotlab_motes, iotlab_passwd, iotlab_user):
+                 topo_file, iotlab_motes, iotlab_passwd, iotlab_user,
+                 iotlab_key_file, iotlab_key_pas):
 
         # store params
         self.host = host
@@ -212,7 +213,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
                 iotlab_motes=iotlab_motes,
                 iotlab_user=iotlab_user,
                 iotlab_passwd=iotlab_passwd,
-            )
+                iotlab_key_file=iotlab_key_file,
+                iotlab_key_pas=iotlab_key_pas,
+                )
         elif testbed_motes:
             motes_finder = testbedmoteprobe.OpentestbedMoteFinder(mqtt_broker)
             mote_list = motes_finder.get_opentestbed_motelist()
@@ -698,7 +701,18 @@ def _add_iotlab_parser_args(parser):
         help='comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
     )
     common.add_auth_arguments(iotlab_parser, False)
-
+    iotlab_parser.add_argument(
+        '--iotlab-key-file',
+        default='~/.ssh/id_rsa',
+        type=str,
+        help='Location of ssh key registered on iotlab'
+    )
+    iotlab_parser.add_argument(
+        '--iotlab-key-pas',
+        default='',
+        type=str,
+        help='If required ssh key file password'
+    )
 
 def _add_parser_args(parser):
     """ Adds arguments specific to the OpenVisualizer application """
@@ -949,6 +963,8 @@ def main():
         iotlab_motes=args.iotlab_motes,
         iotlab_user=args.username,
         iotlab_passwd=args.password,
+        iotlab_key_file=args.iotlab_key_file,
+        iotlab_key_pas=args.iotlab_key_pas,
     )
 
     try:

@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+
 import logging
 import time
 
@@ -89,3 +90,7 @@ def cli(port, baudrate, verbose, runs, pktlen, timeout):
             break
 
     logger.info("quitting script")
+
+
+if __name__ == "__main__":
+    cli()

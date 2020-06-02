@@ -57,7 +57,6 @@ setup(
         'console_scripts': [
             'openv-server = openvisualizer.__main__:main',
             'openv-client = openvisualizer.client.main:cli',
-            'openv-serial = tests.scripts.serialtester_cli:cli'
         ]
     },
     install_requires=INSTALL_REQUIREMENTS,

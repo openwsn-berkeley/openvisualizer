@@ -1,14 +1,16 @@
-# language: python
-# python:
-#   - "2.7"
-#
-# # Install dependencies
-# before_install:
-#  - sudo apt-get update -qq
-# install: pip install -r requirements.txt
-#
-# # Command to run tests
-# script:
-#   - scons unittest
-#   - scons pylint
-#   - scons docs
+language: python
+python:
+  - "2.7"
+
+# Install dependencies
+before_install:
+  - sudo apt-get update -qq
+install:
+  - pip install -r requirements.txt
+  - pip install -r tests-requirements.txt
+  - pip install .
+
+# Command to run tests
+script:
+  - python -m pytest tests/ov
+  # - python -m pytest tests/server_client # test also require openwsn-fw so for now not working on Travis

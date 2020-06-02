@@ -1,14 +1,14 @@
-language: python
-python:
-  - "2.7"
-
-# Install dependencies
-before_install:
- - sudo apt-get update -qq
-install: pip install -r requirements.txt
-
-# Command to run tests
-script:
-  - scons unittest
-  - scons pylint
-  - scons docs
+# language: python
+# python:
+#   - "2.7"
+#
+# # Install dependencies
+# before_install:
+#  - sudo apt-get update -qq
+# install: pip install -r requirements.txt
+#
+# # Command to run tests
+# script:
+#   - scons unittest
+#   - scons pylint
+#   - scons docs

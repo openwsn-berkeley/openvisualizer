@@ -10,9 +10,12 @@ import logging
 import threading
 
 from pydispatch import dispatcher
+from scapy.compat import raw
+from scapy.layers.inet import UDP
+from scapy.layers.inet6 import IPv6
 
 from openvisualizer.opentun.opentun import OpenTun
-from openvisualizer.utils import format_buf, calculate_fcs, calculate_pseudo_header_crc
+from openvisualizer.utils import format_buf, calculate_fcs, format_ipv6_addr
 
 log = logging.getLogger('EventBusMonitor')
 log.setLevel(logging.ERROR)
@@ -209,38 +212,19 @@ class EventBusMonitor(object):
         """
 
         # UDP
-        udp_len = len(zep) + 8
-
-        udp = [0x00, 0x00]  # src port (unused)
-        udp += [0x45, 0x5a]  # dest port (17754)
-        udp += [udp_len >> 8, udp_len & 0xff]  # length
-        udp += [0x00, 0x00]  # checksum
-        udp += zep
+        udp = UDP(sport=0, dport=17754)
+        udp.add_payload("".join([chr(i) for i in zep]))
 
         # Common address for source and destination
         addr = []
         addr += OpenTun.IPV6PREFIX
         addr += OpenTun.IPV6HOST
+        addr = format_ipv6_addr(addr)
 
-        # CRC See https://tools.ietf.org/html/rfc2460.
+        # IP
+        ip = IPv6(version=6, tc=0, src=addr, hlim=64, dst=addr)
+        ip = ip / udp
 
-        # not sure if the payload contains the udp header in this case.
-        udp[6:8] = calculate_pseudo_header_crc(
-            src=addr,
-            dst=addr,
-            length=[0x00, 0x00] + udp[4:6],
-            nh=[0x00, 0x00, 0x00, 17],
-            payload=zep
-        )
+        data = [ord(b) for b in raw(ip)]
 
-        # IPv6
-        ip = [6 << 4]  # v6 + traffic class (upper nybble)
-        ip += [0x00, 0x00, 0x00]  # traffic class (lower nibble) + flow label
-        ip += udp[4:6]  # payload length
-        ip += [17]  # next header (protocol)
-        ip += [8]  # hop limit (pick a safe value)
-        ip += addr  # source
-        ip += addr  # destination
-        ip += udp
-
-        dispatcher.send(sender=self.name, signal='v6ToInternet', data=ip)
+        dispatcher.send(sender=self.name, signal='v6ToInternet', data=data)

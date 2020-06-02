@@ -15,6 +15,7 @@ verboselogs
 click
 blessed
 ipaddr
+scapy
 sshtunnel
 iotlabcli
 pywin32; sys_platform == 'win32'

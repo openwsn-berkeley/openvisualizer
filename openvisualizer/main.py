@@ -135,6 +135,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
         self.sim_topology = sim_topology
 
         self.debug = debug
+        if self.debug and not opentun:
+            log.warning("Wireshark debugging requires opentun")
+
         self.use_page_zero = use_page_zero
         self.vcdlog = vcdlog
 
@@ -173,6 +176,11 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
 
         # create opentun call last since indicates prefix
         self.opentun = OpenTun.create(opentun)
+
+        if self.debug and self.opentun:
+            self.ebm.wireshark_debug_enabled = True
+        else:
+            self.ebm.wireshark_debug_enabled = False
 
         if self.simulator_mode:
             self.simengine = simengine.SimEngine(self.sim_topology)
@@ -250,7 +258,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
         self.register_function(self.get_dagroot)
         self.register_function(self.get_dag)
         self.register_function(self.get_motes_connectivity)
-        self.register_function(self.get_ebm_wireshark_enabled)
+        self.register_function(self.get_wireshark_debug)
+        self.register_function(self.enable_wireshark_debug)
+        self.register_function(self.disable_wireshark_debug)
         self.register_function(self.get_ebm_stats)
         self.register_function(self.get_network_topology)
         self.register_function(self.update_network_topology)
@@ -543,7 +553,13 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
             log.warning("returning fault: {}".format(error_msg))
             raise Fault(faultCode=-1, faultString=error_msg)
 
-    def get_ebm_wireshark_enabled(self):
+    def enable_wireshark_debug(self):
+        self.ebm.wireshark_debug_enabled = True
+
+    def disable_wireshark_debug(self):
+        self.ebm.wireshark_debug_enabled = False
+
+    def get_wireshark_debug(self):
         return self.ebm.wireshark_debug_enabled
 
     def get_ebm_stats(self):
@@ -711,10 +727,11 @@ def _add_parser_args(parser):
     )
 
     parser.add_argument(
-        '-d', '--debug',
+        '-d', '--wireshark-debug',
         dest='debug',
-        action='store',
-        help='Set the debugging level, default is INFO.'
+        default=False,
+        action='store_true',
+        help='Enables debugging with wireshark (requires opentun).'
     )
 
     parser.add_argument(
@@ -872,6 +889,11 @@ def main():
 
     if args.set_root:
         options.append('set root                = {0}'.format(args.set_root))
+
+    if args.opentun:
+        options.append('opentun                 = {0}'.format('True'))
+        if args.debug:
+            options.append('wireshark debug         = {0}'.format(True))
 
     options.append('use page zero           = {0}'.format(args.use_page_zero))
     options.append('use VCD logger          = {0}'.format(args.vcdlog))

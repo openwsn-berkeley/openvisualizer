@@ -76,6 +76,29 @@ def list_methods(proxy):
 
 @click.command()
 @pass_proxy
+def wireshark_debug(proxy):
+    """ Toggles wireshark debugging. When on it shows packets exchanged in the OpenWSN network in Wireshark. """
+    try:
+        status = proxy.rpc_server.get_wireshark_debug()
+        if status:
+            _ = proxy.rpc_server.disable_wireshark_debug()
+        else:
+            _ = proxy.rpc_server.enable_wireshark_debug()
+
+        click.echo("{} --> {}".format(status, proxy.rpc_server.get_wireshark_debug()))
+    except xmlrpclib.Fault as err:
+        click.secho("Server fault: {}".format(err), fg='red')
+    except socket.error as err:
+        if errno.ECONNREFUSED:
+            click.secho("Connection refused. Is server running?", fg='red')
+        else:
+            click.echo(err)
+
+    click.secho('Ok!', fg='green')
+
+
+@click.command()
+@pass_proxy
 def motes(proxy):
     """Print the address and serial-port of each mote connected to the Openvisualizer server."""
     try:
@@ -296,7 +319,8 @@ def neighbors(proxy, mote, refresh_rate):
 
 
 cli.add_command(shutdown)
-cli.add_command(list_methods)
+# cli.add_command(list_methods)
+cli.add_command(wireshark_debug)
 cli.add_command(motes)
 cli.add_command(boot)
 cli.add_command(root)

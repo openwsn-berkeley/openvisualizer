@@ -64,7 +64,7 @@ class WebServer:
         self.bottle_srv.route(path='/connectivity', callback=self._show_connectivity)
         self.bottle_srv.route(path='/connectivity/motes', callback=self._show_motes_connectivity)
         self.bottle_srv.route(path='/eventdata', callback=self._get_event_data)
-        self.bottle_srv.route(path='/wiresharkDebug/:enabled', callback=WebServer._set_wireshark_debug)
+        self.bottle_srv.route(path='/wiresharkDebug/:enabled', callback=self._set_wireshark_debug)
         self.bottle_srv.route(path='/gologicDebug/:enabled', callback=WebServer._set_gologic_debug)
         self.bottle_srv.route(path='/topology', callback=self._topology_page)
         self.bottle_srv.route(path='/topology/data', callback=self._topology_data)
@@ -152,15 +152,23 @@ class WebServer:
             logger.debug('Found mote {0} in mote_states'.format(moteid))
         return states
 
-    @staticmethod
-    def _set_wireshark_debug(enabled):
+    def _set_wireshark_debug(self, enabled):
         """
         Selects whether eventBus must export debug packets.
         :param enabled: 'true' if enabled; any other value considered false
         """
-        logger.info('Enable wireshark debug : {0}'.format(enabled))
-        # self.app.ebm.set_wireshark_debug(enabled == 'true')
-        return '{"result" : "success"}'
+        logger.info('Enable wireshark debug: {0}'.format(enabled))
+        try:
+            if enabled.strip() == 'true':
+                _ = self.rpc_server.enable_wireshark_debug()
+            elif enabled.strip() == 'false':
+                _ = self.rpc_server.disable_wireshark_debug()
+            else:
+                logger.error('Illegal value for \'_set_wireshark_debug\'')
+        except xmlrpclib.Fault as err:
+            logger.error("Caught a server fault: {}".format(err))
+        except socket.error as err:
+            logger.error(err)
 
     @staticmethod
     def _set_gologic_debug(enabled):
@@ -316,7 +324,7 @@ class WebServer:
     def _get_event_data(self):
         try:
             res = {
-                'isDebugPkts': 'true' if self.rpc_server.get_ebm_wireshark_enabled() else 'false',
+                'isDebugPkts': 'true' if self.rpc_server.get_wireshark_debug() else 'false',
                 'stats': self.rpc_server.get_ebm_stats()
             }
         except socket.error as err:

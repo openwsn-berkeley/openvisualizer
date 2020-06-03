@@ -11,6 +11,7 @@ OpenVisualizer (OV) is part of UC Berkeley's OpenWSN project. It provides monito
     - [Setting up the virtualenv](#setting-up-the-virtualenv)
     - [Installing on OSX or Linux](#installing-on-osx-or-linux)
     - [Installing on Windows](#installing-on-windows)
+    - [Developers](#developers)
 * [Architecture](#architecture)
     - [OpenVisualizer Server](#server)
     - [OpenVisualizer Client](#client)
@@ -75,6 +76,21 @@ After installing OpenVisualizer you need to remove the package `pyreadline`. The
 ```bash
 (venv) $ pip uninstall pyreadline
 ```
+
+### Developers
+If you wish to develop for OpenVisualizer or mess around with the code, you should follow these steps:
+1. Setup a virtual environment (as described above) and activate the environment
+2. Clone the repository
+
+```bash
+(venv) $ git clone git@github.com:openwsn-berkeley/openvisualizer.git
+```
+3. Checkout the appropriate branch
+4. Move to the root of the git repository and install the tools
+```bash
+(venv) $ pip install -e .
+```
+The last command will locally install the Python package in an editable form. If you change your Python code the package will automatically use your new code.
 
 ## Architecture <a name="architecture"></a>
 

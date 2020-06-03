@@ -81,7 +81,7 @@ class TunReadThread(threading.Thread):
 
 
 # ============================ main class ======================================
-@OpenTun.record_os('macos')
+@OpenTun.record_os('darwin')
 class OpenTunMACOS(OpenTun):
     """ Class which interfaces between a TUN virtual interface and an EventBus. """
 

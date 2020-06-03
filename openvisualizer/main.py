@@ -38,6 +38,7 @@ from openvisualizer.motehandler.motestate import motestate
 from openvisualizer.motehandler.motestate.motestate import MoteState
 from openvisualizer.openlbr import openlbr
 from openvisualizer.opentun.opentun import OpenTun
+from openvisualizer.opentun.opentunnull import OpenTunNull
 from openvisualizer.rpl import topology, rpl
 from openvisualizer.simengine import simengine, motehandler
 from openvisualizer.utils import extract_component_codes, extract_log_descriptions, extract_6top_rcs, \
@@ -177,7 +178,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
         # create opentun call last since indicates prefix
         self.opentun = OpenTun.create(opentun)
 
-        if self.debug and self.opentun:
+        if self.debug and opentun:
             self.ebm.wireshark_debug_enabled = True
         else:
             self.ebm.wireshark_debug_enabled = False
@@ -554,10 +555,16 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
             raise Fault(faultCode=-1, faultString=error_msg)
 
     def enable_wireshark_debug(self):
-        self.ebm.wireshark_debug_enabled = True
+        if isinstance(self.opentun, OpenTunNull):
+            raise Fault(faultCode=-1, faultString="Wireshark debugging requires opentun to be active on the server")
+        else:
+            self.ebm.wireshark_debug_enabled = True
 
     def disable_wireshark_debug(self):
-        self.ebm.wireshark_debug_enabled = False
+        if isinstance(self.opentun, OpenTunNull):
+            raise Fault(faultCode=-1, faultString="Wireshark debugging requires opentun to be active on the server")
+        else:
+            self.ebm.wireshark_debug_enabled = False
 
     def get_wireshark_debug(self):
         return self.ebm.wireshark_debug_enabled

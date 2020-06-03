@@ -87,12 +87,14 @@ def wireshark_debug(proxy):
 
         click.echo("{} --> {}".format(status, proxy.rpc_server.get_wireshark_debug()))
     except xmlrpclib.Fault as err:
-        click.secho("Server fault: {}".format(err), fg='red')
+        click.secho("Server fault: {}".format(err.faultString), fg='red')
+        return
     except socket.error as err:
         if errno.ECONNREFUSED:
             click.secho("Connection refused. Is server running?", fg='red')
         else:
             click.echo(err)
+        return
 
     click.secho('Ok!', fg='green')
 

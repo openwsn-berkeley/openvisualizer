@@ -269,8 +269,11 @@ class RPL(eventbusclient.EventBusClient):
         else:
             self.parents_dao_seq[node].append(dao_header['RPL_DAO_Sequence'])
 
-        with open('dao_sequence.txt', 'a') as f:
-            f.write(str(self.parents_dao_seq) + '\n')
+        try:
+            with open('dao_sequence.txt', 'a') as f:
+                f.write(str(self.parents_dao_seq) + '\n')
+        except IOError as err:
+            log.error("Permission error: {}".format(err))
 
         # if you get here, the DAO was parsed correctly
 

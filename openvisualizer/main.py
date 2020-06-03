@@ -858,7 +858,11 @@ def main():
 
     # loading the logging configuration
     if not args.lconf and pkg_resources.resource_exists(PACKAGE_NAME, DEFAULT_LOGGING_CONF):
-        logging.config.fileConfig(pkg_resources.resource_stream(PACKAGE_NAME, DEFAULT_LOGGING_CONF))
+        try:
+            logging.config.fileConfig(pkg_resources.resource_stream(PACKAGE_NAME, DEFAULT_LOGGING_CONF))
+        except IOError as err:
+            log.critical("Permission error: {}".format(err))
+            return
         log.verbose("Loading logging configuration: {}".format(DEFAULT_LOGGING_CONF))
     elif args.lconf:
         logging.config.fileConfig(args.lconf)

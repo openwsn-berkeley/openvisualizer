@@ -353,11 +353,9 @@ class OpenLbr(EventBusClient):
                 # udp header -- can be compressed.. assume first it is not compressed.
                 if len(ipv6dic['payload']) < 5:
                     log.critical("wrong payload length on UDP packet {0}".format(",".join(str(c) for c in data)))
-                    print "wrong payload length on UDP packet {0}".format(",".join(str(c) for c in data))
                     return
 
                 if ipv6dic['payload'][0] & self.NHC_UDP_MASK == self.NHC_UDP_ID:
-
                     lowpan_nhc = ipv6dic['payload'][0]
                     new_udp_header_length = 0
 
@@ -425,6 +423,9 @@ class OpenLbr(EventBusClient):
                     ipv6dic['app_payload'] = ipv6dic['payload'][8:]
 
                 dispatch_signal = (tuple(ipv6dic['dst_addr']), self.PROTO_UDP, ipv6dic['udp_dest_port'])
+            else:
+                log.error('Unknown next header {}, dropping packet'.format(ipv6dic['next_header']))
+                return
 
             # keep payload and app_payload in case we want to assemble the message later.
             # as source address is being retrieved from the IPHC header, the signal includes it in case

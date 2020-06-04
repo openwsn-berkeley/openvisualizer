@@ -49,8 +49,8 @@ class IotlabMoteProbe(MoteProbe):
             reg = r'[0-9a-zA-Z\-]+-\d+\.([a-z]+)'
             match = re.search(reg, iotlab_mote)
             self.iotlab_site = match.group(1)
-        self.iotlab_tunnel = None
-        self.socket = None
+        self._ssh_tunnel = None
+        self._socket = None
         self.xonxoff = xonxoff
         self._cts = False
 
@@ -104,8 +104,12 @@ class IotlabMoteProbe(MoteProbe):
         return mote_probes
 
     @property
-    def serial(self):
-        return self.socket
+    def socket(self):
+        return self._socket
+
+    @property
+    def ssh_tunnel(self):
+        return self._ssh_tunnel
 
     # ======================== private =================================
 
@@ -130,7 +134,7 @@ class IotlabMoteProbe(MoteProbe):
 
     def _rcv_data(self, rx_bytes=1024):
         try:
-            data = self.socket.recv(rx_bytes)
+            data = self._socket.recv(rx_bytes)
             if self.xonxoff:
                 self._set_cts(data)
             return data
@@ -145,22 +149,22 @@ class IotlabMoteProbe(MoteProbe):
             if self.xonxoff and not self._cts:
                 continue
             else:
-                bytes_written += self.socket.send(hdlc_data)
+                bytes_written += self._socket.send(hdlc_data)
 
     def _detach(self):
-        if self.socket is not None:
+        if self._socket is not None:
             log.debug('closing socket to {}'.format(self._portname))
-            self.socket.close()
+            self._socket.close()
 
-        if self.iotlab_tunnel is not None:
+        if self._ssh_tunnel is not None:
             log.debug('stopping ssh tunnel to {}'.format(self._portname))
-            self.iotlab_tunnel.stop()
+            self._ssh_tunnel.stop()
 
     def _attach(self):
         if hasattr(self, 'iotlab_site'):
             port = self._get_free_port()
             sshtunnel.SSH_TIMEOUT = self.IOTLAB_SSH_TIMEOUT
-            self.iotlab_tunnel = sshtunnel.open_tunnel(
+            self._ssh_tunnel = sshtunnel.open_tunnel(
                 '{}.{}'.format(self.iotlab_site,
                                self.IOTLAB_FRONTEND_BASE_URL),
                 ssh_pkey=self.iotlab_key_file,
@@ -170,16 +174,16 @@ class IotlabMoteProbe(MoteProbe):
                 remote_bind_address=(self.iotlab_mote,
                                      self.IOTLAB_MOTE_TCP_PORT),
                 local_bind_address=('0.0.0.0', port))
-            self.iotlab_tunnel.start()
+            self._ssh_tunnel.start()
             time.sleep(0.1)
 
             log.debug('{}: ssh tunnel started'.format(self.iotlab_mote))
 
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.settimeout(self.IOTLAB_SOCKET_TIMEOUT)
-            self.socket.connect(('127.0.0.1', port))
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.settimeout(self.IOTLAB_SOCKET_TIMEOUT)
+            self._socket.connect(('127.0.0.1', port))
 
             log.debug('{}: socket connected'.format(self.iotlab_mote))
         else:
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect((self.iotlab_mote, self.IOTLAB_MOTE_TCP_PORT))
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.connect((self.iotlab_mote, self.IOTLAB_MOTE_TCP_PORT))

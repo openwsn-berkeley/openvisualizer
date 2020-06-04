@@ -1,16 +1,22 @@
-pyzmq==15.4.0
-pyserial==2.6
-PyDispatcher==2.0.3
-bottle==0.11.6
-Sphinx==1.8.5
-netifaces
+pyserial
+PyDispatcher
+bottle
+Sphinx
 yappi
-intelhex==2.1
+intelhex
 openwsn-coap
 pylint
 pycryptodome
 cbor
 hkdf
 paho-mqtt
+coloredlogs
+verboselogs
+click
+blessed
+ipaddr
 scapy
-pytest==4.6.9
+sshtunnel
+iotlabcli
+pywin32; sys_platform == 'win32'
+colorama; sys_platform == 'win32'

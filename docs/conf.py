@@ -18,7 +18,7 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.append(os.path.abspath('..'))
 sys.path.append(os.path.abspath('../bin/openVisualizerApp'))
-sys.path.append(os.path.abspath('../openvisualizer/eventBus/PyDispatcher-2.0.3'))
+sys.path.append(os.path.abspath('../openvisualizer/eventbus/PyDispatcher-2.0.3'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -67,12 +67,6 @@ release = '1.6'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns = ['build']
-
-# Avoids an import error from reading wrong file for platform.
-if os.name == 'nt':
-    exclude_patterns += ['openTunLinux.rst']
-elif os.name == 'posix':
-    exclude_patterns += ['openTunWindows.rst']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None

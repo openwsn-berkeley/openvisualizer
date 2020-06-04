@@ -4,12 +4,13 @@ python:
 
 # Install dependencies
 before_install:
- - sudo apt-get update -qq
- - sudo apt-get install -qq python-tk
- - sudo apt-get install scons
-install: pip install -r requirements.txt
+  - sudo apt-get update -qq
+install:
+  - pip install -r requirements.txt
+  - pip install -r tests-requirements.txt
+  - pip install .
 
 # Command to run tests
 script:
-  - scons unittests
-  - scons docs
+  - python -m pytest tests/ov
+  # - python -m pytest tests/server_client # test also require openwsn-fw so for now not working on Travis

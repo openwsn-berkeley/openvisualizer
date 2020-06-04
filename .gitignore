@@ -1,0 +1,18 @@
+# cache files
+*.pyc
+.sconsign.dblite
+
+# folders
+build/
+venv/
+
+# openvisualizer temporary files
+debugpins.vcd
+dao_sequence.txt
+bin/debugpins.vcd
+openvisualizer/motehandler/moteconnector/openparser/defines.py
+
+
+# IDE files
+.idea/
+*.log

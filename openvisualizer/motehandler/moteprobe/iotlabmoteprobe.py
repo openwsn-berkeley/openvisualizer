@@ -32,7 +32,8 @@ class IotlabMoteProbe(MoteProbe):
     IOTLAB_FRONTEND_BASE_URL = 'iot-lab.info'
 
     def __init__(self, iotlab_mote, iotlab_user=None, iotlab_passwd=None,
-                 iotlab_key_file=None, iotlab_key_pas=None):
+                 iotlab_key_file=None, iotlab_key_pas=None, xonxoff=True):
+
         self.iotlab_mote = iotlab_mote
 
         if self.IOTLAB_FRONTEND_BASE_URL in self.iotlab_mote:
@@ -50,6 +51,8 @@ class IotlabMoteProbe(MoteProbe):
             self.iotlab_site = match.group(1)
         self.iotlab_tunnel = None
         self.socket = None
+        self.xonxoff = xonxoff
+        self._cts = False
 
         # initialize the parent class
         MoteProbe.__init__(self, portname=iotlab_mote)
@@ -113,15 +116,36 @@ class IotlabMoteProbe(MoteProbe):
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             return s.getsockname()[1]
 
+    def _set_cts(self, data):
+        xoff_idx = -1
+        xon_idx = -1
+        if chr(self.XON) in data:
+            xon_idx = len(data) - 1 - data[::-1].index(chr(self.XON))
+        if chr(self.XOFF) in data:
+            xoff_idx = len(data) - 1 - data[::-1].index(chr(self.XOFF))
+        if xoff_idx > xon_idx:
+            self._cts = False
+        elif xon_idx > xoff_idx:
+            self._cts = True
+
     def _rcv_data(self, rx_bytes=1024):
         try:
-            return self.socket.recv(rx_bytes)
+            data = self.socket.recv(rx_bytes)
+            if self.xonxoff:
+                self._set_cts(data)
+            return data
         except socket.timeout:
             raise MoteProbeNoData
 
     def _send_data(self, data):
         hdlc_data = self.hdlc.hdlcify(data)
-        self.socket.send(hdlc_data)
+        hdlc_len = len(bytearray(hdlc_data))
+        bytes_written = 0
+        while not self.quit and bytes_written != hdlc_len:
+            if self.xonxoff and not self._cts:
+                continue
+            else:
+                bytes_written += self.socket.send(hdlc_data)
 
     def _detach(self):
         if self.socket is not None:

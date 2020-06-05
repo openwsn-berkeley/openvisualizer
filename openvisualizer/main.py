@@ -9,6 +9,7 @@ Contains application model for OpenVisualizer. Expects to be called by top-level
 """
 import json
 import logging.config
+import os
 import platform
 import shutil
 import signal
@@ -341,7 +342,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
     def _load_saved_topology(self):
         """ Check if we can find the file locally, if not search the example directory. """
 
-        local_path = os.path.join('topologies', self.topo_file)
+        local_path = '/'.join(('topologies', str(self.topo_file)))
 
         try:
             if os.path.isfile(self.topo_file):

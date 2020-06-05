@@ -7,10 +7,10 @@ import xmlrpclib
 
 import bottle
 import click
-from openvisualizer.client.webserver import WebServer
 
 from openvisualizer.client.plugins.plugin import Plugin
 from openvisualizer.client.utils import transform_into_ipv6
+from openvisualizer.client.webserver import WebServer
 from openvisualizer.motehandler.motestate.motestate import MoteState
 
 
@@ -107,13 +107,16 @@ def motes(proxy):
         temp_mote_dict = proxy.rpc_server.get_mote_dict()
         addr_port_dict = {}
 
-        # if we have all the info resolve the entire IPv6 address
+        # check if we have all the info resolve the entire IPv6 address
         if None not in temp_mote_dict.values():
             for addr in temp_mote_dict:
                 mote_state = proxy.rpc_server.get_mote_state(addr)
                 id_manager = json.loads(mote_state[MoteState.ST_IDMANAGER])[0]
                 full_addr = transform_into_ipv6(id_manager['myPrefix'][:-9] + '-' + id_manager['my64bID'][:-5])
                 addr_port_dict[full_addr] = temp_mote_dict[addr]
+        else:
+            logging.warning("Not all addresses could be resolved.")
+
     except socket.error as err:
         if errno.ECONNREFUSED:
             click.secho("Connection refused. Is server running?", fg='red')
@@ -126,12 +129,30 @@ def motes(proxy):
         if len(addr_port_dict) != len(temp_mote_dict):
             addr_port_dict = temp_mote_dict
 
-        click.secho("Attached motes (address | port):", bold=True, underline=True)
+        i = 0
+        port = None
+        while port is None and i < len(addr_port_dict):
+            addr, port = addr_port_dict.items()[i]
+            i += 1
+
+        if port is None:
+            port = 'None'
+
+        heading = " | {:^{}} | {:^{}} | {:^13} |".format("MOTE ID", str(max(15, len(addr))), "PORT",
+                                                         str(max(15, len(port))), 'STATUS')
+        click.echo("".join([" "] + ["-"] * (len(heading) - 1)))
+        click.echo(heading)
+        click.echo("".join([" "] + ["-"] * (len(heading) - 1)))
         for addr, port in addr_port_dict.items():
             if port is None:
-                click.echo("- {} {:>25}".format(port, addr))
+                click.echo(" | {:^15} | {:^15} | ".format(port, addr), nl='')
+                click.secho("{:^13}".format('No response'), fg='red', nl='')
+                click.echo(" |")
             else:
-                click.echo("- {} {:>25}".format(addr, port))
+                click.echo(" | {:^15} | {:^15} | ".format(addr, port), nl='')
+                click.secho("{:^13}".format('Ok!'), fg='green', nl='')
+                click.echo(" |")
+        click.echo("".join([" "] + ["-"] * (len(heading) - 1)))
 
 
 @click.command()

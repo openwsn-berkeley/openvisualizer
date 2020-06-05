@@ -99,7 +99,7 @@ The architecture of OpenVisualizer is split into two main components:
 * **OpenVisualizer Server**
 * **OpenVisualizer Client**
 
-![openvisualizer-architecture](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop_SW-318/images/ov_arch.png)
+![openvisualizer-architecture](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop/images/ov_arch.png)
 
 ### OpenVisualizer Server <a name="server"></a>
 The _OpenVisualizer Server_ contains all the code to interface with a mesh network consisting of motes running the OpenWSN firmware. The server can interact with locally connected hardware or with a networks deployed on [IoT-LAB][] or the OpenTestBed. Alternatively, the server can simulate a network and run the firmware code on emulated motes, locally on your computer. To achieve mote emulation, the OpenWSN firmware is compiled as a Python C extension. Mote emulation is particularly useful when you don't have hardware at hand or for debugging purposes. Inside the `openvisualizer` Python package there are several subpackages. All of the subpackages, with exception of the package called `client`, implement different parts of the _OpenVisualizer Server_. Some important features are:
@@ -116,7 +116,7 @@ There are two types of clients: the _terminal client_ and the _web interface cli
 
 The image below shows an instance of _OpenVisualizer Server_ (on the left), and five connected _OpenVisualizer Clients_ (on the right). Each client displays information about a specific mote, i.e., the neighbor table, the TSCH schedule, the packet queue pressure, general mote information, and MAC-layer statistics.
 
-![openv-client](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop_SW-318/images/openv-client.png)
+![openv-client](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop/images/openv-client.png)
 
 
 ## Manual <a name="manual"></a>
@@ -167,7 +167,7 @@ Most `openv-client` commands will issue a single call to the _OpenVisualizer Ser
 (venv) $ openv-client root AF8B
 ```
 
-| ![openv-client](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop_SW-318/images/openv-client-root.png) |
+| ![openv-client](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop/images/openv-client-root.png) |
 | :----------------------------------------------------------: |
 | *We try to set mote 0001 as DAG root by running the `openv-client root` command. During the first attempt the OpenVisualizer Server is not active and the command fails. We then start a server instance in another terminal window and retry our command. This time the command is successful.* |
 
@@ -176,7 +176,7 @@ Other useful commands are:
 * **boot**: only available when the server is running a simulated network and when the emulated motes have not yet booted. By default the server will immediately boot the emulated motes, but you can change this behavior by adding the `--no-boot` option.
 *  **motes**: lists the addresses of the connected motes
 
-| ![openv-client](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop_SW-318/images/openv-client-motes.png) |
+| ![openv-client](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop/images/openv-client-motes.png) |
 | :----------------------------------------------------------: |
 | *The addresses of the emulated motes before the network was formed and after network formation.* |
 
@@ -190,7 +190,7 @@ The final subcommand of the `openv-client` is called `view`. It can display seve
 
 Each _view_ command works in the same way. It starts a thread that periodically queries the server for a specific bit of information for a specified mote. It then displays this information nicely by using the Python package `blessed`, a wrapper around the Python`curses` module, or through the web browser (when you use the _view_ called _web_).  The option `--refresh-rate=<x>` (not available for the _web view_) can change how often the _view_ is updated, i.e., queries the _OpenVisualizer Server_ (default is 1s). 
 
-| ![openv-client](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop_SW-318/images/openv-client-views.png) |
+| ![openv-client](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop/images/openv-client-views.png) |
 | :----------------------------------------------------------: |
 | *The top terminal panel shows the output of the OpenVisualizer Server. On the bottom there are two active views, schedule and neighbors, each in there own terminal panel* |
 
@@ -214,7 +214,7 @@ The web view can be started as follows:
 
 Web view (main tab)            |  Web view (topology tab) 
 :-------------------------:|:-------------------------:
-![openv-client-web1](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop_SW-318/images/webview-motes.png)  | ![openv-client-web2](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop_SW-318/images/webview-topology.png) 
+![openv-client-web1](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop/images/webview-motes.png)  | ![openv-client-web2](https://raw.githubusercontent.com/TimothyClaeys/openvisualizer/develop/images/webview-topology.png) 
 
 ### Hardware <a name="hardware"></a>
 
@@ -255,16 +255,23 @@ When _OpenVisualizer Server_ runs directly on the SSH frontend you can use the s
 You can authenticate to [IoT-LAB][] upfront by running:
 
 ```bash
-(venv) $ iotlab-auth -u <login>
+(venv)  $ iotlab-auth -u <login>
 ```
 
 Otherwise you need to pass your username and password as additional parameters:
 
 ```bash
-(venv) $ openv-server --iotlab-motes m3-10 m3-11 --user <USERNAME> --password <PASSWORD>
+(venv)  $ openv-server --iotlab-motes m3-10 m3-11 --user <USERNAME> --password <PASSWORD>
 ```
 
 ### OpenTestBed <a name="opentestbed"></a>
+
+Running the _OpenVisualizer Server_ as a frontend for the OpenTestBed is as simple as:
+
+```bash
+(venv) $ openv-server --opentestbed
+```
+The server connects in the background to the MQTT server that gathers the data from the testbed and subscribes to the appropriate topics.
 
 ## Documentation <a name="docs"></a>
 

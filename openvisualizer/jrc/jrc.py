@@ -12,6 +12,7 @@ import os
 import threading
 
 import cbor
+import json
 import verboselogs
 from coap import coap, coapResource, coapDefines as Defs, coapUtils as Utils, coapObjectSecurity as Oscoap
 
@@ -39,23 +40,23 @@ class JRC(object):
 # ======================== Security Context Handler =========================
 class ContextHandler(object):
     # value of the OSCORE Master Secret from 6TiSCH TD
-    master_secret = binascii.unhexlify('DEADBEEFCAFEDEADBEEFCAFEDEADBEEF')
+    master_secret = "DEADBEEFCAFEDEADBEEFCAFEDEADBEEF"
+    master_salt = ""
 
     def __init__(self, join_resource):
         self.join_resource = join_resource
 
     # ======================== Context Handler needs to be registered =============================
-    def security_context_lookup(self, kid):
-        kid_buf = Utils.str2buf(kid)
+    def security_context_lookup(self, kid, kidContext):
 
-        eui64 = kid_buf[:-1]
-        sender_id = eui64 + [0x01]  # sender ID of jrc is reversed
-        recipient_id = eui64 + [0x00]
+        eui64 = kidContext
+        sender_id = "JRC"
+        recipient_id = ""
 
         # if eui-64 is found in the list of joined nodes, return the appropriate context
         # this is important for replay protection
         for dictionary in self.join_resource.joinedNodes:
-            if dictionary['eui64'] == Utils.buf2str(eui64):
+            if dictionary['eui64'] == eui64:
                 try:
                     log.verbose("Node {0} found in joinedNodes. Returning context {1}.".format(
                         format_ipv6_addr(dictionary['eui64']), str(dictionary['context'])))
@@ -66,14 +67,40 @@ class ContextHandler(object):
 
         # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET
         # handler of the join resource
-        context = Oscoap.SecurityContext(masterSecret=self.master_secret,
-                                         senderID=Utils.buf2str(sender_id),
-                                         recipientID=Utils.buf2str(recipient_id),
-                                         aeadAlgorithm=Oscoap.AES_CCM_16_64_128())
+        filePath = os.path.abspath(os.path.join("bin", "oscore_context_{0}.json".format(binascii.hexlify(eui64))))
+        if not os.path.exists(os.path.dirname(filePath)):
+            os.makedirs(os.path.dirname(filePath))
 
-        log.verbose("New node: {0}. Derive new OSCORE context from master secret.".format(format_ipv6_addr(eui64)))
+        log.verbose("New node: {0}. Creating new OSCORE context in {1}.".format(format_ipv6_addr(Utils.str2buf(eui64)), filePath))
+
+        # FIXME: until persistency is implemented in firmware, we need to overwrite the security context for each run
+        # FIXME: this is a security issue as AEAD nonces get reused and should not be used in a production environment
+        self.security_context_create_overwrite(filePath,
+                                               binascii.hexlify(eui64),
+                                               self.master_salt,
+                                               self.master_secret,
+                                               binascii.hexlify(sender_id),
+                                               binascii.hexlify(recipient_id))
+
+        context = Oscoap.SecurityContext(securityContextFilePath=filePath)
 
         return context
+
+    # create and return a security context file
+    def security_context_create_overwrite(self, filePath, idContext, masterSalt, masterSecret, senderID, recipientID):
+        dict = {}
+        dict["aeadAlgorithm"] = "AES_CCM_16_64_128"
+        dict["hashFunction"] = "sha256"
+        dict["idContext"] = idContext
+        dict["masterSalt"] = masterSalt
+        dict["masterSecret"] = masterSecret
+        dict["recipientID"] = recipientID
+        dict["senderID"] = senderID
+        dict["replayWindow"] = [0]
+        dict["sequenceNumber"] = 0
+
+        with open(filePath, "w") as contextFile:
+            json.dump(dict, contextFile, indent=4, sort_keys=True)
 
 
 # ======================== Interface with OpenVisualizer ======================================
@@ -282,7 +309,7 @@ class JoinResource(coapResource.coapResource):
 
         if object_security:
             # we need to add the pledge to a list of joined nodes, if not present already
-            eui64 = Utils.buf2str(object_security.kid[:-1])
+            eui64 = Utils.buf2str(object_security.kidContext)
             found = False
             for node in self.joinedNodes:
                 if node['eui64'] == eui64:

@@ -88,10 +88,11 @@ class SerialMoteProbe(MoteProbe):
 
     def _send_data(self, data):
         hdlc_data = self.hdlc.hdlcify(data)
-        bytes_written = 0
-        self._serial.flush()
-        while bytes_written != len(bytearray(hdlc_data)):
-            bytes_written += self._serial.write(hdlc_data)
+        hdlc_len = len(bytearray(hdlc_data))
+        sent = 0
+        while not self.quit and sent != hdlc_len:
+            rem = hdlc_len - sent
+            sent += self._serial.write(hdlc_data[sent:sent + rem])
 
     def _rcv_data(self, rx_bytes=1):
         data = self._serial.read(rx_bytes)

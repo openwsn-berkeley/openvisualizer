@@ -13,6 +13,7 @@ import time
 from contextlib import closing
 
 import sshtunnel
+import paramiko
 from iotlabcli import auth
 
 from moteprobe import MoteProbe, MoteProbeNoData
@@ -30,12 +31,17 @@ class IotlabMoteProbe(MoteProbe):
     IOTLAB_MOTE_TCP_PORT = 20000
 
     IOTLAB_FRONTEND_BASE_URL = 'iot-lab.info'
+    IOTLAB_A8 = 'a8'
 
     def __init__(self, iotlab_mote, iotlab_user=None, iotlab_passwd=None,
-                 iotlab_key_file=None, iotlab_key_pas=None, xonxoff=True):
-
+                 iotlab_key_file=None, iotlab_key_pas=None, xonxoff=True,
+                 baudrate=115200):
         self.iotlab_mote = iotlab_mote
-
+        # match the site from the mote's address
+        reg = r'([0-9a-zA-Z\-]+)-(\d+)'
+        match = re.search(reg, iotlab_mote)
+        self._iotlab_archi = match.group(1)
+        self._iotlab_num = match.group(2)
         if self.IOTLAB_FRONTEND_BASE_URL in self.iotlab_mote:
             # Recover user credentials
             self.iotlab_user, self.iotlab_passwd = auth.get_user_credentials(
@@ -53,6 +59,9 @@ class IotlabMoteProbe(MoteProbe):
         self._socket = None
         self.xonxoff = xonxoff
         self._cts = False
+        # a8-m3 can be started with different baudrates
+        if self._iotlab_archi == self.IOTLAB_A8:
+            self._baudrate = baudrate
 
         # initialize the parent class
         MoteProbe.__init__(self, portname=iotlab_mote)
@@ -61,29 +70,32 @@ class IotlabMoteProbe(MoteProbe):
 
     @classmethod
     def probe_iotlab_motes(cls, iotlab_motes, iotlab_user, iotlab_passwd,
-                           iotlab_key_file, iotlab_key_pas):
+                           iotlab_key_file, iotlab_key_pas, baudrate):
         mote_probes = []
         probe = None
-        log.debug("Probing motes: {}".format(iotlab_motes))
+        log.debug("Probing motes: {}/{}".format(iotlab_motes, baudrate))
         try:
             for mote in iotlab_motes:
                 log.debug("Probe {}".format(mote))
                 try:
-                    probe = cls(
-                        iotlab_mote=mote,
-                        iotlab_user=iotlab_user,
-                        iotlab_passwd=iotlab_passwd,
-                        iotlab_key_file=iotlab_key_file,
-                        iotlab_key_pas=iotlab_key_pas,)
-                    while probe.socket is None and probe.isAlive():
-                        pass
-                    if probe.test_serial(pkts=2):
-                        log.success("{} Ok.".format(probe._portname))
-                        mote_probes.append(probe)
-                    else:
-                        # Exit unresponsive moteprobe threads
-                        probe.close()
-                        probe.join()
+                    for baud in baudrate:
+                        probe = cls(
+                            iotlab_mote=mote,
+                            iotlab_user=iotlab_user,
+                            iotlab_passwd=iotlab_passwd,
+                            iotlab_key_file=iotlab_key_file,
+                            iotlab_key_pas=iotlab_key_pas,
+                            baudrate=baud)
+                        while probe.socket is None and probe.isAlive():
+                            pass
+                        if probe.test_serial(pkts=3):
+                            log.success("{} Ok.".format(probe._portname))
+                            mote_probes.append(probe)
+                            break
+                        else:
+                            # Exit unresponsive moteprobe threads
+                            probe.close()
+                            probe.join()
                 except Exception as e:
                     if probe:
                         probe.close()
@@ -102,6 +114,10 @@ class IotlabMoteProbe(MoteProbe):
         log.success(
             "Discovered following iotlab-motes: {}".format(valid_motes))
         return mote_probes
+
+    @property
+    def baudrate(self):
+        return self._baudrate
 
     @property
     def socket(self):
@@ -160,30 +176,72 @@ class IotlabMoteProbe(MoteProbe):
             log.debug('stopping ssh tunnel to {}'.format(self._portname))
             self._ssh_tunnel.stop()
 
+    def _get_socket(self, host, port):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(self.IOTLAB_SOCKET_TIMEOUT)
+        sock.connect((host, port))
+        return sock
+
+    def _get_ssh_tunnel(self, remote_bind_address, local_bind_address):
+        sshtunnel.SSH_TIMEOUT = self.IOTLAB_SSH_TIMEOUT
+        tunnel = sshtunnel.open_tunnel(
+            '{}.{}'.format(self.iotlab_site,
+                           self.IOTLAB_FRONTEND_BASE_URL),
+            ssh_pkey=self.iotlab_key_file,
+            ssh_private_key_password=self.iotlab_key_pas,
+            ssh_username=self.iotlab_user,
+            ssh_password=self.iotlab_passwd,
+            remote_bind_address=remote_bind_address,
+            local_bind_address=local_bind_address)
+        return tunnel
+
+    def _a8_socat_start(self, port, baudrate):
+        socat_cmd = 'socat TCP-LISTEN:{},fork,reuseaddr'.format(port)
+        socat_cmd += ' FILE:/dev/ttyA8_M3,b{},echo=0,raw &'.format(baudrate)
+
+        host = 'node-{}-{}'.format(self._iotlab_archi, self._iotlab_num)
+        user = 'root'
+
+        if hasattr(self, 'iotlab_site'):
+            cmd = "ssh {}@{} {}".format(user, host, socat_cmd)
+            host = '{}.iot-lab.info'.format(self.iotlab_site)
+            user = self.iotlab_user
+        else:
+            cmd = socat_cmd
+
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(hostname=host, username=user, timeout=2)
+        client.exec_command(cmd)
+        client.close
+        log.debug('{}: started socat'.format(self.iotlab_mote))
+
     def _attach(self):
+        # Default socket port, host
+        port = self.IOTLAB_MOTE_TCP_PORT
+        host = self.iotlab_mote
+
+        if self._iotlab_archi == self.IOTLAB_A8:
+            log.debug('{}: setting up socat'.format(self.iotlab_mote))
+            self._a8_socat_start(port=self.IOTLAB_MOTE_TCP_PORT,
+                                 baudrate=self._baudrate)
+
         if hasattr(self, 'iotlab_site'):
             port = self._get_free_port()
-            sshtunnel.SSH_TIMEOUT = self.IOTLAB_SSH_TIMEOUT
-            self._ssh_tunnel = sshtunnel.open_tunnel(
-                '{}.{}'.format(self.iotlab_site,
-                               self.IOTLAB_FRONTEND_BASE_URL),
-                ssh_pkey=self.iotlab_key_file,
-                ssh_private_key_password=self.iotlab_key_pas,
-                ssh_username=self.iotlab_user,
-                ssh_password=self.iotlab_passwd,
-                remote_bind_address=(self.iotlab_mote,
-                                     self.IOTLAB_MOTE_TCP_PORT),
-                local_bind_address=('0.0.0.0', port))
+            host = '127.0.0.1'
+            # start ssh tunnel to ssh-frontend
+            if self._iotlab_archi == self.IOTLAB_A8:
+                remote_bind = (
+                    'node-{}-{}'.format(self._iotlab_archi, self._iotlab_num),
+                    self.IOTLAB_MOTE_TCP_PORT)
+            else:
+                remote_bind = (self.iotlab_mote, self.IOTLAB_MOTE_TCP_PORT)
+            local_bind = (host, port)
+            self._ssh_tunnel = self._get_ssh_tunnel(remote_bind, local_bind)
             self._ssh_tunnel.start()
             time.sleep(0.1)
+            log.debug('{}: ssh frontend tunnel started'.format(self.iotlab_mote))
 
-            log.debug('{}: ssh tunnel started'.format(self.iotlab_mote))
-
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.settimeout(self.IOTLAB_SOCKET_TIMEOUT)
-            self._socket.connect(('127.0.0.1', port))
-
-            log.debug('{}: socket connected'.format(self.iotlab_mote))
-        else:
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.connect((self.iotlab_mote, self.IOTLAB_MOTE_TCP_PORT))
+        self._socket = self._get_socket(host, port)
+        log.debug('{}: socket connected'.format(self.iotlab_mote))

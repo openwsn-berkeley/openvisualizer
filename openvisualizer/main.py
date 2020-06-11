@@ -215,6 +215,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
                 iotlab_passwd=iotlab_passwd,
                 iotlab_key_file=iotlab_key_file,
                 iotlab_key_pas=iotlab_key_pas,
+                baudrate=baudrate
                 )
         elif testbed_motes:
             motes_finder = testbedmoteprobe.OpentestbedMoteFinder(mqtt_broker)

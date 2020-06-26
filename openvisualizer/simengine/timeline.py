@@ -100,7 +100,7 @@ class TimeLine(threading.Thread):
             # make sure that this event is later in time than the previous
             if not self.current_time <= event.at_time:
                 self.log.critical("Current time {} exceeds event time: {}".format(self.current_time, event))
-                assert 0
+                assert False
 
             # record the current time
             self.current_time = event.at_time

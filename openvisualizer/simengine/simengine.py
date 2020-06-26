@@ -18,16 +18,16 @@ class SimEngineStats(object):
         self.running = False
         self.txStart = None
 
-    def indicateStart(self):
+    def indicate_start(self):
         self.txStart = time.time()
         self.running = True
 
-    def indicateStop(self):
+    def indicate_stop(self):
         if self.txStart:
             self.durationRunning += time.time() - self.txStart
             self.running = False
 
-    def getDurationRunning(self):
+    def get_duration_running(self):
         if self.running:
             return self.durationRunning + (time.time() - self.txStart)
         else:
@@ -49,7 +49,7 @@ class SimEngine(object):
 
     # ======================== main ============================================
 
-    def __init__(self, simTopology='', loghandler=logging.NullHandler()):
+    def __init__(self, sim_topology='', log_handler=logging.StreamHandler(), log_level=logging.WARNING):
 
         # don't re-initialize an instance (singleton pattern)
         if self._init:
@@ -57,14 +57,16 @@ class SimEngine(object):
         self._init = True
 
         # store params
-        self.loghandler = loghandler
+        self.log_handler = log_handler
+        self.log_handler.setFormatter(
+            logging.Formatter(fmt='%(asctime)s [%(name)s:%(levelname)s] %(message)s', datefmt='%H:%M:%S'))
 
         # local variables
         self.moteHandlers = []
         self.timeline = timeline.TimeLine()
-        self.propagation = propagation.Propagation(simTopology)
-        self.idmanager = idmanager.IdManager()
-        self.locationmanager = locationmanager.LocationManager()
+        self.propagation = propagation.Propagation(sim_topology)
+        self.id_manager = idmanager.IdManager()
+        self.location_manager = locationmanager.LocationManager()
         self.pauseSem = threading.Lock()
         self.isPaused = False
         self.stopAfterSteps = None
@@ -83,11 +85,10 @@ class SimEngine(object):
             'Propagation',
             'IdManager',
             'LocationManager',
-            'SimCli',
         ]:
             temp = logging.getLogger(loggerName)
-            temp.setLevel(logging.INFO)
-            temp.addHandler(loghandler)
+            temp.setLevel(log_level)
+            temp.addHandler(log_handler)
 
     def start(self):
 
@@ -101,7 +102,7 @@ class SimEngine(object):
 
     # === controlling execution speed
 
-    def setDelay(self, delay):
+    def set_delay(self, delay):
         self.delay = delay
 
     def pause(self):
@@ -110,7 +111,7 @@ class SimEngine(object):
         if not self.isPaused:
             self.pauseSem.acquire()
             self.isPaused = True
-            self.stats.indicateStop()
+            self.stats.indicate_stop()
 
     def step(self, numSteps):
         self.stopAfterSteps = numSteps
@@ -125,7 +126,7 @@ class SimEngine(object):
         if self.isPaused:
             self.pauseSem.release()
             self.isPaused = False
-            self.stats.indicateStart()
+            self.stats.indicate_start()
 
     def pause_or_delay(self):
         if self.isPaused:
@@ -146,7 +147,7 @@ class SimEngine(object):
 
         assert (self.stopAfterSteps is None or self.stopAfterSteps >= 0)
 
-    def isRunning(self):
+    def is_running(self):
         return not self.isPaused
 
     # === called from the main script
@@ -166,7 +167,7 @@ class SimEngine(object):
     # === called from timeline
 
     def indicate_first_event_passed(self):
-        self.stats.indicateStart()
+        self.stats.indicate_start()
 
     # === getting information about the system
 

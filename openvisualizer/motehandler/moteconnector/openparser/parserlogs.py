@@ -15,12 +15,12 @@ from openvisualizer.motehandler.moteconnector.openparser.parserexception import 
 
 verboselogs.install()
 
-log = logging.getLogger('ParserIEC')
+log = logging.getLogger('ParserLogs')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-class ParserInfoErrorCritical(Parser):
+class ParserLogs(Parser):
     HEADER_LENGTH = 1
 
     class LogSeverity(IntEnum):
@@ -38,7 +38,7 @@ class ParserInfoErrorCritical(Parser):
         log.debug("create instance")
 
         # initialize parent class
-        super(ParserInfoErrorCritical, self).__init__(self.HEADER_LENGTH)
+        super(ParserLogs, self).__init__(self.HEADER_LENGTH)
 
         # store params
         self.severity = severity
@@ -66,7 +66,7 @@ class ParserInfoErrorCritical(Parser):
         else:
             self.error_info[(component, error_code)] = 1
 
-        if error_code == 0x26:
+        if error_code == 0x25:
             # replace args of sixtop command/return code id by string
             arg1 = self.stack_defines["sixtop_returncodes"][arg1]
             arg2 = self.stack_defines["sixtop_states"][arg2]

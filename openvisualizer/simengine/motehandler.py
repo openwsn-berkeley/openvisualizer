@@ -63,11 +63,11 @@ class MoteHandler(threading.Thread):
         self.mote = mote
 
         # === local variables
-        self.loghandler = self.engine.loghandler
+        self.loghandler = self.engine.log_handler
         # unique identifier of the mote
-        self.id = self.engine.idmanager.get_id()
+        self.id = self.engine.id_manager.get_id()
         # position of the mote
-        self.location = self.engine.locationmanager.get_location()
+        self.location = self.engine.location_manager.get_location()
         # stats
         self.num_rx_commands = 0
         self.num_tx_commands = 0

@@ -8,7 +8,7 @@ import logging
 
 from openvisualizer.motehandler.moteconnector.openparser import parser, parserstatus, parserdata, parserpacket, \
     parserprintf
-from openvisualizer.motehandler.moteconnector.openparser.parseriec import ParserInfoErrorCritical
+from openvisualizer.motehandler.moteconnector.openparser.parserlogs import ParserLogs
 
 log = logging.getLogger('OpenParser')
 log.setLevel(logging.ERROR)
@@ -20,12 +20,12 @@ class OpenParser(parser.Parser):
 
     SERFRAME_MOTE2PC_DATA = ord('D')
     SERFRAME_MOTE2PC_STATUS = ord('S')
-    SERFRAME_MOTE2PC_VERBOSE = ParserInfoErrorCritical.LogSeverity.SEVERITY_VERBOSE
-    SERFRAME_MOTE2PC_INFO = ParserInfoErrorCritical.LogSeverity.SEVERITY_INFO
-    SERFRAME_MOTE2PC_WARNING = ParserInfoErrorCritical.LogSeverity.SEVERITY_WARNING
-    SERFRAME_MOTE2PC_SUCCESS = ParserInfoErrorCritical.LogSeverity.SEVERITY_SUCCESS
-    SERFRAME_MOTE2PC_ERROR = ParserInfoErrorCritical.LogSeverity.SEVERITY_ERROR
-    SERFRAME_MOTE2PC_CRITICAL = ParserInfoErrorCritical.LogSeverity.SEVERITY_CRITICAL
+    SERFRAME_MOTE2PC_VERBOSE = ParserLogs.LogSeverity.SEVERITY_VERBOSE
+    SERFRAME_MOTE2PC_INFO = ParserLogs.LogSeverity.SEVERITY_INFO
+    SERFRAME_MOTE2PC_WARNING = ParserLogs.LogSeverity.SEVERITY_WARNING
+    SERFRAME_MOTE2PC_SUCCESS = ParserLogs.LogSeverity.SEVERITY_SUCCESS
+    SERFRAME_MOTE2PC_ERROR = ParserLogs.LogSeverity.SEVERITY_ERROR
+    SERFRAME_MOTE2PC_CRITICAL = ParserLogs.LogSeverity.SEVERITY_CRITICAL
     SERFRAME_MOTE2PC_SNIFFED_PACKET = ord('P')
     SERFRAME_MOTE2PC_PRINTF = ord('F')
 
@@ -47,12 +47,12 @@ class OpenParser(parser.Parser):
 
         # subparser objects
         self.parser_status = parserstatus.ParserStatus()
-        self.parser_verbose = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_VERBOSE, stack_defines)
-        self.parser_info = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_INFO, stack_defines)
-        self.parser_warning = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_WARNING, stack_defines)
-        self.parser_success = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_SUCCESS, stack_defines)
-        self.parser_error = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_ERROR, stack_defines)
-        self.parser_critical = ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_CRITICAL, stack_defines)
+        self.parser_verbose = ParserLogs(self.SERFRAME_MOTE2PC_VERBOSE, stack_defines)
+        self.parser_info = ParserLogs(self.SERFRAME_MOTE2PC_INFO, stack_defines)
+        self.parser_warning = ParserLogs(self.SERFRAME_MOTE2PC_WARNING, stack_defines)
+        self.parser_success = ParserLogs(self.SERFRAME_MOTE2PC_SUCCESS, stack_defines)
+        self.parser_error = ParserLogs(self.SERFRAME_MOTE2PC_ERROR, stack_defines)
+        self.parser_critical = ParserLogs(self.SERFRAME_MOTE2PC_CRITICAL, stack_defines)
         self.parser_data = parserdata.ParserData(mqtt_broker_address)
         self.parser_packet = parserpacket.ParserPacket()
         self.parser_printf = parserprintf.ParserPrintf()

@@ -21,12 +21,13 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 from argparse import ArgumentParser
 from xmlrpclib import Fault
 
+import appdirs
 import coloredlogs
 import pkg_resources
 import verboselogs
 from iotlabcli.parser import common
 
-from openvisualizer import PACKAGE_NAME, WINDOWS_COLORS, UNIX_COLORS, DEFAULT_LOGGING_CONF
+from openvisualizer import PACKAGE_NAME, WINDOWS_COLORS, UNIX_COLORS, DEFAULT_LOGGING_CONF, APPNAME
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.jrc import jrc
@@ -882,10 +883,26 @@ def main():
     _add_iotlab_parser_args(parser)
     args = parser.parse_args()
 
+    # create directories to store logs and application data
+    try:
+        os.makedirs(appdirs.user_log_dir(APPNAME))
+    except OSError as err:
+        if err.errno != 17:
+            log.critical(err)
+            return
+
+    try:
+        os.makedirs(appdirs.user_data_dir(APPNAME))
+    except OSError as err:
+        if err.errno != 17:
+            log.critical(err)
+            return
+
     # loading the logging configuration
     if not args.lconf and pkg_resources.resource_exists(PACKAGE_NAME, DEFAULT_LOGGING_CONF):
         try:
-            logging.config.fileConfig(pkg_resources.resource_stream(PACKAGE_NAME, DEFAULT_LOGGING_CONF))
+            logging.config.fileConfig(pkg_resources.resource_stream(PACKAGE_NAME, DEFAULT_LOGGING_CONF),
+                                      {'log_dir': appdirs.user_log_dir(APPNAME)})
         except IOError as err:
             log.critical("permission error: {}".format(err))
             return
@@ -896,7 +913,10 @@ def main():
     else:
         log.error("could not load logging configuration.")
 
-    options = ['host address server     = {0}'.format(args.host), 'port number server      = {0}'.format(args.port)]
+    options = ['log files directory     = {0}'.format(appdirs.user_log_dir(APPNAME)),
+               'data files directory    = {0}'.format(appdirs.user_data_dir(APPNAME)),
+               'host address server     = {0}'.format(args.host),
+               'port number server      = {0}'.format(args.port)]
 
     if args.fw_path:
         options.append('firmware path           = {0}'.format(args.fw_path))

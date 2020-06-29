@@ -264,6 +264,25 @@ Otherwise you need to pass your username and password as additional parameters:
 (venv)  $ openv-server --iotlab-motes m3-10 m3-11 --user <USERNAME> --password <PASSWORD>
 ```
 
+If the ssh key used to authenticate over iot-lab is not found you can specify its
+location with `--iotlab_key_file` option:
+
+```bash
+(venv)  $ openv-server --iotlab-motes m3-10 m3-11 --iotlab-key-file=<key file path>
+```
+
+This can be useful when running as superuser (required by --opentun).
+
+##### Iot-LAB A8-M3
+
+For iotlab-a8-m3 there is no default TCP port opened, so OpenVisualizer will take
+care of opening one over the specified baudrates so only for Iot-LAB A8-M3 the
+baudrate must also be specified, e.g:
+
+    ```bash
+    (venv) $ openv-server --iotlab-motes a8-4.grenoble.iot-lab.info a8-5.grenoble.iot-lab.info --baudrate 500000
+    ```
+
 ### OpenTestBed <a name="opentestbed"></a>
 
 Running the _OpenVisualizer Server_ as a frontend for the OpenTestBed is as simple as:

@@ -13,8 +13,9 @@ import socket
 import xmlrpclib
 
 import bottle
+import pkg_resources
 
-from openvisualizer import VERSION
+from openvisualizer import VERSION, PACKAGE_NAME
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -27,7 +28,7 @@ bottle.view = functools.partial(bottle.view, ovVersion=VERSION)
 
 
 class WebServer:
-    """ Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web server. """
+    """ Provides web UI for OpenVisualizer."""
 
     def __init__(self, bottle_srv, rpc_server_addr, debug):
         """
@@ -42,7 +43,9 @@ class WebServer:
         self._define_routes()
 
         # To find page templates
-        bottle.TEMPLATE_PATH.append('openvisualizer/client/web_files/templates/')
+        templates_path = '/'.join(('client', 'web_files', 'templates'))
+        templates_path = pkg_resources.resource_filename(PACKAGE_NAME, templates_path)
+        bottle.TEMPLATE_PATH.append(templates_path)
 
     # ======================== public ==========================================
 
@@ -99,7 +102,10 @@ class WebServer:
 
     @staticmethod
     def _server_static(filepath):
-        return bottle.static_file(filepath, root='openvisualizer/client/web_files/static/')
+        static_path = '/'.join(('client', 'web_files', 'static'))
+        static_path = pkg_resources.resource_filename(PACKAGE_NAME, static_path)
+
+        return bottle.static_file(filepath, root=static_path)
 
     def _toggle_dagroot(self, moteid):
         """

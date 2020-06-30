@@ -9,6 +9,7 @@ Contains application model for OpenVisualizer. Expects to be called by top-level
 """
 import json
 import logging.config
+import os
 import platform
 import shutil
 import signal
@@ -220,10 +221,8 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
                 self.mote_probes.append(testbedmoteprobe.OpentestbedMoteProbe(mqtt_broker, testbedmote_eui64=p))
         else:
             # in "hardware" mode, motes are connected to the serial port
-            self.mote_probes = SerialMoteProbe.probe_serial_ports(
-                port_mask=port_mask,
-                baudrate=baudrate
-            )
+            self.mote_probes = SerialMoteProbe.probe_serial_ports(port_mask=port_mask, baudrate=baudrate)
+
         # create a MoteConnector for each MoteProbe
         try:
             fw_defines = self.extract_stack_defines()
@@ -232,7 +231,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
             os.kill(os.getpid(), signal.SIGTERM)
             return
 
-        self.mote_connectors = [moteconnector.MoteConnector(mp, fw_defines) for mp in self.mote_probes]
+        self.mote_connectors = [moteconnector.MoteConnector(mp, fw_defines, mqtt_broker) for mp in self.mote_probes]
 
         # create a MoteState for each MoteConnector
         self.mote_states = [motestate.MoteState(mc) for mc in self.mote_connectors]
@@ -341,7 +340,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
     def _load_saved_topology(self):
         """ Check if we can find the file locally, if not search the example directory. """
 
-        local_path = os.path.join('topologies', self.topo_file)
+        local_path = '/'.join(('topologies', str(self.topo_file)))
 
         try:
             if os.path.isfile(self.topo_file):

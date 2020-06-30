@@ -54,17 +54,13 @@ class ParserData(parser.Parser):
                 log.error("Failed to connect to {} with error msg: {}".format(self.broker, e))
             else:
                 # start mqtt client
-                self.mqtt_thread = threading.Thread(
-                    name='mqtt_loop_thread',
-                    target=self.mqtt_client.loop_forever
-                )
+                self.mqtt_thread = threading.Thread(name='mqtt_loop_thread', target=self.mqtt_client.loop_forever)
                 self.mqtt_thread.start()
 
     # ======================== private =========================================
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
-
-        log.info("Connected to MQTT")
+        log.success("Succesfully connected to broker: {}".format(self.broker))
 
         self.mqtt_connected = True
 
@@ -123,7 +119,7 @@ class ParserData(parser.Parser):
 
                 pkt_info['asn'] = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 5:offset - 1]]))[0]
                 aux = data[offset - 5:offset]  # last 5 bytes of the packet are the ASN in the UDP latency packet
-                diff = self._asn_diference(aux, asn_bytes)  # calculate difference
+                diff = ParserData._asn_diference(aux, asn_bytes)  # calculate difference
                 pkt_info['latency'] = diff  # compute time in slots
                 offset -= 5
 
@@ -137,13 +133,13 @@ class ParserData(parser.Parser):
                 src_id = pkt_info['src_id']
                 offset -= 2
 
-                numTicksOn = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 4:offset]]))[0]
+                num_ticks_on = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 4:offset]]))[0]
                 offset -= 4
 
-                numTicksInTotal = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 4:offset]]))[0]
+                num_ticks_in_total = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 4:offset]]))[0]
                 offset -= 4
 
-                pkt_info['dutyCycle'] = float(numTicksOn) / float(numTicksInTotal)  # duty cycle
+                pkt_info['dutyCycle'] = float(num_ticks_on) / float(num_ticks_in_total)  # duty cycle
 
                 # self.avg_kpi:
                 if src_id in self.avg_kpi:
@@ -185,7 +181,8 @@ class ParserData(parser.Parser):
 
     # ======================== private =========================================
 
-    def _asn_diference(self, init, end):
+    @staticmethod
+    def _asn_diference(init, end):
 
         asn_init = struct.unpack('<HHB', ''.join([chr(c) for c in init]))
         asn_end = struct.unpack('<HHB', ''.join([chr(c) for c in end]))
@@ -236,8 +233,4 @@ class ParserData(parser.Parser):
 
         if self.mqtt_connected:
             # publish the cmd message
-            self.mqtt_client.publish(
-                topic='opentestbed/uinject/arrived',
-                payload=json.dumps(payload),
-                qos=2
-            )
+            self.mqtt_client.publish(topic='opentestbed/uinject/arrived', payload=json.dumps(payload), qos=2)

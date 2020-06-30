@@ -4,6 +4,7 @@ bottle
 Sphinx
 yappi
 intelhex
+setuptools<=44.1.1
 openwsn-coap
 pylint
 pycryptodome

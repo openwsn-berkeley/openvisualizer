@@ -7,6 +7,7 @@ from openvisualizer import VERSION, PACKAGE_NAME
 web_static = 'client/web_files/static'
 web_templates = 'client/web_files/templates'
 
+
 # Cannot create this list with pip.req.parse_requirements() because it requires
 # the pwd module, which is Unix only.
 def _read_requirements(file_name):
@@ -36,6 +37,7 @@ with open(os.path.join(this_directory, 'README.md')) as f:
 setup(
     name=PACKAGE_NAME,
     packages=find_packages(exclude=['tests', 'docs', 'images']),
+    python_requires='<=2.7.17',
     package_data={
         'openvisualizer': [
             'config/*.conf',

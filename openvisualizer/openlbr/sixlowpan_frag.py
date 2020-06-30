@@ -9,7 +9,7 @@ import logging
 from openvisualizer.utils import buf2int, hex2buf
 
 log = logging.getLogger('SixLowPanFrag')
-log.setLevel(logging.WARNING)
+log.setLevel(logging.INFO)
 log.addHandler(logging.NullHandler())
 
 
@@ -94,7 +94,7 @@ class Fragmentor(object):
                 del self.reassemble_buffer[tag]
 
         if reassembled_pkt is not None:
-            log.debug("[GATEWAY] Reassembled {} frags with tag {} into an IPv6 packet of size {}".format(
+            log.success("[GATEWAY] Reassembled {} frags with tag {} into an IPv6 packet of size {}".format(
                 num_of_frags, used_tag, len(reassembled_pkt)))
 
         return reassembled_pkt
@@ -140,7 +140,7 @@ class Fragmentor(object):
         # increment the tag for the new set of fragments
         self.datagram_tag += 1
 
-        log.debug("[GATEWAY] Fragment incoming IPv6 packet (size: {}) into {} fragments with tag {}".format(
-            len(ip6_pkt), len(fragment_list), self.datagram_tag))
+        log.info("[GATEWAY] Fragmenting incoming IPv6 packet (size: {}) into {} fragments with tag {}".format(
+            original_length, len(fragment_list), self.datagram_tag - 1))
 
         return fragment_list

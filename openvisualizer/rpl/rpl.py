@@ -260,7 +260,7 @@ class RPL(eventbusclient.EventBusClient):
         output += ['- children:']
         for p in children:
             output += ['   {0}:{1}'.format(format_ipv6_addr(self.network_prefix), format_ipv6_addr(p))]
-        output = '\n\t\t'.join(output)
+        output = '\n\t'.join(output)
         log.info(output)
 
         node = format_ipv6_addr(source)

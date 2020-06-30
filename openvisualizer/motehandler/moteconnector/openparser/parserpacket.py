@@ -40,7 +40,9 @@ class ParserPacket(parser.Parser):
         log.debug("packet without header: {0}".format(data))
 
         event_type = 'sniffedPacket'
-        # notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer header
+
+        # notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer
+        # header
         return event_type, data
 
 # ======================== private =========================================

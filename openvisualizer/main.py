@@ -303,6 +303,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
 
     def load_topology(self):
         """ Import the network topology from a json file. """
+        if not self.simulator_mode:
+            log.error("Only supported in simulator mode")
+            return
 
         log.success("Loading topology from file.")
 
@@ -600,6 +603,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
     def update_network_topology(self, connections):
         connections = json.loads(connections)
 
+        if not self.simulator_mode:
+            return False
+
         for (_, v) in connections.items():
             mh = self.simengine.get_mote_handler_by_id(v['id'])
             mh.set_location(v['lat'], v['lon'])
@@ -609,6 +615,10 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
     def get_network_topology(self):
         motes = []
         rank = 0
+
+        if not self.simulator_mode:
+            return {}
+
         while True:
             try:
                 mh = self.simengine.get_mote_handler(rank)
@@ -626,14 +636,23 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
         return data
 
     def create_motes_connection(self, from_mote, to_mote):
+        if not self.simulator_mode:
+            return False
+
         self.simengine.propagation.create_connection(from_mote, to_mote)
         return True
 
     def update_motes_connection(self, from_mote, to_mote, pdr):
+        if not self.simulator_mode:
+            return False
+
         self.simengine.propagation.update_connection(from_mote, to_mote, pdr)
         return True
 
     def delete_motes_connection(self, from_mote, to_mote):
+        if not self.simulator_mode:
+            return False
+
         self.simengine.propagation.delete_connection(from_mote, to_mote)
         return True
 

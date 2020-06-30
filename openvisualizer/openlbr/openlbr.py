@@ -6,6 +6,7 @@
 
 import logging
 import threading
+import time
 
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.openlbr.sixlowpan_frag import Fragmentor
@@ -274,6 +275,7 @@ class OpenLbr(EventBusClient):
                     signal='bytesToMesh',
                     data=(lowpan['nextHop'], fragment),
                 )
+                time.sleep(0.01)
 
         except (ValueError, NotImplementedError) as err:
             log.error(err)

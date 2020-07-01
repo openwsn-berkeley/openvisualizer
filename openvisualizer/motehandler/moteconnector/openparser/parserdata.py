@@ -1,6 +1,6 @@
 # Copyright (c) 2010-2013, Regents of the University of California.
-# All rights reserved. 
-#  
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -23,7 +23,7 @@ class ParserData(parser.Parser):
 
     UINJECT_MASK = 'uinject'
 
-    def __init__(self, mqtt_broker_address):
+    def __init__(self, mqtt_broker_address, mote_port):
 
         # log
         log.debug("create instance")
@@ -39,6 +39,7 @@ class ParserData(parser.Parser):
 
         self.avg_kpi = {}
 
+        self.mote_port = mote_port
         self.broker = mqtt_broker_address
         self.mqtt_connected = False
 
@@ -51,7 +52,7 @@ class ParserData(parser.Parser):
             try:
                 self.mqtt_client.connect(self.broker)
             except Exception as e:
-                log.error("Failed to connect to {} with error msg: {}".format(self.broker, e))
+                log.error("failed to connect to {} with error msg: {}".format(self.broker, e))
             else:
                 # start mqtt client
                 self.mqtt_thread = threading.Thread(name='mqtt_loop_thread', target=self.mqtt_client.loop_forever)
@@ -60,7 +61,7 @@ class ParserData(parser.Parser):
     # ======================== private =========================================
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
-        log.success("Succesfully connected to broker: {}".format(self.broker))
+        log.success("connected to broker ({}) for mote on port: {}".format(self.broker, self.mote_port))
 
         self.mqtt_connected = True
 
@@ -73,7 +74,7 @@ class ParserData(parser.Parser):
         # ensure data not short longer than header
         self._check_length(data)
 
-        header_bytes = data[:2]
+        _ = data[:2]  # header bytes
         # asn comes in the next 5bytes.
 
         asn_bytes = data[2:7]

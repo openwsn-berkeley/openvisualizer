@@ -1,12 +1,12 @@
 import sys
 
-import opentunnull
+import opentunnull  # noqa: F401
 
 if sys.platform.startswith('win32'):
-    import opentunwindows
+    import opentunwindows  # noqa: F401
 
 if sys.platform.startswith('linux'):
-    import opentunlinux
+    import opentunlinux  # noqa: F401
 
 if sys.platform.startswith('darwin'):
-    import opentunmacos
+    import opentunmacos  # noqa: F401

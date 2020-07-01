@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -115,9 +115,9 @@ class EventBusMonitor(object):
                     assert len(frame) >= 1 + 2  # 1 for length byte, 2 for CRC
 
                     # cut frame in pieces
-                    length = frame[0]
+                    _ = frame[0]  # length
                     body = frame[1:-2]
-                    crc = frame[-2:]
+                    _ = frame[-2:]  # crc
 
                     # wrap with zep header
                     zep = self._wrap_zep_crc(body, frequency)
@@ -135,7 +135,7 @@ class EventBusMonitor(object):
 
                 if signal == 'fromMote.sniffedPacket':
                     body = data[0:-3]
-                    crc = data[-3:-1]
+                    _ = data[-3:-1]  # crc
                     frequency = data[-1]
 
                     # wrap with zep header

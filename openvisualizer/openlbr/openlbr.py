@@ -306,7 +306,7 @@ class OpenLbr(EventBusClient):
 
             # read next header
             if ipv6dic['next_header'] == self.IANA_IPv6HOPHEADER:
-                # mark hop by hop header present, check hop_flags after obtaining src_addr in IPV6 header. 
+                # mark hop by hop header present, check hop_flags after obtaining src_addr in IPV6 header.
                 hopbyhop_header_present = True
                 # skip the header and process the rest of the message.
                 ipv6dic['next_header'] = ipv6dic['hop_next_header']
@@ -579,7 +579,7 @@ class OpenLbr(EventBusClient):
         if len(lowpan['route']) > 1:
             # source route needed, get prefix from compression Reference
             if len(compress_reference) == 16:
-                prefix = compress_reference[:8]
+                _ = compress_reference[:8]  # prefix
 
             # =======================3. RH3 6LoRH(s) ==============================
             size_unit_type = 0xff
@@ -819,17 +819,17 @@ class OpenLbr(EventBusClient):
                         pkt_lowpan[ptr + 1] == self.TYPE_6LoRH_DEADLINE:
 
                     length = pkt_lowpan[ptr] & self.MASK_LENGTH_6LoRH_IPINIP
-                    nxt_byte = pkt_lowpan[ptr + 2]
+                    _ = pkt_lowpan[ptr + 2]  # next byte
 
                     # 3rd byte
                     o_val = (pkt_lowpan[ptr + 2] & self.ORG_FLAG) >> 7
-                    d_val = (pkt_lowpan[ptr + 2] & self.DELAY_FLAG) >> 6
+                    _ = (pkt_lowpan[ptr + 2] & self.DELAY_FLAG) >> 6  # d_val
                     etl_val = (pkt_lowpan[ptr + 2] & self.ETL_FLAG) >> 3
                     otl_val = (pkt_lowpan[ptr + 2] & self.OTL_FLAG)
 
                     # 4th byte
-                    tu_val = (pkt_lowpan[ptr + 3] & self.TU_FLAG) >> 6
-                    exponent = (pkt_lowpan[ptr + 3] & self.EXP_FLAG) >> 3
+                    _ = (pkt_lowpan[ptr + 3] & self.TU_FLAG) >> 6  # tu_val
+                    _ = (pkt_lowpan[ptr + 3] & self.EXP_FLAG) >> 3  # exponent
 
                     # Expiration Time
                     nxt_ptr = ptr + 4

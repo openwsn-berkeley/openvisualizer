@@ -61,7 +61,7 @@ class Contexthandler(object):
                         format_ipv6_addr(dictionary['eui64']), str(dictionary['context'])))
                 except TypeError:
                     log.error("Type-error in conversion of {}".format(dictionary['eui64']))
-                    
+
                 return dictionary['context']
 
         # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET

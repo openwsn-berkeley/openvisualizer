@@ -232,7 +232,7 @@ class WebServer:
 
         motes_temp = {}
         for (k, v) in bottle.request.forms.items():
-            m = re.match("motes\[(\w+)\]\[(\w+)\]", k)
+            m = re.match(r"motes\[([0-9]*)\]\[([a-z]*)\]", k)
 
             assert m
             index = int(m.group(1))

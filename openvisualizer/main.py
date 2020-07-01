@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -26,7 +26,7 @@ import pkg_resources
 import verboselogs
 from iotlabcli.parser import common
 
-from openvisualizer import *
+from openvisualizer import PACKAGE_NAME, WINDOWS_COLORS, UNIX_COLORS, DEFAULT_LOGGING_CONF
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.jrc import jrc
@@ -191,7 +191,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
             self.temp_dir = self.copy_sim_fw()
 
             if self.temp_dir is None:
-                log.critical("Failed to import simulation files! Exiting now!")
+                log.critical("failed to import simulation files! Exiting now!")
                 os.kill(os.getpid(), signal.SIGTERM)
 
             sys.path.append(os.path.join(self.temp_dir))
@@ -204,6 +204,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
                 mote_handler = motehandler.MoteHandler(oos_openwsn.OpenMote(), self.vcdlog)
                 self.simengine.indicate_new_mote(mote_handler)
                 self.mote_probes += [emulatedmoteprobe.EmulatedMoteProbe(emulated_mote=mote_handler)]
+
             # load the saved topology from the topology file
             if self.topo_file:
                 self.load_topology()
@@ -227,7 +228,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
         try:
             fw_defines = self.extract_stack_defines()
         except IOError as err:
-            log.critical("Could not updated firmware definitions: {}".format(err))
+            log.critical("could not updated firmware definitions: {}".format(err))
             os.kill(os.getpid(), signal.SIGTERM)
             return
 
@@ -276,9 +277,9 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
         # set a mote (hardware or emulated) as DAG root of the network
         if self.root is not None:
             if self.simulator_mode and self.auto_boot is False:
-                log.warning("Cannot set root when motes are not booted! ")
+                log.warning("cannot set root when motes are not booted! ")
             else:
-                log.info("Setting DAG root...")
+                log.info("setting DAG root...")
                 # make sure that the simulated motes are booted and the hardware motes have communicated there mote ID
                 time.sleep(1.5)
                 self.set_root(self.root)
@@ -287,7 +288,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
     def cleanup_temporary_files(files):
         """ Clean up temporary simulation files """
         for f in files:
-            log.verbose("Cleaning up files: {}".format(f))
+            log.verbose("cleaning up files: {}".format(f))
             shutil.rmtree(f, ignore_errors=True)
 
     def load_motes_from_topology_file(self):
@@ -307,7 +308,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
             log.error("Only supported in simulator mode")
             return
 
-        log.success("Loading topology from file.")
+        log.success("loading topology from file.")
 
         topo_config = self._load_saved_topology()
         if topo_config is None:
@@ -352,13 +353,13 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
             elif pkg_resources.resource_exists(PACKAGE_NAME, local_path):
                 f = pkg_resources.resource_stream(PACKAGE_NAME, local_path)
             else:
-                log.error('Could not open file: {}'.format(self.topo_file))
+                log.error('could not open file: {}'.format(self.topo_file))
                 return
 
             topo_config = json.load(f)
             f.close()
         except (IOError, ValueError) as err:
-            log.error('Failed to load topology from file: {}'.format(err))
+            log.error('failed to load topology from file: {}'.format(err))
             return
 
         return topo_config
@@ -380,13 +381,13 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
         # in openwsn-fw, directory containing 'openwsnmodule_obj.h'
         inc_dir = os.path.join(self.fw_path, 'bsp', 'boards', 'python')
         if not os.path.exists(inc_dir):
-            log.critical("Path '{}' does not exist".format(inc_dir))
+            log.critical("path '{}' does not exist".format(inc_dir))
             return
 
         # in openwsn-fw, directory containing extension library
         lib_dir = os.path.join(self.fw_path, 'build', 'python_gcc', 'projects', 'common')
         if not os.path.exists(lib_dir):
-            log.critical("Path '{}' does not exist".format(lib_dir))
+            log.critical("path '{}' does not exist".format(lib_dir))
             return
 
         temp_dir = tempfile.mkdtemp()
@@ -401,11 +402,11 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
         try:
             shutil.copy(os.path.join(inc_dir, 'openwsnmodule_obj.h'), temp_dir)
         except IOError:
-            log.critical("Could not find {} file".format('openwsnmodule_obj.h'))
+            log.critical("could not find {} file".format('openwsnmodule_obj.h'))
             return
 
         log.verbose(
-            "Copying '{}' to temporary dir '{}'".format(os.path.join(inc_dir, 'openwsnmodule_obj.h'), temp_dir))
+            "copying '{}' to temporary dir '{}'".format(os.path.join(inc_dir, 'openwsnmodule_obj.h'), temp_dir))
 
         try:
             os.makedirs(os.path.join(dest_dir))
@@ -419,7 +420,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
             return
 
         log.verbose(
-            "Copying '{}' to '{}'".format(os.path.join(lib_dir, source_name), os.path.join(dest_dir, dest_name)))
+            "copying '{}' to '{}'".format(os.path.join(lib_dir, source_name), os.path.join(dest_dir, dest_name)))
 
         # Copy the module directly to sim_files directory if it matches this host.
         if arch_and_os[0] == 'amd64':
@@ -435,14 +436,14 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
             try:
                 shutil.copy(os.path.join(lib_dir, source_name), temp_dir)
             except IOError:
-                log.critical("Could not find {}".format(str(os.path.join(lib_dir, source_name))))
+                log.critical("could not find {}".format(str(os.path.join(lib_dir, source_name))))
                 return
 
         return temp_dir
 
     def extract_stack_defines(self):
         """ Extract firmware definitions for the OpenVisualizer parser from the OpenWSN-FW files. """
-        log.info('Extracting firmware definitions.')
+        log.info('extracting firmware definitions.')
         definitions = {
             "components": extract_component_codes(os.path.join(self.fw_path, 'inc', 'opendefs.h')),
             "log_descriptions": extract_log_descriptions(os.path.join(self.fw_path, 'inc', 'opendefs.h')),
@@ -868,9 +869,9 @@ def main():
 
     banner = [""]
     banner += [" ___                 _ _ _  ___  _ _ "]
-    banner += ["| . | ___  ___ ._ _ | | | |/ __>| \ |"]
-    banner += ["| | || . \/ ._>| ' || | | |\__ \|   |"]
-    banner += ["`___'|  _/\___.|_|_||__/_/ <___/|_\_|"]
+    banner += ["| . | ___  ___ ._ _ | | | |/ __>| \\ |"]
+    banner += ["| | || . \\/ ._>| ' || | | |\\__ \\|   |"]
+    banner += ["`___'|  _/\\___.|_|_||__/_/ <___/|_\\_|"]
     banner += ["     |_|                  openwsn.org"]
     banner += [""]
 
@@ -886,14 +887,14 @@ def main():
         try:
             logging.config.fileConfig(pkg_resources.resource_stream(PACKAGE_NAME, DEFAULT_LOGGING_CONF))
         except IOError as err:
-            log.critical("Permission error: {}".format(err))
+            log.critical("permission error: {}".format(err))
             return
-        log.verbose("Loading logging configuration: {}".format(DEFAULT_LOGGING_CONF))
+        log.verbose("loading logging configuration: {}".format(DEFAULT_LOGGING_CONF))
     elif args.lconf:
         logging.config.fileConfig(args.lconf)
-        log.verbose("Loading logging configuration: {}".format(args.lconf))
+        log.verbose("loading logging configuration: {}".format(args.lconf))
     else:
-        log.error("Could not load logging configuration.")
+        log.error("could not load logging configuration.")
 
     options = ['host address server     = {0}'.format(args.host), 'port number server      = {0}'.format(args.port)]
 
@@ -904,7 +905,7 @@ def main():
             options.append('firmware path           = {0}'.format(os.environ['OPENWSN_FW_BASE']))
         except KeyError:
             log.warning(
-                "Unknown openwsn-fw location, specify with option '--fw-path' or by exporting the OPENWSN_FW_BASE "
+                "unknown openwsn-fw location, specify with option '--fw-path' or by exporting the OPENWSN_FW_BASE "
                 "environment variable.")
 
     if args.simulator_mode:
@@ -940,10 +941,10 @@ def main():
         options.append('load topology from file = {0}'.format(args.topo_file))
 
     if args.topo_file and (args.simulator_mode or args.sim_topology or args.set_root):
-        log.warning("The simulation options or root option might be overwritten by the configuration in '{}'".format(
+        log.warning("simulation options or root option might be overwritten by the configuration in '{}'".format(
             args.topo_file))
 
-    log.info('Initializing OV Server with options:\n\t- {0}'.format('\n\t- '.join(options)))
+    log.info('initializing OV Server with options:\n\t- {0}'.format('\n\t- '.join(options)))
 
     log.debug('sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path)))
 
@@ -970,7 +971,7 @@ def main():
     )
 
     try:
-        log.info("Starting RPC server")
+        log.info("starting RPC server")
         server.serve_forever()
     except KeyboardInterrupt:
         pass

@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -34,7 +34,7 @@ class RPL(eventbusclient.EventBusClient):
 
     ALL_RPL_NODES_MULTICAST = [0xff, 0x02] + [0x00] * 13 + [0x1a]
 
-    # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
+    # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml
     IANA_ICMPv6_RPL_TYPE = 155
 
     # rpl DIO (RFC6550)
@@ -231,7 +231,7 @@ class RPL(eventbusclient.EventBusClient):
                     dao_transit_information['Transit_information_path_sequence'] = dao[4]
                     dao_transit_information['Transit_information_path_lifetime'] = dao[5]
                     # address of the parent
-                    prefix = dao[6:14]
+                    _ = dao[6:14]  # prefix
                     parents += [dao[14:22]]
                     dao = dao[22:]
                 elif dao[0] == self._TARGET_INFORMATION_TYPE:
@@ -240,7 +240,7 @@ class RPL(eventbusclient.EventBusClient):
                     dao_target_information['Target_information_flags'] = dao[2]
                     dao_target_information['Target_information_prefix_length'] = dao[3]
                     # address of the child
-                    prefix = dao[4:12]
+                    _ = dao[4:12]  # prefix
                     children += [dao[12:20]]
                     dao = dao[20:]
                 else:

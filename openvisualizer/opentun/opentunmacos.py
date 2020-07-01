@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -144,8 +144,8 @@ class OpenTunMACOS(OpenTun):
             prefix_str = format_ipv6_addr(self.IPV6PREFIX)
             host_str = format_ipv6_addr(self.IPV6HOST)
 
-            v = os.system('ifconfig {0} inet6 {1}:{2} prefixlen 64'.format(if_name, prefix_str, host_str))
-            v = os.system('ifconfig {0} inet6 fe80::{1} prefixlen 64 add'.format(if_name, host_str))
+            _ = os.system('ifconfig {0} inet6 {1}:{2} prefixlen 64'.format(if_name, prefix_str, host_str))
+            _ = os.system('ifconfig {0} inet6 fe80::{1} prefixlen 64 add'.format(if_name, host_str))
 
             # =====
             log.debug("adding static route route")

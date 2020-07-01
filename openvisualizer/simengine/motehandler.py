@@ -1,7 +1,7 @@
 #!/usr/bin/python
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -41,7 +41,7 @@ def read_notif_ids(header_path):
 
     global notif_string
     for line in lines:
-        m = re.search('MOTE_NOTIF_(\w+)', line)
+        m = re.search('MOTE_NOTIF_([a-zA-Z0-9_]+)', line)
         if m:
             if m.group(1) not in notif_string:
                 notif_string += [m.group(1)]

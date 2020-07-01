@@ -131,7 +131,7 @@ class OpentestbedMoteFinder(object):
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
 
-        log.success("succesfully connected to: {0}".format(self.mqtt_broker))
+        log.success("connected to broker: {0}".format(self.mqtt_broker))
 
         client.subscribe('opentestbed/deviceType/box/deviceId/+/resp/status')
 

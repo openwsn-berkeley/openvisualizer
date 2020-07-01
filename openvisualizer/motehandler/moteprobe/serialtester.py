@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -46,7 +46,7 @@ class SerialTester(EventBusClient):
         # give this thread a name
         self.name = 'SerialTester@{0}'.format(self)
 
-        # initialize parent 
+        # initialize parent
         self.mote_probe.send_to_parser = self._receive_data_from_mote_serial
 
     def quit(self):

@@ -1,7 +1,7 @@
 #!/usr/bin/python
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -44,7 +44,7 @@ class HwCrystal(HwModule):
     def start(self):
         """ Start the crystal. """
 
-        # get the timestamp of a 
+        # get the timestamp of a
         self.ts_tick = self.timeline.get_current_time()
 
         # log

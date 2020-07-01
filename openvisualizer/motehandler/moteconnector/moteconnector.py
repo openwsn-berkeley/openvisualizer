@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -32,7 +32,7 @@ class MoteConnector(EventBusClient):
         self.serialport = self.mote_probe.portname
 
         # local variables
-        self.parser = openparser.OpenParser(mqtt_broker, stack_defines)
+        self.parser = openparser.OpenParser(mqtt_broker, stack_defines, self.serialport)
         self.state_lock = threading.Lock()
         self.network_prefix = None
         self._subscribed_data_for_dagroot = False

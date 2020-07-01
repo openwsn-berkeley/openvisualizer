@@ -12,9 +12,12 @@ Run this test by double-clicking on this file, then pinging any address in the p
 """
 
 import logging
+import os
 import sys
 import threading
 import time
+
+import click
 
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.opentun import opentun
@@ -117,7 +120,8 @@ class ReadThread(EventBusClient):
                 # print
                 log.info('Received IPv6 echo reply')
 
-    def _create_ipv6_echo_reply(self, echo_request):
+    @staticmethod
+    def _create_ipv6_echo_reply(echo_request):
 
         # invert addresses, change "echo request" type to "echo reply"
         echo_reply = echo_request[:8] + \
@@ -194,7 +198,8 @@ class WriteThread(threading.Thread):
 
     # ======================== private =========================================
 
-    def _create_ipv6echo_request(self):
+    @staticmethod
+    def _create_ipv6echo_request():
         """
         Create an IPv6 echo request.
         """
@@ -238,7 +243,16 @@ class WriteThread(threading.Thread):
         return echo_request
 
 
-def main():
+@click.command()
+def cli():
+    if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
+        if os.geteuid() != 0:
+            click.echo("Must be run with root privileges.\n")
+            click.echo("When installed in a virtual environment, 'sudo openv-tun' will probably not work. "
+                       "Point towards the installation folder of the virtual env, e.g., "
+                       "'sudo <virtual_env_root_folder>/bin/openv-tun")
+            return
+
     # create the tun interface
     tun_if = opentun.OpenTun.create(opentun=True)
 
@@ -246,7 +260,13 @@ def main():
     read_thread = ReadThread()
     write_thread = WriteThread(read_thread.dispatch)
 
-    raw_input()
+    click.echo("\nKill with CTRL-C\n")
+
+    try:
+        while True:
+            time.sleep(0.2)
+    except KeyboardInterrupt:
+        pass
 
     # stop threads
     tun_if.close()
@@ -255,4 +275,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cli()

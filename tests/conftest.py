@@ -135,8 +135,8 @@ class TunInterface:
         try:
             # write over tuntap interface
             os.write(self.tun_iff, data)
-        except Exception as err:
-            print("write failed")
+        except OSError as e:
+            log.error(e)
 
 
 # ============================= fixtures ======================================

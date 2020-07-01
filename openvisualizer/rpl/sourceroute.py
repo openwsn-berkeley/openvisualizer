@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -39,9 +39,9 @@ class SourceRoute(EventBusClient):
     def get_source_route(self, dest_addr):
         """
         Retrieve the source route to a given mote.
-        
+
         :param dest_addr: [in] The EUI64 address of the final destination.
-        
+
         :returns: The source route, a list of EUI64 address, ordered from destination to source.
         """
 

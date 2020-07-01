@@ -1,6 +1,6 @@
 # Copyright (c) 2017, CNRS.
-# All rights reserved. 
-#  
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -51,8 +51,8 @@ class ParserPrintf(parser.Parser):
         # log
         log.debug('received printf {0}'.format(data))
 
-        addr = ParserPrintf.bytes_to_addr(data[0:2])
-        asn = ParserPrintf.bytes_to_string(data[2:7])
+        _ = ParserPrintf.bytes_to_addr(data[0:2])  # addr
+        _ = ParserPrintf.bytes_to_string(data[2:7])  # asn
 
         sys.stdout.write("{}".format("".join([chr(c) for c in data[7:]])))
         sys.stdout.flush()

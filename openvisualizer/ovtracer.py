@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 import logging
@@ -18,18 +18,20 @@ class OVtracer(object):
 
     def __init__(self):
         yappi.start()
-        self.timer = threading.Timer(self.TRACING_INTERVAL, self._logTracingStats)
+        self.timer = threading.Timer(self.TRACING_INTERVAL, self._log_tracing_stats)
         self.timer.start()
 
-    def _logTracingStats(self):
+    def _log_tracing_stats(self):
         threads = yappi.get_thread_stats()
         for t in threads:
             self._log_thread_stat(t)
-        self.timer = threading.Timer(self.TRACING_INTERVAL, self._logTracingStats)
+        self.timer = threading.Timer(self.TRACING_INTERVAL, self._log_tracing_stats)
         self.timer.start()
 
-    def _log_thread_stat(self, stat_entry):
+    @staticmethod
+    def _log_thread_stat(stat_entry):
         log.info("Thread Trace: {0}".format(stat_entry))
 
-    def _log_function_stat(self, stat_entry):
+    @staticmethod
+    def _log_function_stat(stat_entry):
         log.info("Function Trace: {0}".format(stat_entry))

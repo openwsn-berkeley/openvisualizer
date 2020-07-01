@@ -122,11 +122,11 @@ class SerialMoteProbe(MoteProbe):
                     for i in range(winreg.QueryInfoKey(key)[1]):
                         try:
                             val = winreg.EnumValue(key, i)
-                        except:
+                        except WindowsError:
                             pass
                         else:
                             ports.append(str(val[1]))
-                except Exception:
+                except WindowsError:
                     pass
             elif os.name == 'posix':
                 if platform.system() == 'Darwin':

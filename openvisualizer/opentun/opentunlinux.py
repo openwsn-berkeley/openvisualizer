@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
@@ -157,14 +157,14 @@ class OpenTunLinux(OpenTun):
             prefix_str = format_ipv6_addr(OpenTun.IPV6PREFIX)
             host_str = format_ipv6_addr(OpenTun.IPV6HOST)
 
-            v = os.system('ip tuntap add dev ' + ifname + ' mode tun user root')
-            v = os.system('ip link set ' + ifname + ' up')
-            v = os.system('ip -6 addr add ' + prefix_str + ':' + host_str + '/64 dev ' + ifname)
-            v = os.system('ip -6 addr add fe80::' + host_str + '/64 dev ' + ifname)
+            _ = os.system('ip tuntap add dev ' + ifname + ' mode tun user root')
+            _ = os.system('ip link set ' + ifname + ' up')
+            _ = os.system('ip -6 addr add ' + prefix_str + ':' + host_str + '/64 dev ' + ifname)
+            _ = os.system('ip -6 addr add fe80::' + host_str + '/64 dev ' + ifname)
 
             # =====
             log.debug("adding a static route route")
-            # added 'metric 1' for router-compatibility constraint 
+            # added 'metric 1' for router-compatibility constraint
             # (show ping packet on wireshark but don't send to mote at all)
             os.system('ip -6 route add ' + prefix_str + ':1415:9200::/96 dev ' + ifname + ' metric 1')
             # trying to set a gateway for this route

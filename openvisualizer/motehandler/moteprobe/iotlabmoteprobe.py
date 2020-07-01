@@ -36,14 +36,13 @@ class IotlabMoteProbe(MoteProbe):
 
         if self.IOTLAB_FRONTEND_BASE_URL in self.iotlab_mote:
             # Recover user credentials
-            self.iotlab_user, self.iotlab_passwd = auth.get_user_credentials(
-                iotlab_user,
-                iotlab_passwd
-            )
+            self.iotlab_user, self.iotlab_passwd = auth.get_user_credentials(iotlab_user, iotlab_passwd)
+
             # match the site from the mote's address
             reg = r'[0-9a-zA-Z\-]+-\d+\.([a-z]+)'
             match = re.search(reg, iotlab_mote)
             self.iotlab_site = match.group(1)
+
         self.iotlab_tunnel = None
         self.socket = None
 
@@ -56,10 +55,10 @@ class IotlabMoteProbe(MoteProbe):
     def probe_iotlab_motes(cls, iotlab_motes, iotlab_user, iotlab_passwd):
         mote_probes = []
         probe = None
-        log.debug("Probing motes: {}".format(iotlab_motes))
+        log.debug("probing motes: {}".format(iotlab_motes))
         try:
             for mote in iotlab_motes:
-                log.debug("Probe {}".format(mote))
+                log.debug("probe {}".format(mote))
                 try:
                     probe = cls(
                         iotlab_mote=mote,
@@ -88,9 +87,10 @@ class IotlabMoteProbe(MoteProbe):
                 probe.close()
                 probe.join()
             os.kill(os.getpid(), signal.SIGTERM)
+
         valid_motes = ['{0}'.format(p._portname) for p in mote_probes]
-        log.success(
-            "Discovered following iotlab-motes: {}".format(valid_motes))
+        log.success("discovered following iotlab-motes: {}".format(valid_motes))
+
         return mote_probes
 
     @property

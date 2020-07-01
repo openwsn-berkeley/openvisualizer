@@ -1,8 +1,8 @@
 # import all the view plugins
 
-from . import macstats
-from . import motestatus
-from . import msf
-from . import neighbors
-from . import pktqueue
-from . import schedule
+from . import macstats      # noqa: F401
+from . import motestatus    # noqa: F401
+from . import msf           # noqa: F401
+from . import neighbors     # noqa: F401
+from . import pktqueue      # noqa: F401
+from . import schedule      # noqa: F401

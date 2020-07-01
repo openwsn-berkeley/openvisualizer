@@ -1,11 +1,9 @@
 from __future__ import print_function
 
-import json
 import logging
 
 from openvisualizer.client.plugins.plugin import Plugin
 from openvisualizer.client.view import View
-from openvisualizer.motehandler.motestate.motestate import MoteState
 
 
 @Plugin.record_view("msf")
@@ -17,7 +15,7 @@ class MSF(View):
 
     def render(self, ms=None):
         super(MSF, self).render()
-        msf_values = json.loads(ms[MoteState.ST_MSF])
+        # msf_values = json.loads(ms[MoteState.ST_MSF])
         print(self.term.bold_red + "Currently unavailable! Requires firmware update!" + self.term.normal)
 
     def run(self):

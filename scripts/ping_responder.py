@@ -83,9 +83,9 @@ class ReadThread(EventBusClient):
                 {
                     'sender': self.WILDCARD,
                     'signal': 'v6ToMesh',
-                    'callback': self._v6_to_mesh_notif
-                }
-            ]
+                    'callback': self._v6_to_mesh_notif,
+                },
+            ],
         )
 
     # ======================== public ==========================================

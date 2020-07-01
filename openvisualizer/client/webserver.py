@@ -331,7 +331,7 @@ class WebServer:
         try:
             res = {
                 'isDebugPkts': 'true' if self.rpc_server.get_wireshark_debug() else 'false',
-                'stats': self.rpc_server.get_ebm_stats()
+                'stats': self.rpc_server.get_ebm_stats(),
             }
         except socket.error as err:
             logger.error(err)

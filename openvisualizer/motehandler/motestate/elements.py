@@ -361,7 +361,7 @@ class StateIdManager(StateElem):
             notif.my64bID_4,
             notif.my64bID_5,
             notif.my64bID_6,
-            notif.my64bID_7
+            notif.my64bID_7,
         ]
 
         if 'myPrefix' not in self.data[0]:

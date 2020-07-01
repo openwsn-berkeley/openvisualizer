@@ -280,14 +280,14 @@ class ParserStatus(parser.Parser):
 
         header_bytes = data[:3]
 
-        # extract moteId and status_elem
+        # extract mote_id and status_elem
         try:
-            (moteId, status_elem) = struct.unpack('<HB', ''.join([chr(c) for c in header_bytes]))
+            (mote_id, status_elem) = struct.unpack('<HB', ''.join([chr(c) for c in header_bytes]))
         except struct.error:
             raise ParserException(ParserException.ExceptionType.DESERIALIZE.value,
                                   "could not extract moteId and statusElem from {0}".format(header_bytes))
 
-        log.debug("moteId={0} statusElem={1}".format(moteId, status_elem))
+        log.debug("moteId={0} statusElem={1}".format(mote_id, status_elem))
 
         # jump the header bytes
         data = data[3:]
@@ -309,8 +309,8 @@ class ParserStatus(parser.Parser):
                             key.name,
                             key.structure,
                             format_buf(data),
-                            str(err)
-                        )
+                            str(err),
+                        ),
                     )
 
                 # map to name tuple

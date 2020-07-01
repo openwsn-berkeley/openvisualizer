@@ -135,8 +135,7 @@ class SerialTester(EventBusClient):
             self.dispatch(
                 signal='fromMoteConnector@' + self.moteProbeSerialPort,
                 data=''.join(
-                    [chr(openparser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)] + [chr(b) for b in packet_to_send]
-                )
+                    [chr(openparser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)] + [chr(b) for b in packet_to_send]),
             )
 
             with self.data_lock:

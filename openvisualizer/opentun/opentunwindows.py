@@ -22,12 +22,12 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-def CTL_CODE(device_type, function, method, access):
+def ctl_code(device_type, function, method, access):
     return (device_type << 16) | (access << 14) | (function << 2) | method
 
 
-def TAP_CONTROL_CODE(request, method):
-    return CTL_CODE(34, request, method, 0)
+def tap_control_code(request, method):
+    return ctl_code(34, request, method, 0)
 
 
 # ============================ helper classes ==================================
@@ -123,8 +123,8 @@ class OpenTunWindows(OpenTun):
     TUN_IPv4_NETWORK = [10, 2, 0, 0]  # The IPv4 address of the TUN interface's network.
     TUN_IPv4_NETMASK = [255, 255, 0, 0]  # The IPv4 netmask of the TUN interface.
 
-    TAP_IOCTL_SET_MEDIA_STATUS = TAP_CONTROL_CODE(6, 0)
-    TAP_IOCTL_CONFIG_TUN = TAP_CONTROL_CODE(10, 0)
+    TAP_IOCTL_SET_MEDIA_STATUS = tap_control_code(6, 0)
+    TAP_IOCTL_CONFIG_TUN = tap_control_code(10, 0)
 
     MIN_DEVICEIO_BUFFER_SIZE = 1
 
@@ -178,7 +178,7 @@ class OpenTunWindows(OpenTun):
             None,
             win32file.OPEN_EXISTING,
             win32file.FILE_ATTRIBUTE_SYSTEM | win32file.FILE_FLAG_OVERLAPPED,
-            None
+            None,
         )
 
         # have Windows consider the interface now connected
@@ -186,7 +186,7 @@ class OpenTunWindows(OpenTun):
             tun_if,
             self.TAP_IOCTL_SET_MEDIA_STATUS,
             '\x01\x00\x00\x00',
-            self.MIN_DEVICEIO_BUFFER_SIZE
+            self.MIN_DEVICEIO_BUFFER_SIZE,
         )
 
         # prepare the parameter passed to the TAP_IOCTL_CONFIG_TUN commmand.
@@ -205,7 +205,7 @@ class OpenTunWindows(OpenTun):
             tun_if,
             self.TAP_IOCTL_CONFIG_TUN,
             config_tun_param,
-            self.MIN_DEVICEIO_BUFFER_SIZE
+            self.MIN_DEVICEIO_BUFFER_SIZE,
         )
 
         # return the handler of the TUN interface

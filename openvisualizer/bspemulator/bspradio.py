@@ -254,7 +254,7 @@ class BspRadio(BspModule, EventBusClient):
         # indicate transmission starts on eventBus
         self.dispatch(
             signal=propagation.Propagation.SIGNAL_WIRELESSTXSTART,
-            data=(self.motehandler.get_id(), self.tx_buf, self.frequency)
+            data=(self.motehandler.get_id(), self.tx_buf, self.frequency),
         )
 
         # schedule the "end of frame" event

@@ -53,7 +53,7 @@ class MoteConnector(EventBusClient):
                     'signal': 'cmdToMote',
                     'callback': self._cmd_to_mote_handler,
                 },
-            ]
+            ],
         )
 
         self.mote_probe.send_to_parser = self._send_to_parser
@@ -154,7 +154,7 @@ class MoteConnector(EventBusClient):
             dispatcher.send(
                 sender=self.name,
                 signal='fromMoteConnector@' + self.serialport,
-                data=''.join([chr(c) for c in data_to_send])
+                data=''.join([chr(c) for c in data_to_send]),
             )
 
         except socket.error as err:

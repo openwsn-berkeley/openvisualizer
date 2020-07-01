@@ -101,12 +101,12 @@ class EventBusMonitor(object):
                     # Forwards a copy of the packet exchanged between simulated motes
                     # to the tun interface for debugging.
 
-                    (moteId, frame, frequency) = data
+                    (mote_id, frame, frequency) = data
 
                     if log.isEnabledFor(logging.DEBUG):
                         output = []
                         output += ['']
-                        output += ['- moteId:    {0}'.format(moteId)]
+                        output += ['- moteId:    {0}'.format(mote_id)]
                         output += ['- frame:     {0}'.format(format_buf(frame))]
                         output += ['- frequency: {0}'.format(frequency)]
                         output = '\n'.join(output)

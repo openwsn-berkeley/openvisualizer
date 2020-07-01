@@ -14,13 +14,13 @@ log = logging.getLogger('test_utils')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
-logHandler = logging.handlers.RotatingFileHandler(LOGFILE_NAME, backupCount=5, mode='w')
+log_handler = logging.handlers.RotatingFileHandler(LOGFILE_NAME, backupCount=5, mode='w')
 
-logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
-for loggerName in ['test_utils', 'OpenLbr', ]:
-    temp = logging.getLogger(loggerName)
+log_handler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
+for logger_name in ['test_utils', 'OpenLbr']:
+    temp = logging.getLogger(logger_name)
     temp.setLevel(logging.DEBUG)
-    temp.addHandler(logHandler)
+    temp.addHandler(log_handler)
 
 # ============================ defines =========================================
 
@@ -78,29 +78,29 @@ EXPECTED_FORMAT_IPv6 = [
         (
             [  # list
                 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
-                0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+                0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
             ],
-            '123:4567:89ab:cdef:fedc:ba98:7654:3210'  # string
-        )
+            '123:4567:89ab:cdef:fedc:ba98:7654:3210',  # string
+        ),
     ),
     json.dumps(
         (
             [  # list
                 0x01, 0x23, 0x45, 0x67, 0x00, 0x00, 0xcd, 0xef,
-                0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+                0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
             ],
-            '123:4567:0:cdef:fedc:ba98:7654:3210'  # string
-        )
+            '123:4567:0:cdef:fedc:ba98:7654:3210',  # string
+        ),
     ),
     json.dumps(
         (
             [  # list
                 0x01, 0x23, 0x45, 0x67, 0x00, 0x00, 0x00, 0x00,
-                0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+                0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
             ],
-            '123:4567:0:0:fedc:ba98:7654:3210'  # string
-        )
-    )
+            '123:4567:0:0:fedc:ba98:7654:3210',  # string
+        ),
+    ),
 ]
 
 

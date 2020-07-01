@@ -168,12 +168,12 @@ class OpenLbr(EventBusClient):
                 {
                     'sender': self.WILDCARD,  # signal from internet to the mesh network
                     'signal': 'v6ToMesh',
-                    'callback': self._v6_to_mesh_notif
+                    'callback': self._v6_to_mesh_notif,
                 },
                 {
                     'sender': self.WILDCARD,
                     'signal': 'networkPrefix',  # signal once a prefix is set.
-                    'callback': self._set_prefix_notif
+                    'callback': self._set_prefix_notif,
                 },
                 {
                     'sender': self.WILDCARD,
@@ -186,7 +186,7 @@ class OpenLbr(EventBusClient):
                     'signal': 'fromMote.data',  # only to data (any), not status nor error
                     'callback': self._mesh_to_v6_notif,
                 },
-            ]
+            ],
         )
 
         # local variables
@@ -491,7 +491,7 @@ class OpenLbr(EventBusClient):
                 'hop_limit': ipv6[7],
                 'src_addr': ipv6[8:8 + 16],
                 'dst_addr': ipv6[24:24 + 16],
-                'payload': ipv6[40:]
+                'payload': ipv6[40:],
             }
 
         if return_val['version'] != 6:

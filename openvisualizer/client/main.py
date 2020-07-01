@@ -37,7 +37,7 @@ def cli(ctx, server, port, debug):
             filemode='w',
             level=logging.DEBUG,
             format='%(asctime)s [%(name)s:%(levelname)s] %(message)s',
-            datefmt='%H:%M:%S'
+            datefmt='%H:%M:%S',
         )
 
 

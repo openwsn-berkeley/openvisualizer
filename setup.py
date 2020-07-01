@@ -48,20 +48,20 @@ setup(
             '/'.join([WEB_STATIC, 'images', '*']),
             '/'.join([WEB_STATIC, 'js', '*.js']),
             '/'.join([WEB_STATIC, 'js', 'plugins', 'metisMenu', '*']),
-            '/'.join([WEB_TEMPLATES, '*'])
+            '/'.join([WEB_TEMPLATES, '*']),
         ],
         '': [
             'requirements.txt',
-            'images/*.png'
-        ]
+            'images/*.png',
+        ],
     },
     entry_points={
         'console_scripts': [
             'openv-server = openvisualizer.__main__:main',
             'openv-client = openvisualizer.client.main:cli',
             'openv-serial = scripts.serialtester_cli:cli',
-            'openv-tun = scripts.ping_responder:cli'
-        ]
+            'openv-tun = scripts.ping_responder:cli',
+        ],
     },
     install_requires=INSTALL_REQUIREMENTS,
     tests_require=TESTS_REQUIREMENTS,

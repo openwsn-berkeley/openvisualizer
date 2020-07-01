@@ -79,14 +79,8 @@ class SimEngine(object):
         self.log.addHandler(logging.NullHandler())
 
         # logging core modules
-        for loggerName in [
-            'SimEngine',
-            'Timeline',
-            'Propagation',
-            'IdManager',
-            'LocationManager',
-        ]:
-            temp = logging.getLogger(loggerName)
+        for logger_name in ['SimEngine', 'Timeline', 'Propagation', 'IdManager', 'LocationManager']:
+            temp = logging.getLogger(logger_name)
             temp.setLevel(log_level)
             temp.addHandler(log_handler)
 
@@ -113,8 +107,8 @@ class SimEngine(object):
             self.isPaused = True
             self.stats.indicate_stop()
 
-    def step(self, numSteps):
-        self.stopAfterSteps = numSteps
+    def step(self, num_steps):
+        self.stopAfterSteps = num_steps
         if self.isPaused:
             self.pauseSem.release()
             self.isPaused = False
@@ -152,15 +146,15 @@ class SimEngine(object):
 
     # === called from the main script
 
-    def indicate_new_mote(self, newMoteHandler):
+    def indicate_new_mote(self, new_mote_handler):
 
         # add this mote to my list of motes
-        self.moteHandlers.append(newMoteHandler)
+        self.moteHandlers.append(new_mote_handler)
 
         # create connections to already existing motes
         for mh in self.moteHandlers[:-1]:
             self.propagation.create_connection(
-                from_mote=newMoteHandler.get_id(),
+                from_mote=new_mote_handler.get_id(),
                 to_mote=mh.get_id(),
             )
 
@@ -177,10 +171,10 @@ class SimEngine(object):
     def get_mote_handler(self, rank):
         return self.moteHandlers[rank]
 
-    def get_mote_handler_by_id(self, moteId):
+    def get_mote_handler_by_id(self, mote_id):
         return_val = None
         for h in self.moteHandlers:
-            if h.get_id() == moteId:
+            if h.get_id() == mote_id:
                 return_val = h
                 break
         assert return_val

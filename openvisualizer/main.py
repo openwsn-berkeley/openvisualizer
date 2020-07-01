@@ -448,7 +448,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
             "components": extract_component_codes(os.path.join(self.fw_path, 'inc', 'opendefs.h')),
             "log_descriptions": extract_log_descriptions(os.path.join(self.fw_path, 'inc', 'opendefs.h')),
             "sixtop_returncodes": extract_6top_rcs(os.path.join(self.fw_path, 'openstack', '02b-MAChigh', 'sixtop.h')),
-            "sixtop_states": extract_6top_states(os.path.join(self.fw_path, 'openstack', '02b-MAChigh', 'sixtop.h'))
+            "sixtop_states": extract_6top_states(os.path.join(self.fw_path, 'openstack', '02b-MAChigh', 'sixtop.h')),
         }
 
         return definitions
@@ -714,7 +714,7 @@ def _add_iotlab_parser_args(parser):
         default='',
         type=str,
         nargs='+',
-        help='comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
+        help='comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")',
     )
     common.add_auth_arguments(iotlab_parser, False)
 
@@ -726,7 +726,7 @@ def _add_parser_args(parser):
         dest='simulator_mode',
         default=0,
         type=int,
-        help='Run a simulation with the given amount of emulated motes.'
+        help='Run a simulation with the given amount of emulated motes.',
     )
 
     parser.add_argument(
@@ -734,14 +734,14 @@ def _add_parser_args(parser):
         dest='fw_path',
         type=str,
         help='Provide the path to the OpenWSN firmware. This option overrides the optional OPENWSN_FW_BASE environment '
-             'variable.'
+             'variable.',
     )
 
     parser.add_argument(
         '-o', '--simtopo',
         dest='sim_topology',
         action='store',
-        help='Force a predefined topology (linear or fully-meshed). Only available in simulation mode.'
+        help='Force a predefined topology (linear or fully-meshed). Only available in simulation mode.',
     )
 
     parser.add_argument(
@@ -749,7 +749,7 @@ def _add_parser_args(parser):
         dest='set_root',
         action='store',
         type=str,
-        help='Set a simulated or hardware mote as root, specify the mote\'s port or address.'
+        help='Set a simulated or hardware mote as root, specify the mote\'s port or address.',
     )
 
     parser.add_argument(
@@ -757,14 +757,14 @@ def _add_parser_args(parser):
         dest='debug',
         default=False,
         action='store_true',
-        help='Enables debugging with wireshark (requires opentun).'
+        help='Enables debugging with wireshark (requires opentun).',
     )
 
     parser.add_argument(
         '-l', '--lconf',
         dest='lconf',
         action='store',
-        help='Provide a logging configuration.'
+        help='Provide a logging configuration.',
     )
 
     parser.add_argument(
@@ -772,7 +772,7 @@ def _add_parser_args(parser):
         dest='vcdlog',
         default=False,
         action='store_true',
-        help='Use VCD logger.'
+        help='Use VCD logger.',
     )
 
     parser.add_argument(
@@ -780,7 +780,7 @@ def _add_parser_args(parser):
         dest='use_page_zero',
         default=False,
         action='store_true',
-        help='Use page number 0 in page dispatch (only works with one-hop).'
+        help='Use page number 0 in page dispatch (only works with one-hop).',
     )
 
     parser.add_argument(
@@ -788,7 +788,7 @@ def _add_parser_args(parser):
         dest='testbed_motes',
         default=False,
         action='store_true',
-        help='Connect to motes from opentestbed over the MQTT server (see option \'--mqtt-broker\')'
+        help='Connect to motes from opentestbed over the MQTT server (see option \'--mqtt-broker\')',
     )
 
     parser.add_argument(
@@ -796,7 +796,7 @@ def _add_parser_args(parser):
         dest='mqtt_broker',
         default='argus.paris.inria.fr',
         action='store',
-        help='MQTT broker address to use'
+        help='MQTT broker address to use',
     )
 
     parser.add_argument(
@@ -804,7 +804,7 @@ def _add_parser_args(parser):
         dest='opentun',
         default=False,
         action='store_true',
-        help='Use a TUN device to route packets to the Internet.'
+        help='Use a TUN device to route packets to the Internet.',
     )
 
     parser.add_argument(
@@ -813,7 +813,7 @@ def _add_parser_args(parser):
         dest='host',
         default='localhost',
         action='store',
-        help='Host address for the RPC address.'
+        help='Host address for the RPC address.',
     )
 
     parser.add_argument(
@@ -823,7 +823,7 @@ def _add_parser_args(parser):
         type=int,
         default=9000,
         action='store',
-        help='Port number for the RPC server.'
+        help='Port number for the RPC server.',
     )
 
     parser.add_argument(
@@ -832,7 +832,7 @@ def _add_parser_args(parser):
         type=str,
         action='store',
         nargs='+',
-        help='Port mask for serial port detection, e.g, /dev/tty/USB*.'
+        help='Port mask for serial port detection, e.g, /dev/tty/USB*.',
     )
 
     parser.add_argument(
@@ -841,7 +841,7 @@ def _add_parser_args(parser):
         default=[115200],
         action='store',
         nargs='+',
-        help='List of baudrates to probe for, e.g 115200 500000.'
+        help='List of baudrates to probe for, e.g 115200 500000.',
     )
 
     parser.add_argument(
@@ -849,7 +849,7 @@ def _add_parser_args(parser):
         dest='auto_boot',
         default=True,
         action='store_false',
-        help='Disables automatic boot of emulated motes.'
+        help='Disables automatic boot of emulated motes.',
     )
 
     parser.add_argument(
@@ -858,7 +858,7 @@ def _add_parser_args(parser):
         type=str,
         action='store',
         help='Provide a topology for the simulation, when in use this option will override all the other '
-             'simulation options.'
+             'simulation options.',
     )
 
 
@@ -909,7 +909,7 @@ def main():
                 "environment variable.")
 
     if args.simulator_mode:
-        options.append('simulation              = {0}'.format(args.simulator_mode)),
+        options.append('simulation              = {0}'.format(args.simulator_mode))
         if args.sim_topology:
             options.append('simulation topology     = {0}'.format(args.sim_topology))
         else:

@@ -50,7 +50,7 @@ class Topology(EventBusClient):
                     'signal': 'getParents',
                     'callback': self.get_parents,
                 },
-            ]
+            ],
         )
 
     # ======================== public ==========================================

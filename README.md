@@ -304,6 +304,29 @@ To route packets between the Internet and the OpenWSN mesh network, OpenVisualiz
 
 
 ## Contributing <a name="contributing"></a>
+Contributions are always welcome. We use `flake8` to enforce the Python PEP-8 style guide. The Travis builder verifies new pull requests and it fails if the Python code does not follow the style guide.
+
+You can check locally if your code changes comply with PEP-8. First, install the main `flake8` package and two `flake8` plugins:
+
+```bash
+(venv) pip install flake8
+(venv) pip install pep8-naming
+(venv) pip install flake8-commas
+```
+
+Move to the root of the OpenVisualizer project and run:
+
+```bash
+(venv) flake8 --config=tox.ini
+```
+
+If flake does not generate any output, your code passes the test; alternatively, you can check the return code:
+
+```bash
+(venv) flake8 --config=tox.ini
+(venv) echo $?
+0
+```
 
 ## Contact <a name="contact"></a>
 

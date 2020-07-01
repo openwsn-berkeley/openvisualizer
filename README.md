@@ -288,6 +288,17 @@ More information can be found on the [Sphinx webpage](https://www.sphinx-doc.org
 
 ## Testing <a name="testing"></a>
 
+### Testing the serial communication
+The OpenWSN firmware uses the serial port extensively to communicate with OpenVisualizer and route packets (when in DAGroot mode). It is thus important that serial communication works well. To verify the serial communication between the hardware motes and your computer you can use the `openv-serial` tool.
+
+| ![openv-serial](https://raw.githubusercontent.com/openwsn-berkeley/openvisualizer/develop/images/openv-serial.png) |
+
+### Testing the TUN interface
+To route packets between the Internet and the OpenWSN mesh network, OpenVisualizer uses a TUN interface. To create such an interface you need root privileges on your system. To test if everything works properly, you can run `openv-tun`.
+
+| ![openv-tun](https://raw.githubusercontent.com/openwsn-berkeley/openvisualizer/develop/images/openv-tun.png) |
+
+
 ## Contributing <a name="contributing"></a>
 
 ## Contact <a name="contact"></a>

@@ -52,7 +52,10 @@ def test_iotlabmoteprobe__attach_error_on_frontend(caplog):
     try:
         with caplog.at_level(logging.DEBUG, logger="MoteProbe"):
             mote = IotlabMoteProbe('dummy-10')
-            time.sleep(0.1)
+            timeout = 100
+            while mote.isAlive() and timeout:
+                time.sleep(0.01)
+                timeout = timeout - 1
             assert mote.isAlive() is False
             assert 'Name or service not known' in caplog.text
     except Exception as e:

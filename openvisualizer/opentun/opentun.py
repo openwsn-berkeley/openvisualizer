@@ -54,9 +54,9 @@ class OpenTun(EventBusClient):
                 {
                     'sender': self.WILDCARD,
                     'signal': 'v6ToInternet',
-                    'callback': self._v6_to_internet_notif
+                    'callback': self._v6_to_internet_notif,
                 },
-            ]
+            ],
         )
 
         # local variables

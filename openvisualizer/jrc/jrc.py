@@ -13,7 +13,7 @@ import threading
 
 import cbor
 import verboselogs
-from coap import coap, coapResource, coapDefines as d, coapUtils as u, coapObjectSecurity as oscoap
+from coap import coap, coapResource, coapDefines as Defs, coapUtils as Utils, coapObjectSecurity as Oscoap
 
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.jrc.cojp_defines import CoJPLabel
@@ -30,23 +30,23 @@ log.addHandler(logging.NullHandler())
 class JRC(object):
     def __init__(self):
         coap_resource = JoinResource()
-        self.coap_server = CoapServer(coap_resource, Contexthandler(coap_resource).security_context_lookup)
+        self.coap_server = CoapServer(coap_resource, ContextHandler(coap_resource).security_context_lookup)
 
     def close(self):
         self.coap_server.close()
 
 
 # ======================== Security Context Handler =========================
-class Contexthandler(object):
+class ContextHandler(object):
     # value of the OSCORE Master Secret from 6TiSCH TD
-    MASTERSECRET = binascii.unhexlify('DEADBEEFCAFEDEADBEEFCAFEDEADBEEF')
+    master_secret = binascii.unhexlify('DEADBEEFCAFEDEADBEEFCAFEDEADBEEF')
 
     def __init__(self, join_resource):
         self.join_resource = join_resource
 
     # ======================== Context Handler needs to be registered =============================
     def security_context_lookup(self, kid):
-        kid_buf = u.str2buf(kid)
+        kid_buf = Utils.str2buf(kid)
 
         eui64 = kid_buf[:-1]
         sender_id = eui64 + [0x01]  # sender ID of jrc is reversed
@@ -55,7 +55,7 @@ class Contexthandler(object):
         # if eui-64 is found in the list of joined nodes, return the appropriate context
         # this is important for replay protection
         for dictionary in self.join_resource.joinedNodes:
-            if dictionary['eui64'] == u.buf2str(eui64):
+            if dictionary['eui64'] == Utils.buf2str(eui64):
                 try:
                     log.verbose("Node {0} found in joinedNodes. Returning context {1}.".format(
                         format_ipv6_addr(dictionary['eui64']), str(dictionary['context'])))
@@ -66,10 +66,10 @@ class Contexthandler(object):
 
         # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET
         # handler of the join resource
-        context = oscoap.SecurityContext(masterSecret=self.MASTERSECRET,
-                                         senderID=u.buf2str(sender_id),
-                                         recipientID=u.buf2str(recipient_id),
-                                         aeadAlgorithm=oscoap.AES_CCM_16_64_128())
+        context = Oscoap.SecurityContext(masterSecret=self.master_secret,
+                                         senderID=Utils.buf2str(sender_id),
+                                         recipientID=Utils.buf2str(recipient_id),
+                                         aeadAlgorithm=Oscoap.AES_CCM_16_64_128())
 
         log.verbose("New node: {0}. Derive new OSCORE context from master secret.".format(format_ipv6_addr(eui64)))
 
@@ -89,7 +89,7 @@ class CoapServer(EventBusClient):
         # run CoAP server in testing mode
         # this mode does not open a real socket, rather uses PyDispatcher for sending/receiving messages
         # We interface this mode with OpenVisualizer to run jrc co-located with the DAG root
-        self.coap_server = coap.coap(udpPort=d.DEFAULT_UDP_PORT, testing=True)
+        self.coap_server = coap.coap(udpPort=Defs.DEFAULT_UDP_PORT, testing=True)
         self.coap_server.addResource(coap_resource)
         self.coap_server.addSecurityContextHandler(context_handler)
         self.coap_server.maxRetransmit = 1
@@ -112,14 +112,14 @@ class CoapServer(EventBusClient):
                 {
                     'sender': self.WILDCARD,
                     'signal': 'registerDagRoot',
-                    'callback': self._register_dagroot_notif
+                    'callback': self._register_dagroot_notif,
                 },
                 {
                     'sender': self.WILDCARD,
                     'signal': 'unregisterDagRoot',
-                    'callback': self._unregister_dagroot_notif
+                    'callback': self._unregister_dagroot_notif,
                 },
-            ]
+            ],
         )
 
         # local variables
@@ -147,7 +147,7 @@ class CoapServer(EventBusClient):
             signal=(
                 tuple(data['prefix'] + data['host']),
                 self.PROTO_UDP,
-                d.DEFAULT_UDP_PORT
+                Defs.DEFAULT_UDP_PORT,
             ),
             callback=self._receive_from_mesh,
         )
@@ -158,7 +158,7 @@ class CoapServer(EventBusClient):
             signal=(
                 tuple(self.LINK_LOCAL_PREFIX + data['host']),
                 self.PROTO_UDP,
-                d.DEFAULT_UDP_PORT
+                Defs.DEFAULT_UDP_PORT,
             ),
             callback=self._receive_from_mesh,
         )
@@ -172,7 +172,7 @@ class CoapServer(EventBusClient):
             signal=(
                 tuple(data['prefix'] + data['host']),
                 self.PROTO_UDP,
-                d.DEFAULT_UDP_PORT
+                Defs.DEFAULT_UDP_PORT,
             ),
             callback=self._receive_from_mesh,
         )
@@ -182,7 +182,7 @@ class CoapServer(EventBusClient):
             signal=(
                 tuple(self.LINK_LOCAL_PREFIX + data['host']),
                 self.PROTO_UDP,
-                d.DEFAULT_UDP_PORT
+                Defs.DEFAULT_UDP_PORT,
             ),
             callback=self._receive_from_mesh,
         )
@@ -198,10 +198,10 @@ class CoapServer(EventBusClient):
         sender = format_ipv6_addr(data[0])
         # FIXME pass source port within the signal and open coap client at this port
         self.coap_client = \
-            coap.coap(ipAddress=sender, udpPort=d.DEFAULT_UDP_PORT, testing=True,
+            coap.coap(ipAddress=sender, udpPort=Defs.DEFAULT_UDP_PORT, testing=True,
                       receiveCallback=self._receive_from_coap)
         # low level forward of the CoAP message
-        self.coap_client.socketUdp.sendUdp(destIp='', destPort=d.DEFAULT_UDP_PORT, msg=data[1])
+        self.coap_client.socketUdp.sendUdp(destIp='', destPort=Defs.DEFAULT_UDP_PORT, msg=data[1])
         return True
 
     def _receive_from_coap(self, timestamp, sender, data):
@@ -214,14 +214,14 @@ class CoapServer(EventBusClient):
         # UDP
         udp_len = len(data) + 8
 
-        udp = u.int2buf(sender[1], 2)  # src port
-        udp += u.int2buf(self.coap_client.udpPort, 2)  # dest port
+        udp = Utils.int2buf(sender[1], 2)  # src port
+        udp += Utils.int2buf(self.coap_client.udpPort, 2)  # dest port
         udp += [udp_len >> 8, udp_len & 0xff]  # length
         udp += [0x00, 0x00]  # checksum
         udp += data
 
         # destination address of the packet is CoAP client's IPv6 address (address of the mote)
-        dst_ipv6_address = u.ipv6AddrString2Bytes(self.coap_client.ipAddress)
+        dst_ipv6_address = Utils.ipv6AddrString2Bytes(self.coap_client.ipAddress)
         assert len(dst_ipv6_address) == 16
         # source address of the packet is DAG root's IPV6 address
         # use the same prefix (link-local or global) as in the destination address
@@ -236,7 +236,7 @@ class CoapServer(EventBusClient):
             dst=dst_ipv6_address,
             length=[0x00, 0x00] + udp[4:6],
             nh=[0x00, 0x00, 0x00, 17],  # UDP as next header
-            payload=udp
+            payload=udp,
         )
 
         # IPv6
@@ -250,10 +250,7 @@ class CoapServer(EventBusClient):
         ip += udp
 
         # announce network prefix
-        self.dispatch(
-            signal='v6ToMesh',
-            data=ip
-        )
+        self.dispatch(signal='v6ToMesh', data=ip)
 
 
 # ==================== Implementation of CoAP join resource =====================
@@ -261,19 +258,19 @@ class JoinResource(coapResource.coapResource):
     def __init__(self):
         self.joinedNodes = []
 
-        self.networkKey = u.str2buf(os.urandom(16))  # random key every time OpenVisualizer is initialized
+        self.networkKey = Utils.str2buf(os.urandom(16))  # random key every time OpenVisualizer is initialized
         self.networkKeyIndex = 0x01  # L2 key index
 
         # initialize parent class
         coapResource.coapResource.__init__(self, path='j')
 
-        self.addSecurityBinding((None, [d.METHOD_POST]))  # security context should be returned by the callback
+        self.addSecurityBinding((None, [Defs.METHOD_POST]))  # security context should be returned by the callback
 
-    def POST(self, options=[], payload=[]):
+    def POST(self, options=[], payload=[]):  # noqa: N802
 
         log.verbose("received JRC join request")
 
-        link_layer_keyset = [self.networkKeyIndex, u.buf2str(self.networkKey)]
+        link_layer_keyset = [self.networkKeyIndex, Utils.buf2str(self.networkKey)]
 
         configuration = {CoJPLabel.COJP_PARAMETERS_LABELS_LLKEYSET: link_layer_keyset}
 
@@ -281,11 +278,11 @@ class JoinResource(coapResource.coapResource):
 
         resp_payload = [ord(b) for b in configuration_serialized]
 
-        object_security = oscoap.objectSecurityOptionLookUp(options)
+        object_security = Oscoap.objectSecurityOptionLookUp(options)
 
         if object_security:
             # we need to add the pledge to a list of joined nodes, if not present already
-            eui64 = u.buf2str(object_security.kid[:-1])
+            eui64 = Utils.buf2str(object_security.kid[:-1])
             found = False
             for node in self.joinedNodes:
                 if node['eui64'] == eui64:
@@ -294,12 +291,13 @@ class JoinResource(coapResource.coapResource):
 
             if not found:
                 self.joinedNodes += [
-                    {'eui64': eui64,  # remove last prepended byte
-                     'context': object_security.context
-                     }
+                    {
+                        'eui64': eui64,  # remove last prepended byte
+                        'context': object_security.context,
+                    },
                 ]
 
             # return the Join Response regardless of whether it is a first or Nth join attempt
-            return d.COAP_RC_2_04_CHANGED, [], resp_payload
+            return Defs.COAP_RC_2_04_CHANGED, [], resp_payload
         else:
-            return d.COAP_RC_4_01_UNAUTHORIZED, [], []
+            return Defs.COAP_RC_4_01_UNAUTHORIZED, [], []

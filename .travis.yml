@@ -6,6 +6,8 @@ python:
 before_install:
   - sudo apt-get update -qq
   - pip install flake8
+  - pip install pep8-naming
+  - pip install flake8-commas
 install:
   - pip install -r requirements.txt
   - pip install -r tests-requirements.txt

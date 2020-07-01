@@ -112,7 +112,7 @@ class ParserData(parser.Parser):
                         'latency': 0,
                         'numCellsUsedTx': 0,
                         'numCellsUsedRx': 0,
-                        'dutyCycle': 0
+                        'dutyCycle': 0,
                     }
 
                 offset -= 2
@@ -158,7 +158,7 @@ class ParserData(parser.Parser):
                         'dutyCycle': [pkt_info['dutyCycle']],
                         'avg_cellsUsage': 0.0,
                         'avg_latency': 0.0,
-                        'avg_pdr': 0.0
+                        'avg_pdr': 0.0,
                     }
 
                 if self.mqtt_connected:

@@ -25,12 +25,12 @@ class Propagation(EventBusClient):
     SENSITIVITY_dBm = -101.0
     GREY_AREA_dB = 15.0
 
-    def __init__(self, simTopology):
+    def __init__(self, sim_topology):
 
         # store params
         from openvisualizer.simengine import simengine
         self.engine = simengine.SimEngine()
-        self.sim_topology = simTopology
+        self.sim_topology = sim_topology
 
         # local variables
         self.data_lock = threading.Lock()
@@ -56,7 +56,7 @@ class Propagation(EventBusClient):
                     'signal': self.SIGNAL_WIRELESSTXEND,
                     'callback': self._indicate_tx_end,
                 },
-            ]
+            ],
         )
 
     # ======================== public ==========================================
@@ -138,7 +138,7 @@ class Propagation(EventBusClient):
                                 'fromMote': from_mote,
                                 'toMote': to_mote,
                                 'pdr': self.connections[from_mote][to_mote],
-                            }
+                            },
                         ]
                         retrieved_connections += [(from_mote, to_mote)]
 
@@ -186,13 +186,13 @@ class Propagation(EventBusClient):
         from_mote = data
 
         if from_mote in self.connections:
-            for (toMote, pdr) in self.connections[from_mote].items():
+            for (to_mote, pdr) in self.connections[from_mote].items():
                 try:
-                    self.pending_tx_end.remove((from_mote, toMote))
+                    self.pending_tx_end.remove((from_mote, to_mote))
                 except ValueError:
                     pass
                 else:
-                    mh = self.engine.get_mote_handler_by_id(toMote)
+                    mh = self.engine.get_mote_handler_by_id(to_mote)
                     mh.bsp_radio.indicate_tx_end(from_mote)
 
     # ======================== private =========================================

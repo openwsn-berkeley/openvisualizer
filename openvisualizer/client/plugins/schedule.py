@@ -33,8 +33,8 @@ class Schedule(View):
         columns += ['|' + yb + ' #TX-ACK ' + n]
         columns += ['|' + yb + ' #RX ' + n + '|']
 
-        HEADER = ''.join(columns)
-        HDR_LINE = ''.join(['-'] * (len(HEADER) - len(columns) * self.COLOR_LINE_MARGIN))
+        header = ''.join(columns)
+        hdr_line = ''.join(['-'] * (len(header) - len(columns) * self.COLOR_LINE_MARGIN))
 
         super(Schedule, self).render()
         schedule_rows = json.loads(ms[MoteState.ST_SCHEDULE])
@@ -49,9 +49,9 @@ class Schedule(View):
 
         w = int(self.term.width / 2)
 
-        print(HDR_LINE.rjust(abs(w + int(len(HDR_LINE) / 2))))
-        print(HEADER.rjust(abs(w + int(len(HEADER) / 2) + int(ceil(len(columns) * self.COLOR_HDR_MARGIN)))))
-        print(HDR_LINE.rjust(abs(w + int(len(HDR_LINE) / 2))))
+        print(hdr_line.rjust(abs(w + int(len(hdr_line) / 2))))
+        print(header.rjust(abs(w + int(len(header) / 2) + int(ceil(len(columns) * self.COLOR_HDR_MARGIN)))))
+        print(hdr_line.rjust(abs(w + int(len(hdr_line) / 2))))
 
         for r in active_cells:
             c, shift = self._get_row_color(str(r['type'])[2:])
@@ -70,7 +70,7 @@ class Schedule(View):
 
             print(r_str.rjust(abs(w + int(len(r_str) / 2) + shift)))
 
-        print(HDR_LINE.rjust(abs(w + int(len(HDR_LINE) / 2))))
+        print(hdr_line.rjust(abs(w + int(len(hdr_line) / 2))))
         print('\n')
         print('{}{}:{}{:>15}'.format(yb, 'S', n, 'Shared cell?'))
         # print('{}{}:{}{:>19}'.format(yb, 'A', n, 'Autonomous cell?'))

@@ -134,9 +134,9 @@ class SerialMoteProbe(MoteProbe):
                 else:
                     port_mask = ['/dev/ttyUSB*']
                 for mask in port_mask:
-                    ports += [(s) for s in glob.glob(mask)]
+                    ports += [s for s in glob.glob(mask)]
         else:
             for mask in port_mask:
-                ports += [(s) for s in glob.glob(mask)]
+                ports += [s for s in glob.glob(mask)]
 
         return ports

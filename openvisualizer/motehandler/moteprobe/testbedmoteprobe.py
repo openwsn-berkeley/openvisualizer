@@ -59,7 +59,7 @@ class OpentestbedMoteProbe(MoteProbe):
         # publish the cmd message
         self.mqtt_client.publish(
             topic='{}/{}/cmd/tomoteserialbytes'.format(self.BASE_TOPIC, self.testbedmote_eui64),
-            payload=json.dumps(payload_buffer)
+            payload=json.dumps(payload_buffer),
         )
 
     def _rcv_data(self):

@@ -182,7 +182,7 @@ class MoteHandler(threading.Thread):
         self.log.addHandler(logging.NullHandler())
 
         # logging this mote's modules
-        for loggerName in [
+        for logger_name in [
             'MoteHandler_' + str(self.id),
             # hw
             'HwSupply_' + str(self.id),
@@ -196,7 +196,7 @@ class MoteHandler(threading.Thread):
             'BspRadio_' + str(self.id),
             'BspUart_' + str(self.id),
         ]:
-            temp = logging.getLogger(loggerName)
+            temp = logging.getLogger(logger_name)
             temp.setLevel(logging.INFO)
             temp.addHandler(self.loghandler)
 

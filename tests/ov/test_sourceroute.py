@@ -20,8 +20,8 @@ log.addHandler(logging.NullHandler())
 
 log_handler = logging.handlers.RotatingFileHandler(LOGFILE_NAME, backupCount=5, mode='w')
 log_handler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
-for loggerName in ['test_sourceRoute', 'SourceRoute', ]:
-    temp = logging.getLogger(loggerName)
+for logger_name in ['test_sourceRoute', 'SourceRoute']:
+    temp = logging.getLogger(logger_name)
     temp.setLevel(logging.DEBUG)
     temp.addHandler(log_handler)
 

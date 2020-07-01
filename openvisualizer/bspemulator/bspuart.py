@@ -328,5 +328,5 @@ class BspUart(BspModule):
             time_next_tx,
             self.motehandler.get_id(),
             self.intr_rx,
-            self.INTR_RX
+            self.INTR_RX,
         )

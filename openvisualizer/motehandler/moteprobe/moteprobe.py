@@ -184,11 +184,11 @@ class MoteProbe(threading.Thread):
                 if self.hdlc_flag and byte != self.hdlc.HDLC_FLAG:
                     # start of frame
                     if log.isEnabledFor(logging.DEBUG):
-                        log.debug("{}: start of HDLC frame {} {}".format(
-                            self.name,
-                            format_string_buf(self.hdlc.HDLC_FLAG),
-                            format_string_buf(byte))
-                        )
+                        log.debug("%s: start of HDLC frame %s %s",
+                                  self.name,
+                                  format_string_buf(self.hdlc.HDLC_FLAG),
+                                  format_string_buf(byte),
+                                  )
                     self.receiving = True
                     # discard received self.hdlc_flag
                     self.hdlc_flag = False

@@ -17,12 +17,12 @@ log = logging.getLogger('test_frag')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
-logHandler = logging.handlers.RotatingFileHandler(LOGFILE_NAME, backupCount=5, mode='w')
-logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
-for loggerName in ['test_frag', 'SixLowPanFrag']:
-    temp = logging.getLogger(loggerName)
+log_handler = logging.handlers.RotatingFileHandler(LOGFILE_NAME, backupCount=5, mode='w')
+log_handler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
+for logger_name in ['test_frag', 'SixLowPanFrag']:
+    temp = logging.getLogger(logger_name)
     temp.setLevel(logging.DEBUG)
-    temp.addHandler(logHandler)
+    temp.addHandler(log_handler)
 
 # ============================ defines =========================================
 

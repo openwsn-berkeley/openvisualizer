@@ -308,16 +308,16 @@ class BspLeds(BspModule):
 
     # === getters
 
-    def get_errorLedOn(self):
+    def get_error_led_on(self):
         return self.error_led_on
 
-    def get_radioLedOn(self):
+    def get_radio_led_on(self):
         return self.radio_led_on
 
-    def get_syncLedOn(self):
+    def get_sync_led_on(self):
         return self.sync_led_on
 
-    def get_debugLedOn(self):
+    def get_debug_led_on(self):
         return self.debug_led_on
 
     # ======================== private =========================================

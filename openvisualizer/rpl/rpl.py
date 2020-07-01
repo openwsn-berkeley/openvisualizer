@@ -73,7 +73,7 @@ class RPL(eventbusclient.EventBusClient):
                     'signal': 'getSourceRoute',
                     'callback': self._get_source_route_notif,
                 },
-            ]
+            ],
         )
 
         # local variables
@@ -125,7 +125,7 @@ class RPL(eventbusclient.EventBusClient):
                 signal=(
                     tuple(self.network_prefix + new_dagroot_eui64),
                     self.PROTO_ICMPv6,
-                    self.IANA_ICMPv6_RPL_TYPE
+                    self.IANA_ICMPv6_RPL_TYPE,
                 ),
                 callback=self._from_mote_data_local_notif,
             )
@@ -133,7 +133,7 @@ class RPL(eventbusclient.EventBusClient):
             # announce new DAG root
             self.dispatch(
                 signal='registerDagRoot',
-                data={'prefix': self.network_prefix, 'host': new_dagroot_eui64}
+                data={'prefix': self.network_prefix, 'host': new_dagroot_eui64},
             )
 
             # store DAGroot
@@ -151,7 +151,7 @@ class RPL(eventbusclient.EventBusClient):
                 signal=(
                     tuple(self.network_prefix + new_dagroot_eui64),
                     self.PROTO_ICMPv6,
-                    self.IANA_ICMPv6_RPL_TYPE
+                    self.IANA_ICMPv6_RPL_TYPE,
                 ),
                 callback=self._from_mote_data_local_notif,
             )
@@ -159,7 +159,7 @@ class RPL(eventbusclient.EventBusClient):
             # announce that node is no longer DAG root
             self.dispatch(
                 signal='unregisterDagRoot',
-                data={'prefix': self.network_prefix, 'host': self.dagroot_eui64}
+                data={'prefix': self.network_prefix, 'host': self.dagroot_eui64},
             )
 
             # clear DAGroot

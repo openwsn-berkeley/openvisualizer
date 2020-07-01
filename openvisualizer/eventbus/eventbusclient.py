@@ -21,7 +21,7 @@ class EventBusClient(object):
     PROTO_UDP = 'udp'
     PROTO_ALL = [
         PROTO_ICMPv6,
-        PROTO_UDP
+        PROTO_UDP,
     ]
 
     def __init__(self, name, registrations):
@@ -69,7 +69,7 @@ class EventBusClient(object):
                             sender,
                             signal,
                             callback,
-                        )
+                        ),
                     )
 
         # register

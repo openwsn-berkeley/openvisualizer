@@ -120,7 +120,7 @@ class VcdLogger(object):
                             self.sig_name[mote][signal],
                             mote,
                             signal,
-                        )
+                        ),
                     )
             # print line
             fswap.write(line)

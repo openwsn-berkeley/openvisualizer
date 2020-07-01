@@ -18,22 +18,22 @@ log = logging.getLogger('test_hdlc')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
-logHandler = logging.handlers.RotatingFileHandler(LOGFILE_NAME, maxBytes=2 * 1024 * 1024, backupCount=5, mode='w')
-logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
-for loggerName in ['test_hdlc', 'OpenHdlc']:
-    temp = logging.getLogger(loggerName)
+log_handler = logging.handlers.RotatingFileHandler(LOGFILE_NAME, maxBytes=2 * 1024 * 1024, backupCount=5, mode='w')
+log_handler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
+for logger_name in ['test_hdlc', 'OpenHdlc']:
+    temp = logging.getLogger(logger_name)
     temp.setLevel(logging.DEBUG)
-    temp.addHandler(logHandler)
+    temp.addHandler(log_handler)
 
 # ============================ fixtures ========================================
 
 RANDOM_FRAME = []
-for frameLen in range(1, 100, 5):
+for frame_len in range(1, 100, 5):
     for run in range(100):
         frame = None
         while (not frame) or (frame in RANDOM_FRAME):
             frame = []
-            for _ in range(frameLen):
+            for _ in range(frame_len):
                 frame += [random.randint(0x00, 0xff)]
         RANDOM_FRAME.append(frame)
 RANDOM_FRAME = [json.dumps(f) for f in RANDOM_FRAME]

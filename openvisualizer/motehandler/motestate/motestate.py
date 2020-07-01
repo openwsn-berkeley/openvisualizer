@@ -53,7 +53,7 @@ class MoteState(EventBusClient):
         ST_MYDAGRANK,
         ST_KAPERIOD,
         ST_JOINED,
-        ST_MSF
+        ST_MSF,
     ]
 
     TRIGGER_DAGROOT = 'DAGroot'
@@ -138,8 +138,8 @@ class MoteState(EventBusClient):
                     'numTx',
                     'numTxACK',
                     'lastUsedAsn',
-                ]
-            )
+                ],
+            ),
         )
         self.state[self.ST_BACKOFF] = StateBackoff()
         self.state[self.ST_QUEUE] = StateQueue()
@@ -165,12 +165,12 @@ class MoteState(EventBusClient):
                     'sixtopSeqNum',
                     'backoffExponent',
                     'backoff',
-                ]
+                ],
             ))
         self.state[self.ST_ISSYNC] = StateIsSync()
         self.state[self.ST_IDMANAGER] = StateIdManager(
             self,
-            self.mote_connector
+            self.mote_connector,
         )
         self.state[self.ST_MYDAGRANK] = StateMyDagRank()
         self.state[self.ST_KAPERIOD] = StateKaPeriod()
@@ -216,7 +216,7 @@ class MoteState(EventBusClient):
                     'signal': 'fromMote.status',
                     'callback': self._received_status_notif,
                 },
-            ]
+            ],
         )
 
     # ======================== public ==========================================
@@ -243,7 +243,7 @@ class MoteState(EventBusClient):
         # dispatch
         self.dispatch(
             signal='cmdToMote',
-            data={'serialPort': self.mote_connector.serialport, 'action': action}
+            data={'serialPort': self.mote_connector.serialport, 'action': action},
         )
 
     # ======================== private =========================================

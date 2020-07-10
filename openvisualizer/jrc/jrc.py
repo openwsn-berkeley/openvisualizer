@@ -47,9 +47,9 @@ class ContextHandler(object):
         self.join_resource = join_resource
 
     # ======================== Context Handler needs to be registered =============================
-    def security_context_lookup(self, kid, kidContext):
+    def security_context_lookup(self, kid, kid_context):
 
-        eui64 = kidContext
+        eui64 = kid_context
         sender_id = "JRC"
         recipient_id = ""
 
@@ -67,40 +67,40 @@ class ContextHandler(object):
 
         # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET
         # handler of the join resource
-        filePath = os.path.abspath(os.path.join("bin", "oscore_context_{0}.json".format(binascii.hexlify(eui64))))
-        if not os.path.exists(os.path.dirname(filePath)):
-            os.makedirs(os.path.dirname(filePath))
+        file_path = os.path.abspath(os.path.join("bin", "oscore_context_{0}.json".format(binascii.hexlify(eui64))))
+        if not os.path.exists(os.path.dirname(file_path)):
+            os.makedirs(os.path.dirname(file_path))
 
-        log.verbose("New node: {0}. Creating new OSCORE context in {1}.".format(format_ipv6_addr(Utils.str2buf(eui64)), filePath))
+        log.verbose("New node: {0}. Creating new OSCORE context in {1}.".format(format_ipv6_addr(Utils.str2buf(eui64)), file_path))
 
         # FIXME: until persistency is implemented in firmware, we need to overwrite the security context for each run
         # FIXME: this is a security issue as AEAD nonces get reused and should not be used in a production environment
-        self.security_context_create_overwrite(filePath,
+        self.security_context_create_overwrite(file_path,
                                                binascii.hexlify(eui64),
                                                self.master_salt,
                                                self.master_secret,
                                                binascii.hexlify(sender_id),
                                                binascii.hexlify(recipient_id))
 
-        context = Oscoap.SecurityContext(securityContextFilePath=filePath)
+        context = Oscoap.SecurityContext(securityContextFilePath=file_path)
 
         return context
 
     # create and return a security context file
-    def security_context_create_overwrite(self, filePath, idContext, masterSalt, masterSecret, senderID, recipientID):
+    def security_context_create_overwrite(self, file_path, id_context, master_salt, master_secret, sender_id, recipient_id):
         dict = {}
         dict["aeadAlgorithm"] = "AES_CCM_16_64_128"
         dict["hashFunction"] = "sha256"
-        dict["idContext"] = idContext
-        dict["masterSalt"] = masterSalt
-        dict["masterSecret"] = masterSecret
-        dict["recipientID"] = recipientID
-        dict["senderID"] = senderID
+        dict["idContext"] = id_context
+        dict["masterSalt"] = master_salt
+        dict["masterSecret"] = master_secret
+        dict["recipientID"] = recipient_id
+        dict["senderID"] = sender_id
         dict["replayWindow"] = [0]
         dict["sequenceNumber"] = 0
 
-        with open(filePath, "w") as contextFile:
-            json.dump(dict, contextFile, indent=4, sort_keys=True)
+        with open(file_path, "w") as context_file:
+            json.dump(dict, context_file, indent=4, sort_keys=True)
 
 
 # ======================== Interface with OpenVisualizer ======================================

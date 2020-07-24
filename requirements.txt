@@ -5,7 +5,7 @@ Sphinx
 yappi
 intelhex
 setuptools<=44.1.1
-openwsn-coap
+openwsn-coap>=0.0.7
 pycryptodome
 cbor
 hkdf

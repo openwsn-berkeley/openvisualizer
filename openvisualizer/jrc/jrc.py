@@ -101,7 +101,7 @@ class ContextHandler(object):
             "recipientID": recipient_id,
             "senderID": sender_id,
             "replayWindow": [0],
-            "sequenceNumber": 0
+            "sequenceNumber": 0,
         }
 
         with open(file_path, "w") as context_file:

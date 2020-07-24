@@ -14,7 +14,10 @@ Module which coordinates rpl DIO and DAO messages.
 """
 
 import logging
+import os
 import threading
+
+from appdirs import user_data_dir
 
 from openvisualizer.eventbus import eventbusclient
 from openvisualizer.rpl import sourceroute
@@ -270,7 +273,7 @@ class RPL(eventbusclient.EventBusClient):
             self.parents_dao_seq[node].append(dao_header['RPL_DAO_Sequence'])
 
         try:
-            with open('dao_sequence.txt', 'a') as f:
+            with open(os.path.join(user_data_dir('openvisualizer'), 'dao_sequence.txt'), 'a') as f:
                 f.write(str(self.parents_dao_seq) + '\n')
         except IOError as err:
             log.error("Permission error: {}".format(err))

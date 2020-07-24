@@ -18,5 +18,6 @@ ipaddr
 scapy
 sshtunnel
 iotlabcli
+appdirs
 pywin32; sys_platform == 'win32'
 colorama; sys_platform == 'win32'

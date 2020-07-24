@@ -243,46 +243,46 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
         # set up RPC server
         try:
             SimpleXMLRPCServer.__init__(self, (self.host, self.port), allow_none=True, logRequests=False)
+
+            self.register_introspection_functions()
+
+            # register RPCs
+            self.register_function(self.shutdown)
+            self.register_function(self.get_mote_dict)
+            self.register_function(self.boot_motes)
+            self.register_function(self.set_root)
+            self.register_function(self.get_mote_state)
+            self.register_function(self.get_dagroot)
+            self.register_function(self.get_dag)
+            self.register_function(self.get_motes_connectivity)
+            self.register_function(self.get_wireshark_debug)
+            self.register_function(self.enable_wireshark_debug)
+            self.register_function(self.disable_wireshark_debug)
+            self.register_function(self.get_ebm_stats)
+            self.register_function(self.get_network_topology)
+            self.register_function(self.update_network_topology)
+            self.register_function(self.create_motes_connection)
+            self.register_function(self.update_motes_connection)
+            self.register_function(self.delete_motes_connection)
+            self.register_function(self.retrieve_routing_path)
+
+            # boot all simulated motes
+            if self.simulator_mode and self.auto_boot:
+                self.boot_motes(['all'])
+
+            # set a mote (hardware or emulated) as DAG root of the network
+            if self.root is not None:
+                if self.simulator_mode and self.auto_boot is False:
+                    log.warning("Cannot set root when motes are not booted! ")
+                else:
+                    log.info("Setting DAG root...")
+                    # make sure that the simulated motes are booted and the hardware motes have communicated there mote ID
+                    time.sleep(1.5)
+                    self.set_root(self.root)
         except Exception as e:
             log.critical(e)
             self.shutdown()
             return
-
-        self.register_introspection_functions()
-
-        # register RPCs
-        self.register_function(self.shutdown)
-        self.register_function(self.get_mote_dict)
-        self.register_function(self.boot_motes)
-        self.register_function(self.set_root)
-        self.register_function(self.get_mote_state)
-        self.register_function(self.get_dagroot)
-        self.register_function(self.get_dag)
-        self.register_function(self.get_motes_connectivity)
-        self.register_function(self.get_wireshark_debug)
-        self.register_function(self.enable_wireshark_debug)
-        self.register_function(self.disable_wireshark_debug)
-        self.register_function(self.get_ebm_stats)
-        self.register_function(self.get_network_topology)
-        self.register_function(self.update_network_topology)
-        self.register_function(self.create_motes_connection)
-        self.register_function(self.update_motes_connection)
-        self.register_function(self.delete_motes_connection)
-        self.register_function(self.retrieve_routing_path)
-
-        # boot all simulated motes
-        if self.simulator_mode and self.auto_boot:
-            self.boot_motes(['all'])
-
-        # set a mote (hardware or emulated) as DAG root of the network
-        if self.root is not None:
-            if self.simulator_mode and self.auto_boot is False:
-                log.warning("cannot set root when motes are not booted! ")
-            else:
-                log.info("setting DAG root...")
-                # make sure that the simulated motes are booted and the hardware motes have communicated there mote ID
-                time.sleep(1.5)
-                self.set_root(self.root)
 
     @staticmethod
     def cleanup_temporary_files(files):

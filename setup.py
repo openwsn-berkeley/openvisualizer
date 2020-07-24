@@ -24,10 +24,6 @@ def _read_requirements(file_name):
 
 
 INSTALL_REQUIREMENTS = _read_requirements('requirements.txt')
-TESTS_REQUIREMENTS = _read_requirements('tests-requirements.txt')
-
-WEB_STATIC = 'web_files/static'
-WEB_TEMPLATES = 'web_files/templates'
 
 # read the contents of your README file
 this_directory = os.path.abspath(os.path.dirname(__file__))
@@ -36,25 +32,9 @@ with open(os.path.join(this_directory, 'README.md')) as f:
 
 setup(
     name=PACKAGE_NAME,
-    packages=find_packages(exclude=['tests', 'docs', 'images']),
+    packages=find_packages(exclude=['tests', '*.tests', 'tests.*', '*.tests.*']),
     python_requires='<=2.7.17',
-    package_data={
-        'openvisualizer': [
-            'config/*.conf',
-            'topologies/*',
-            '/'.join([WEB_STATIC, 'css', '*']),
-            '/'.join([WEB_STATIC, 'font-awesome', 'css', '*']),
-            '/'.join([WEB_STATIC, 'font-awesome', 'fonts', '*']),
-            '/'.join([WEB_STATIC, 'images', '*']),
-            '/'.join([WEB_STATIC, 'js', '*.js']),
-            '/'.join([WEB_STATIC, 'js', 'plugins', 'metisMenu', '*']),
-            '/'.join([WEB_TEMPLATES, '*']),
-        ],
-        '': [
-            'requirements.txt',
-            'images/*.png',
-        ],
-    },
+    include_package_data=True,
     entry_points={
         'console_scripts': [
             'openv-server = openvisualizer.__main__:main',
@@ -64,8 +44,6 @@ setup(
         ],
     },
     install_requires=INSTALL_REQUIREMENTS,
-    tests_require=TESTS_REQUIREMENTS,
-    extras_require={'test': TESTS_REQUIREMENTS},
     # Must extract zip to edit conf files.
     zip_safe=False,
     version=VERSION,

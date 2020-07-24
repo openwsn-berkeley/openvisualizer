@@ -277,7 +277,8 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
                     log.warning("Cannot set root when motes are not booted! ")
                 else:
                     log.info("Setting DAG root...")
-                    # make sure that the simulated motes are booted and the hardware motes have communicated there mote ID
+                    # make sure that the simulated motes are booted and the hardware motes have communicated
+                    # their mote ID
                     time.sleep(1.5)
                     self.set_root(self.root)
         except Exception as e:

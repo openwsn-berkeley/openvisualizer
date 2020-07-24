@@ -1,0 +1,12 @@
+include requirements.txt
+include LICENSE.md
+recursive-include openvisualizer/config *.conf
+recursive-include openvisualizer/topologies *
+recursive-include images *.png
+recursive-include openvisualizer/client/web_files/static/css *
+recursive-include openvisualizer/client/web_files/static/font-awesome/css *
+recursive-include openvisualizer/client/web_files/static/font-awesome/fonts *
+recursive-include openvisualizer/client/web_files/static/images *
+recursive-include openvisualizer/client/web_files/static/js *.js
+recursive-include openvisualizer/client/web_files/static/js/plugins/metisMenu *
+recursive-include openvisualizer/client/web_files/templates *

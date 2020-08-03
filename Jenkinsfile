@@ -5,7 +5,7 @@ pipeline {
     stages {
         stage('Test') {
             steps {
-                sh 'flake8'
+                sh 'flake8 > code_format_report.txt'
                 sh 'python -m pytest tests/ov --junitxml=report.xml -s'
             }
         }

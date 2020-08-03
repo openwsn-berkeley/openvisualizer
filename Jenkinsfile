@@ -5,8 +5,7 @@ pipeline {
     stages {
         stage('Test') {
             steps {
-                sh 'python --version'
-                sh 'pip freeze'
+                sh 'flake8'
                 sh 'python -m pytest tests/ov --junitxml=report.xml -s'
             }
         }

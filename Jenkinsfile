@@ -6,7 +6,7 @@ pipeline {
         stage('Test') {
             steps {
                 sh 'python --version'
-                sh 'pytest --version'
+                sh 'pip freeze'
                 sh 'python -m pytest tests/ov --junitxml=report.xml -s'
             }
         }

@@ -5,7 +5,6 @@ pipeline {
     stages {
         stage('Test') {
             steps {
-                sh 'flake8 > format_checking.txt'
                 sh 'pytest tests/ov --junitxml=report.xml -s'
             }
         }

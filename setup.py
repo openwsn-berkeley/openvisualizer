@@ -33,7 +33,7 @@ with open(os.path.join(this_directory, 'README.md')) as f:
 setup(
     name=PACKAGE_NAME,
     packages=find_packages(exclude=['tests', '*.tests', 'tests.*', '*.tests.*']),
-    python_requires='<=2.7.17',
+    python_requires='<=2.7.18',
     include_package_data=True,
     entry_points={
         'console_scripts': [

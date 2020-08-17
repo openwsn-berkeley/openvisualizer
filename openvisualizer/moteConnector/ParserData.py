@@ -247,7 +247,6 @@ class ParserData(Parser.Parser):
         payload['avg_pdr']         = avg_pdr_all
         payload['src_id']          = src_id
 
-
         print payload
 
         # publish the cmd message

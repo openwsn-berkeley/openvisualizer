@@ -35,10 +35,8 @@ class eventLogger(threading.Thread):
     def run(self):
 
         # to record mote status to file, uncomment the following code
-        '''
+        
         while True:
-            # by default, don't write to local files
-            pass
 
             with open(self.logfile,'a') as f:
                 for key, value in self.moteState.state.items():
@@ -54,7 +52,8 @@ class eventLogger(threading.Thread):
                 f.write(str(self.moteState.moteConnector.parser.parserInfo.errorinfo)+'\n')
                 
             time.sleep(2)
-        '''
+        
+        
 
     #======================== public ==========================================
     

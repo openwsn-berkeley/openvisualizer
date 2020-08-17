@@ -99,11 +99,23 @@ class OpenVisualizerApp(object):
                 moteProbe.moteProbe(mqtt_broker_address, iotlabmote=p) for p in self.iotlabmotes.split(',')
             ]
         elif self.testbedmotes:
-            motesfinder = moteProbe.OpentestbedMoteFinder(mqtt_broker_address)
-            self.moteProbes       = [
-                moteProbe.moteProbe(mqtt_broker_address, testbedmote_eui64=p)
-                for p in motesfinder.get_opentestbed_motelist()
-            ]
+            # motesfinder = moteProbe.OpentestbedMoteFinder(mqtt_broker_address)
+            # self.moteProbes       = [
+            #     moteProbe.moteProbe(mqtt_broker_address, testbedmote_eui64=p)
+            #     for p in motesfinder.get_opentestbed_motelist()
+            # ]
+
+            with open('../opentestbed/otbox_motes.json','r') as jf:
+                otbox_motes = json.load(jf)
+                motes_list = []
+                for otbox, info in otbox_motes.items():
+                    if info['box_info']['location'].startswith('A'):
+                        for motes in info['mote_info']:
+                            motes_list.append(motes['EUI64'])
+                self.moteProbes       = [
+                    moteProbe.moteProbe(mqtt_broker_address, testbedmote_eui64=p)
+                    for p in motes_list
+                ]
             
         else:
             # in "hardware" mode, motes are connected to the serial port

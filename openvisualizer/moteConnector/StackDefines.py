@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Mon, 03 Jun 2019 19:43:06
+# on Fri, 11 Oct 2019 17:14:56
 #
 
 components = {
@@ -117,7 +117,7 @@ errorDescriptions = {
   66: "busy receiving when stop of serial activity, buffer input length {1} (code location {0})",
   67: "wrong CRC in input Buffer",
   68: "synchronized when received a packet",
-  69: "the slot {0} to be added is already in schedule",
+  69: "the slot {0} (autocell: {1}) to be added is already in schedule",
   70: "the received packet format is not supported (code location {0})",
   71: "the metadata type is not suppored",
   72: "maxretries reached (counter: {0})",

@@ -1,9 +1,3 @@
-# Copyright (c) 2010-2013, Regents of the University of California.
-# All rights reserved.
-#
-# Released under the BSD 3-Clause license as published at the link below.
-# https://openwsn.atlassian.net/wiki/display/OW/License
-
 import logging
 
 from openvisualizer.utils import buf2int, hex2buf
@@ -15,14 +9,14 @@ log.addHandler(logging.NullHandler())
 
 # ============================ parameters ======================================
 
-class ReassembleEntry(object):
+class ReassembleEntry:
     def __init__(self, wanted, received, frag):
         self.total_bytes = wanted
         self.recvd_bytes = received
         self.fragments = frag
 
 
-class Fragmentor(object):
+class Fragmentor:
     """
     Class which performs fragmentation and reassembly of 6LoWPAN packets for transport of IEEE 802.15.4 networks.
 
@@ -127,7 +121,7 @@ class Fragmentor(object):
             else:
                 # subsequent fragment
                 dispatch_size = hex2buf("{:02x}".format((self.FRAGN_DISPATCH << 8) | original_length))
-                offset = [len(fragment_list) * (self.MAX_FRAGMENT_SIZE / 8)]
+                offset = [len(fragment_list) * int((self.MAX_FRAGMENT_SIZE / 8))]
                 frag_header.extend(dispatch_size)
                 frag_header.extend(datagram_tag)
                 frag_header.extend(offset)

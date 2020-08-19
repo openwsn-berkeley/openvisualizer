@@ -273,7 +273,7 @@ class OpenLbr(EventBusClient):
             for fragment in self.fragmentor.do_fragment(lowpan_bytes):
                 self.dispatch(
                     signal='bytesToMesh',
-                    data=(lowpan['nextHop'], fragment),
+                    data=(list(lowpan['nextHop']), fragment),
                 )
                 time.sleep(0.01)
 
@@ -340,7 +340,6 @@ class OpenLbr(EventBusClient):
                 # icmp header
                 if len(ipv6dic['payload']) < 5:
                     log.critical("wrong payload lenght on ICMPv6 packet {0}".format(",".join(str(c) for c in data)))
-                    print "wrong payload lenght on ICMPv6 packet {0}".format(",".join(str(c) for c in data))
                     return
 
                 ipv6dic['icmpv6_type'] = ipv6dic['payload'][0]
@@ -556,7 +555,7 @@ class OpenLbr(EventBusClient):
         return_val = []
 
         if self.use_page_zero:
-            print 'Page dispatch page number zero is not supported!\n'
+            log.critical('Page dispatch page number zero is not supported!\n')
             raise SystemError()
 
         # the 6lowpan packet contains 4 parts
@@ -856,7 +855,6 @@ class OpenLbr(EventBusClient):
                             output += ['org_time is {0}'.format(format_addr(o_time))]
                         output = '\n'.join(output)
                         log.error(output)
-                        print output
 
                     ptr += length + 1
             else:
@@ -1012,7 +1010,8 @@ class OpenLbr(EventBusClient):
         pkt_ipv6['pre_hop'] = mac_prev_hop
         return pkt_ipv6
 
-    def reassemble_ipv6_packet(self, pkt):
+    @staticmethod
+    def reassemble_ipv6_packet(pkt):
         pktw = [((6 << 4) + (pkt['traffic_class'] >> 4)),
                 (((pkt['traffic_class'] & 0x0F) << 4) + (pkt['flow_label'] >> 16)),
                 ((pkt['flow_label'] >> 8) & 0x00FF),
@@ -1038,12 +1037,14 @@ class OpenLbr(EventBusClient):
 
     def _set_prefix_notif(self, sender, signal, data):
         """ Record the network prefix. """
+
         with self.state_lock:
             self.network_prefix = data
             log.info('Set network prefix  {0}'.format(format_ipv6_addr(data)))
 
     def _info_dagroot_notif(self, sender, signal, data):
         """ Record the DAGroot's EUI64 address. """
+
         if data['isDAGroot'] == 1:
             with self.state_lock:
                 self.dagRootEui64 = data['eui64'][:]

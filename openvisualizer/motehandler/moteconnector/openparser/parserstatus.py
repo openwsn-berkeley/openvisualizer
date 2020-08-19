@@ -282,7 +282,7 @@ class ParserStatus(parser.Parser):
 
         # extract mote_id and status_elem
         try:
-            (mote_id, status_elem) = struct.unpack('<HB', ''.join([chr(c) for c in header_bytes]))
+            (mote_id, status_elem) = struct.unpack('<HB', bytes(header_bytes))
         except struct.error:
             raise ParserException(ParserException.ExceptionType.DESERIALIZE.value,
                                   "could not extract moteId and statusElem from {0}".format(header_bytes))
@@ -301,7 +301,7 @@ class ParserStatus(parser.Parser):
 
                 # parse byte array
                 try:
-                    fields = struct.unpack(key.structure, ''.join([chr(c) for c in data]))
+                    fields = struct.unpack(key.structure, bytes(data))
                 except struct.error as err:
                     raise ParserException(
                         ParserException.ExceptionType.DESERIALIZE.value,

@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
 import logging.handlers
+import os
 from random import randint, shuffle
 
 import pytest
@@ -36,15 +37,15 @@ TEST_VECTORS = []
 for i in range(NUM_OF_TEST_VECTORS):
     # create an IPv6 packet with a random payload
     pkt = ip6.IPv6(src='bbbb::2', dst='bbbb::1', hlim=64)
-    pkt.add_payload("".join([chr(randint(0, 255)) for j in range(randint(MIN_PAYLOAD_SIZE, MAX_PAYLOAD_SIZE))]))
+    pkt.add_payload(os.urandom(randint(MIN_PAYLOAD_SIZE, MAX_PAYLOAD_SIZE)))
 
     # fragment the packet
     fragment_list = lo.sixlowpan_fragment(pkt)
 
     for j in range(len(fragment_list)):
-        fragment_list[j] = [ord(b) for b in raw(fragment_list[j])]
+        fragment_list[j] = [b for b in raw(fragment_list[j])]
 
-    pkt = [ord(b) for b in raw(pkt)]
+    pkt = [b for b in raw(pkt)]
 
     TEST_VECTORS.append((pkt, fragment_list))
 
@@ -81,17 +82,20 @@ def test_fragment_packet(random_6lwp_fragments):
 
     log.debug("Original packet (len: {}) -- {}".format(len(ip_pkt), ip_pkt))
 
-    frags = [lo.SixLoWPAN("".join([chr(b) for b in f])) for f in fragmentor.do_fragment(ip_pkt)]
+    frags = []
+    for frag in fragmentor.do_fragment(ip_pkt):
+        frags.append(lo.SixLoWPAN(bytes(frag)))
+
     log.debug(frags)
 
     reassembled = lo.sixlowpan_defragment(frags)
 
     if len(reassembled) == 0:
         # the packet was not fragmented
-        log.debug(list(bytearray(raw(frags[0]))))
+        log.debug([int(b) for b in (raw(frags[0]))])
         log.debug(ip_pkt)
-        assert ip_pkt == list(bytearray(raw(frags[0])))
+        assert ip_pkt == [int(b) for b in (raw(frags[0]))]
     else:
-        log.debug(list(bytearray(raw(reassembled[1]))))
+        log.debug([int(b) for b in raw(reassembled[1])])
         log.debug(ip_pkt)
-        assert ip_pkt == list(bytearray(raw(reassembled[1])))
+        assert ip_pkt == [int(b) for b in raw(reassembled[1])]

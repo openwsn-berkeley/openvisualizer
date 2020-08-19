@@ -78,8 +78,9 @@ class MoteProbe(threading.Thread):
 
     def run(self):
         try:
-            log.debug("start running")
-            log.debug("attach to port {0}".format(self._portname))
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug("start running")
+                log.debug("attaching to port {0}".format(self._portname))
             self._attach()
 
             while not self.quit:  # read bytes from serial pipe
@@ -88,14 +89,12 @@ class MoteProbe(threading.Thread):
                 except MoteProbeNoData:
                     continue
                 except Exception as err:
-                    log.warning(err)
+                    log.error(err)
                     time.sleep(1)
                     break
                 else:
                     self._parse_bytes(rx_bytes)
-                if hasattr(self, 'emulated_mote'):
-                    self.serial.done_reading()
-            log.warning('{}; exit loop'.format(self._portname))
+            log.info('{}; exit loop'.format(self._portname))
         except Exception as err:
             err_msg = format_crash_message(self.name, err)
             log.critical(err_msg)
@@ -187,8 +186,7 @@ class MoteProbe(threading.Thread):
                         log.debug("%s: start of HDLC frame %s %s",
                                   self.name,
                                   format_string_buf(self.hdlc.HDLC_FLAG),
-                                  format_string_buf(byte),
-                                  )
+                                  format_string_buf(byte))
                     self.receiving = True
                     # discard received self.hdlc_flag
                     self.hdlc_flag = False

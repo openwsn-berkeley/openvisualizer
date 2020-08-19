@@ -120,7 +120,8 @@ class MoteConnector(EventBusClient):
 
                 # retrieve the security key of the network
                 with self.state_lock:
-                    key_dict = self._dispatch_and_get_result(signal='getL2SecurityKey', data=[])
+                    # key_dict = self._dispatch_and_get_result(signal='getL2SecurityKey', data=[])
+                    key_dict = {'index': [0], 'value': [b for b in range(0, 16)]}
 
                 # create data to send
                 with self.state_lock:

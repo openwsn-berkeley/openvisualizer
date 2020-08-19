@@ -56,7 +56,7 @@ class ParserLogs(Parser):
 
         # parse packet
         try:
-            mote_id, component, error_code, arg1, arg2 = struct.unpack('>HBBhH', ''.join([chr(c) for c in data]))
+            mote_id, component, error_code, arg1, arg2 = struct.unpack('>HBBhH', bytes(data))
         except struct.error:
             raise ParserException(ParserException.ExceptionType.DESERIALIZE.value,
                                   "could not extract data from {0}".format(data))

@@ -15,7 +15,7 @@ from contextlib import closing
 import sshtunnel
 from iotlabcli import auth
 
-from moteprobe import MoteProbe, MoteProbeNoData
+from .moteprobe import MoteProbe, MoteProbeNoData
 
 log = logging.getLogger('MoteProbe')
 log.setLevel(logging.ERROR)

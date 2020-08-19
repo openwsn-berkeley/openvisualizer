@@ -10,7 +10,7 @@ import json
 import logging
 import re
 import socket
-import xmlrpclib
+from xmlrpc.client import ServerProxy, Fault
 
 import bottle
 import pkg_resources
@@ -37,7 +37,7 @@ class WebServer:
         logger.debug('create instance')
 
         # store params
-        self.rpc_server = xmlrpclib.ServerProxy('http://{}:{}'.format(*rpc_server_addr))
+        self.rpc_server = ServerProxy('http://{}:{}'.format(*rpc_server_addr))
         self.bottle_srv = bottle_srv
 
         self._define_routes()
@@ -53,7 +53,7 @@ class WebServer:
 
     def _define_routes(self):
         """
-        Matches web URL to impelementing method. Cannot use @route annotations on the methods due to the class-based
+        Matches web URL to implementing method. Cannot use @route annotations on the methods due to the class-based
         implementation.
         """
         self.bottle_srv.route(path='/', callback=self._show_moteview)
@@ -116,7 +116,7 @@ class WebServer:
         logger.debug('Toggle root status for moteid {0}'.format(moteid))
         try:
             ms = self.rpc_server.get_mote_state(moteid)
-        except xmlrpclib.Fault as err:
+        except Fault as err:
             logger.error("A fault occurred: {}".format(err))
             return '{"result" : "fail"}'
         except socket.error as err:
@@ -127,7 +127,7 @@ class WebServer:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Found mote {0} in mote_states'.format(moteid))
             try:
-                self.rpc_server.set_root(moteid)
+                self.rpc_server.set_dagroot(moteid)
             except socket.error as err:
                 logger.error(err)
                 return '{}'
@@ -148,7 +148,7 @@ class WebServer:
             logger.debug('Get JSON data for moteid {0}'.format(moteid))
         try:
             states = self.rpc_server.get_mote_state(moteid)
-        except xmlrpclib.Fault as err:
+        except Fault as err:
             logger.error("Could not fetch mote state for mote {}: {}".format(moteid, err))
             return states
         except socket.error as err:
@@ -171,7 +171,7 @@ class WebServer:
                 _ = self.rpc_server.disable_wireshark_debug()
             else:
                 logger.error('Illegal value for \'_set_wireshark_debug\'')
-        except xmlrpclib.Fault as err:
+        except Fault as err:
             logger.error("Caught a server fault: {}".format(err))
         except socket.error as err:
             logger.error(err)
@@ -179,7 +179,6 @@ class WebServer:
     @staticmethod
     def _set_gologic_debug(enabled):
         logger.info('Enable GoLogic debug : {0}'.format(enabled))
-        # vcdlogger.VcdLogger().set_enabled(enabled == 'true')
         return '{"result" : "success"}'
 
     @bottle.view('eventBus.tmpl')
@@ -314,9 +313,6 @@ class WebServer:
         except socket.error as err:
             logger.error(err)
             return {}
-
-        if dagroot is not None:
-            dagroot = ''.join('%02x' % b for b in dagroot)
 
         data['DAGroot'] = dagroot
 

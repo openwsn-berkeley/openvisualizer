@@ -10,7 +10,7 @@ import signal
 
 import serial
 
-from moteprobe import MoteProbe, MoteProbeNoData
+from .moteprobe import MoteProbe, MoteProbeNoData
 
 try:
     import _winreg as winreg
@@ -87,10 +87,10 @@ class SerialMoteProbe(MoteProbe):
     # ======================== private =================================
 
     def _send_data(self, data):
-        hdlc_data = self.hdlc.hdlcify(data)
+        hdlc_data = self.hdlc.hdlcify(data).encode("utf-8")
         bytes_written = 0
         self._serial.flush()
-        while bytes_written != len(bytearray(hdlc_data)):
+        while bytes_written != len(hdlc_data):
             bytes_written += self._serial.write(hdlc_data)
 
     def _rcv_data(self, rx_bytes=1):

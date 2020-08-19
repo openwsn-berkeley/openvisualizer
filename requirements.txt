@@ -3,8 +3,8 @@ PyDispatcher
 bottle
 Sphinx
 intelhex
-setuptools<=44.1.1
-openwsn-coap>=0.0.7
+setuptools
+#openwsn-coap>=0.0.7
 pycryptodome
 cbor
 hkdf

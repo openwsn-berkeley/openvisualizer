@@ -265,5 +265,6 @@ class MoteState(EventBusClient):
         if not found:
             raise SystemError("No handler for data {0}".format(data))
 
-    def _is_namedtuple_instance(self, var, tuple_instance):
+    @staticmethod
+    def _is_namedtuple_instance(var, tuple_instance):
         return var._fields == tuple_instance._fields

@@ -16,8 +16,8 @@ def _read_requirements(file_name):
     requirements file contains only module lines and comments.
     """
     requirements = []
-    with open(os.path.join(file_name)) as f:
-        for line in f:
+    with open(os.path.join(file_name)) as file:
+        for line in file:
             if not line.startswith('#'):
                 requirements.append(line)
     return requirements
@@ -33,12 +33,12 @@ with open(os.path.join(this_directory, 'README.md')) as f:
 setup(
     name=PACKAGE_NAME,
     packages=find_packages(exclude=['tests', '*.tests', 'tests.*', '*.tests.*']),
-    python_requires='<=2.7.18',
+    python_requires='>=3.6',
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'openv-server = openvisualizer.__main__:main',
-            'openv-client = openvisualizer.client.main:cli',
+            'openv-server = openvisualizer.__main__:cli',
+            'openv-client = openvisualizer.client.__main__:cli',
             'openv-serial = scripts.serialtester_cli:cli',
             'openv-tun = scripts.ping_responder:cli',
         ],

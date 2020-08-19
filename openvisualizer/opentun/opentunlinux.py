@@ -57,9 +57,6 @@ class TunReadThread(threading.Thread):
                 # wait for data
                 p = os.read(self.tun_if, self.ETHERNET_MTU)
 
-                # convert input from a string to a byte list
-                p = [ord(b) for b in p]
-
                 # debug info
                 log.debug('packet captured on tun interface: {0}'.format(format_buf(p)))
 
@@ -128,11 +125,10 @@ class OpenTunLinux(OpenTun):
         data = self.VIRTUAL_TUN_ID + data
 
         # convert data to string
-        data = ''.join([chr(b) for b in data])
 
         try:
             # write over tuntap interface
-            os.write(self.tun_if, data)
+            os.write(self.tun_if, bytes(data))
             log.debug("data dispatched to tun correctly {0}, {1}".format(signal, sender))
         except Exception as err:
             err_msg = format_critical_message(err)
@@ -149,24 +145,24 @@ class OpenTunLinux(OpenTun):
             # =====
             log.info("opening tun interface")
             return_val = os.open("/dev/net/tun", os.O_RDWR)
-            ifs = ioctl(return_val, self.TUN_SET_IFF, struct.pack("16sH", "tun%d", self.IFF_TUN))
-            ifname = ifs[:16].strip("\x00")
+            ifs = ioctl(return_val, self.TUN_SET_IFF, struct.pack("16sH", "tun%d".encode('utf-8'), self.IFF_TUN))
+            if_name = ifs[:16].strip(b'\x00').decode('utf-8')
 
             # =====
             log.debug("configuring the IPv6 address")
             prefix_str = format_ipv6_addr(OpenTun.IPV6PREFIX)
             host_str = format_ipv6_addr(OpenTun.IPV6HOST)
 
-            _ = os.system('ip tuntap add dev ' + ifname + ' mode tun user root')
-            _ = os.system('ip link set ' + ifname + ' up')
-            _ = os.system('ip -6 addr add ' + prefix_str + ':' + host_str + '/64 dev ' + ifname)
-            _ = os.system('ip -6 addr add fe80::' + host_str + '/64 dev ' + ifname)
+            _ = os.system('ip tuntap add dev ' + if_name + ' mode tun user root')
+            _ = os.system('ip link set ' + if_name + ' up')
+            _ = os.system('ip -6 addr add ' + prefix_str + ':' + host_str + '/64 dev ' + if_name)
+            _ = os.system('ip -6 addr add fe80::' + host_str + '/64 dev ' + if_name)
 
             # =====
             log.debug("adding a static route route")
             # added 'metric 1' for router-compatibility constraint
             # (show ping packet on wireshark but don't send to mote at all)
-            os.system('ip -6 route add ' + prefix_str + ':1415:9200::/96 dev ' + ifname + ' metric 1')
+            os.system('ip -6 route add ' + prefix_str + ':1415:9200::/96 dev ' + if_name + ' metric 1')
             # trying to set a gateway for this route
             # os.system('ip -6 route add ' + prefixStr + '::/64 via ' + IPv6Prefix + ':' + hostStr + '/64')
 
@@ -176,10 +172,7 @@ class OpenTunLinux(OpenTun):
 
             # =====
             log.info('created following virtual interfaces')
-            os.system('ip addr show ' + ifname)
-
-            # =====start radvd
-            # os.system('radvd start')
+            os.system('ip addr show ' + if_name)
 
         except IOError as err:
             # happens when not root

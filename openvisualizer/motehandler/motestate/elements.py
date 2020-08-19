@@ -1,6 +1,7 @@
 import json
 import time
 from abc import ABCMeta
+from typing import Optional
 
 from openvisualizer.motehandler.motestate.opentype import TypeAsn, OpenType, TypeCellType, TypeAddr, TypeComponent, \
     TypeRssi
@@ -23,7 +24,7 @@ class StateElem(object):
         self.meta[0]['lastUpdated'] = time.time()
         self.meta[0]['numUpdates'] += 1
 
-    def to_json(self, aspect='all', is_pretty_print=False):
+    def to_json(self, aspect='all', is_pretty_print=False) -> str:
         """
         Dumps state to JSON.
 
@@ -318,13 +319,16 @@ class StateIdManager(StateElem):
         super(StateIdManager, self).__init__()
         self.ebc = event_bus_client
         self.mote_connector = mote_connector
-        self.is_dagroot = None
+        self._is_dagroot = None
 
-    def get_16b_addr(self):
+    def get_16b_addr(self) -> Optional[str]:
         try:
-            return self.data[0]['my16bID'].addr[:]
+            return ''.join(['%02x' % b for b in self.data[0]['my16bID'].addr[:]])
         except IndexError:
             return None
+
+    def is_dagroot(self):
+        return self._is_dagroot
 
     def update(self, notif=None, creator=None, owner=None):
         super(StateIdManager, self).update()
@@ -380,7 +384,7 @@ class StateIdManager(StateElem):
         ]
 
         # announce information about the DAG root to the eventBus
-        if self.is_dagroot != self.data[0]['isDAGroot']:
+        if self._is_dagroot != self.data[0]['isDAGroot']:
             # dispatch
             self.ebc.dispatch(
                 signal='infoDagRoot',
@@ -392,7 +396,7 @@ class StateIdManager(StateElem):
             )
 
         # record is_dagroot
-        self.is_dagroot = self.data[0]['isDAGroot']
+        self._is_dagroot = self.data[0]['isDAGroot']
 
 
 class StateMyDagRank(StateElem):

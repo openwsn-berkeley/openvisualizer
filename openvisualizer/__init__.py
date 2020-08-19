@@ -1,4 +1,4 @@
-VERSION = '2.0.0alpha1'
+VERSION = '2.0.0alpha2'
 
 PACKAGE_NAME = 'openvisualizer'
 APPNAME = PACKAGE_NAME

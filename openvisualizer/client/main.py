@@ -130,16 +130,18 @@ def motes(proxy):
             addr_port_dict = temp_mote_dict
 
         i = 0
-        port = None
+        port, addr = None, None
         while port is None and i < len(addr_port_dict):
             addr, port = addr_port_dict.items()[i]
             i += 1
 
-        if port is None:
-            port = 'None'
+        len_addr = len(addr) if addr is not None else 0
+        len_port = len(port) if port is not None else 0
 
-        heading = " | {:^{}} | {:^{}} | {:^13} |".format("MOTE ID", str(max(15, len(addr))), "PORT",
-                                                         str(max(15, len(port))), 'STATUS')
+        heading = " | {:^{}} | {:^{}} | {:^13} |".format("MOTE ID",
+                                                         str(max(15, len_addr)), "PORT",
+                                                         str(max(15, len_port)), 'STATUS')
+
         click.echo("".join([" "] + ["-"] * (len(heading) - 1)))
         click.echo(heading)
         click.echo("".join([" "] + ["-"] * (len(heading) - 1)))

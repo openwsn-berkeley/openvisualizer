@@ -49,7 +49,7 @@ Once installed you need to activate the virtual environment. On Linux or OSX:
 $ source venv/bin/activate
 ```
 
-On Windows (if you are using PowerShell, you might have to change the execution policy):
+On Windows (instructions have been tested for Windows CMD only):
 
 ```bash
 $ .\venv\Scripts\activate

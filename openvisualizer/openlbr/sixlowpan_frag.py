@@ -80,7 +80,7 @@ class Fragmentor(object):
 
         # check if we can reassemble
         num_of_frags = 0
-        used_tag = 0
+        used_tag = None
         for tag, entry in self.reassemble_buffer.items():
             if entry.total_bytes == entry.recvd_bytes:
                 frags = sorted(entry.fragments, key=lambda frag: frag[0])
@@ -90,8 +90,10 @@ class Fragmentor(object):
 
                 for frag in frags:
                     reassembled_pkt.extend(frag[1])
+                break
 
-                del self.reassemble_buffer[tag]
+        if used_tag is not None:
+            del self.reassemble_buffer[used_tag]
 
         if reassembled_pkt is not None:
             log.success("[GATEWAY] Reassembled {} frags with tag {} into an IPv6 packet of size {}".format(

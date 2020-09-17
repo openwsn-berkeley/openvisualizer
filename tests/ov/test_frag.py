@@ -83,14 +83,15 @@ def test_fragment_packet(random_6lwp_fragments):
 
     frags = [lo.SixLoWPAN("".join([chr(b) for b in f])) for f in fragmentor.do_fragment(ip_pkt)]
     log.debug(frags)
+
     reassembled = lo.sixlowpan_defragment(frags)
 
     if len(reassembled) == 0:
         # the packet was not fragmented
-        log.debug(list(bytearray(raw(ip6.IPv6(frags[0])))))
+        log.debug(list(bytearray(raw(frags[0]))))
         log.debug(ip_pkt)
-        assert ip_pkt == list(bytearray(raw(ip6.IPv6(frags[0]))))
+        assert ip_pkt == list(bytearray(raw(frags[0])))
     else:
-        log.debug(list(bytearray(raw(ip6.IPv6(reassembled[1])))))
+        log.debug(list(bytearray(raw(reassembled[1]))))
         log.debug(ip_pkt)
-        assert ip_pkt == list(bytearray(raw(ip6.IPv6(reassembled[1]))))
+        assert ip_pkt == list(bytearray(raw(reassembled[1])))

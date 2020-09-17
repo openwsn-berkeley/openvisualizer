@@ -2,7 +2,6 @@ pyserial
 PyDispatcher
 bottle
 Sphinx
-yappi
 intelhex
 setuptools<=44.1.1
 openwsn-coap>=0.0.7

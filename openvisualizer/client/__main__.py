@@ -2,12 +2,14 @@ import errno
 import json
 import logging
 import socket
+import sys
 import time
 from xmlrpc.client import ServerProxy, Fault
 
 import bottle
 import click
 
+from openvisualizer import VERSION
 from openvisualizer.client.plugins.plugin import Plugin
 from openvisualizer.client.utils import transform_into_ipv6
 from openvisualizer.client.webserver import WebServer
@@ -24,13 +26,24 @@ pass_proxy = click.make_pass_decorator(Proxy, ensure=True)
 pass_plugins = click.make_pass_decorator(Plugin, ensure=True)
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.option('--server', default='localhost', help='Specify address of the Openvisualizer server')
+@click.option('--version', is_flag=True, help='Print the OpenVisualizer version')
 @click.option('--port', default=9000, help='Specify to port to use')
 @click.option('--debug', is_flag=True, help="Enable debugging")
 @click.pass_context
-def cli(ctx, server, port, debug):
+def cli(ctx, version, server, port, debug):
     ctx.obj = Proxy(server, port)
+
+    if version:
+        click.echo(f"OpenVisualizer (client) v{VERSION}")
+        sys.exit(0)
+
+    if ctx.invoked_subcommand is None:
+        click.echo('Use one of the following subcommands: ', nl=False)
+        click.secho('network, view, or shutdown', bold=True)
+        sys.exit(0)
+
     if debug:
         logging.basicConfig(
             filename='openv-client.log',
@@ -39,6 +52,7 @@ def cli(ctx, server, port, debug):
             format='%(asctime)s [%(name)s:%(levelname)s] %(message)s',
             datefmt='%H:%M:%S',
         )
+
 
 
 @click.command()

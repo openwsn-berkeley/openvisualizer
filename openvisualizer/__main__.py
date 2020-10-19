@@ -13,7 +13,7 @@ import click
 import coloredlogs
 import pkg_resources as pkg_rs
 
-from openvisualizer import APPNAME, PACKAGE_NAME, DEFAULT_LOGGING_CONF, WINDOWS_COLORS, UNIX_COLORS
+from openvisualizer import APPNAME, PACKAGE_NAME, DEFAULT_LOGGING_CONF, WINDOWS_COLORS, UNIX_COLORS, VERSION
 from openvisualizer.server import OpenVisualizer
 
 server_object: Optional[OpenVisualizer] = None
@@ -111,10 +111,10 @@ def prompt_fw_path(ctx, param, fw_path):
     return fw_path
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.option('--host', default='localhost', help='Specify address of the OpenVisualizer server', show_default=True)
 @click.option('--port', default=9000, help='Specify to port to use', show_default=True)
-@click.option('--wireshark-debug', is_flag=True, help="Enable WireShark debugging")
+@click.option('--version', is_flag=True, help='Print version information OpenVisualizer')
 @click.option('--tun', is_flag=True, help="Enable the TUN interface")
 @click.option('--wireshark-debug', is_flag=True, help="Enable wireshark debugging")
 @click.option('--lconf', default=pkg_rs.resource_filename(PACKAGE_NAME, DEFAULT_LOGGING_CONF),
@@ -135,6 +135,15 @@ def cli(ctx, host, port, version, wireshark_debug, tun, lconf, page_zero, fw_pat
     banner += [""]
 
     click.secho('\n'.join(banner))
+
+    if version:
+        click.echo(f"OpenVisualizer (server) v{VERSION}")
+        sys.exit(0)
+
+    if ctx.invoked_subcommand is None:
+        click.echo('Use one of the following subcommands: ', nl=False)
+        click.secho('hardware, simulation, iotlab, or testbed', bold=True)
+        sys.exit(0)
 
     if tun and os.name == 'posix' and not os.getuid() == 0:
         res = click.prompt("TUN requires admin privileges, (C)ontinue or (A)bort", default="A")

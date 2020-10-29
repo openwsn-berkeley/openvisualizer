@@ -179,16 +179,20 @@ def simulation(config, num_of_motes, topology):
 @pass_config
 def testbed(config):
     """ Attaches OpenVisualizer to the opentestbed. """
-
-    start_server(OpenVisualizer(config, OpenVisualizer.Mode.TESTBED), config)
+    pass
+    # TODO: need to verify
+    click.secho("Temporarily disabled")
+    # start_server(OpenVisualizer(config, OpenVisualizer.Mode.TESTBED), config)
 
 
 @click.command()
 @pass_config
 def iotlab(config):
     """ Attaches OpenVisualizer to IoT-LAB."""
-
-    start_server(OpenVisualizer(config, OpenVisualizer.Mode.IOTLAB), config)
+    pass
+    # TODO: need to verify
+    click.secho("Temporarily disabled")
+    # start_server(OpenVisualizer(config, OpenVisualizer.Mode.IOTLAB), config)
 
 
 def start_server(server_instance, config):

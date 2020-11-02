@@ -208,6 +208,9 @@ class ParserData(parser.Parser):
         self.avg_kpi[src_id]['avg_latency'] = \
             sum(self.avg_kpi[src_id]['latency']) / len(self.avg_kpi[src_id]['latency'])
 
+        self.avg_kpi[src_id]['avg_duty_cycle'] = \
+            sum(self.avg_kpi[src_id]['dutyCycle']) / len(self.avg_kpi[src_id]['dutyCycle'])
+
         mote_data['counter'].sort()  # sort the counter before calculating
 
         self.avg_kpi[src_id]['avg_pdr'] = \
@@ -216,20 +219,24 @@ class ParserData(parser.Parser):
         avg_pdr_all = 0.0
         avg_latency_all = 0.0
         avg_num_cells_usage_all = 0.0
+        avg_duty_cycle_all = 0.0
 
         for mote, data in self.avg_kpi.items():
             avg_pdr_all += data['avg_pdr']
             avg_latency_all += data['avg_latency']
             avg_num_cells_usage_all += data['avg_cellsUsage']
+            avg_duty_cycle_all += data['avg_duty_cycle']
 
         num_motes = len(self.avg_kpi)
         avg_pdr_all = avg_pdr_all / float(num_motes)
         avg_latency_all = avg_latency_all / float(num_motes)
         avg_num_cells_usage_all = avg_num_cells_usage_all / float(num_motes)
+        avg_duty_cycle_all = avg_duty_cycle_all / float(num_motes)
 
         payload['avg_cellsUsage'] = avg_num_cells_usage_all
         payload['avg_latency'] = avg_latency_all
         payload['avg_pdr'] = avg_pdr_all
+        payload['avg_duty_cycle'] = avg_duty_cycle_all
         payload['src_id'] = src_id
 
         if self.mqtt_connected:

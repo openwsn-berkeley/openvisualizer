@@ -150,6 +150,21 @@ def cli(ctx, host, port, version, wireshark_debug, tun, lconf, page_zero, fw_pat
         if res != "C":
             sys.exit(0)
 
+    # create directories to store logs and application data
+    try:
+        os.makedirs(appdirs.user_log_dir(APPNAME))
+    except OSError as err:
+        if err.errno != 17:
+            log.critical(err)
+            return
+
+    try:
+        os.makedirs(appdirs.user_data_dir(APPNAME))
+    except OSError as err:
+        if err.errno != 17:
+            log.critical(err)
+            return
+
     ctx.obj = ServerConfig(host, port, wireshark_debug, tun, lconf, page_zero, fw_path, mqtt_broker, root)
     load_logging_conf(ctx.obj)
 
@@ -209,8 +224,8 @@ def start_server(server_instance, config):
 def load_logging_conf(config):
     try:
         logging.config.fileConfig(fname=config.lconf, defaults={'log_dir': appdirs.user_log_dir(APPNAME)})
-    except IOError:
-        log.error("Failed to load config")
+    except IOError as err:
+        log.error(f"Failed to load config: {err}")
 
 
 cli.add_command(hardware)

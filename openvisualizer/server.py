@@ -239,8 +239,9 @@ class OpenVisualizer(EventBusClient):
         return states, edges
 
     def get_network_topology(self):
-        motes = []
-        address = 1
+        pass
+        # motes = []
+        # address = 1
 
         # if self.mode != self.Mode.SIMULATION:
         #     raise Fault(faultCode='-1', faultString="Only available during simulation")

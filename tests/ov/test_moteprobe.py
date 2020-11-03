@@ -144,7 +144,7 @@ def test_moteprobe_run_and_exit(m_attach, m_detach):
     try:
         my_mock = MockMoteProbe('mock')
         # Thread should be running
-        assert my_mock.isAlive()
+        assert my_mock.is_alive()
         time.sleep(0.01)
         # Thread should have attached to serial pipe
         assert m_attach.called
@@ -169,7 +169,7 @@ def test_moteprobe_init(prob_running):
     assert hasattr(prob_running, '_detach')
     assert hasattr(prob_running, '_attach')
     # Thread should be running
-    assert prob_running.isAlive()
+    assert prob_running.is_alive()
 
 
 @pytest.mark.parametrize('probe_stopped', [('mock')], indirect=["probe_stopped"])
@@ -223,7 +223,7 @@ def test_moteprobe__attach_error(m_attach, caplog):
         with caplog.at_level(logging.INFO, logger="MoteProbe"):
             my_mock = MockMoteProbe('mock')
             time.sleep(0.01)
-            assert my_mock.isAlive() is False
+            assert my_mock.is_alive() is False
             assert '_attach_failed' in caplog.text
     except Exception as e:
         my_mock.close()
@@ -240,8 +240,8 @@ def test_moteprobe__rcv_data_error(m_rcv_data, caplog):
             time.sleep(0.01)
             assert m_rcv_data.called
             assert '_rcv_failed' in caplog.text
-        # should still be alive after a wrongfull receive
-        assert my_mock.isAlive() is True
+        # should still be alive after a failed receive
+        assert my_mock.is_alive() is True
     except Exception as e:
         my_mock.close()
         my_mock.join()

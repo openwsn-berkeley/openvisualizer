@@ -3,7 +3,7 @@ import queue
 import random
 from collections import namedtuple
 from threading import Thread
-from typing import List, Any, Dict, Optional
+from typing import List, Dict, Optional
 
 from openvisualizer.simulator.moteprocess import Radio
 

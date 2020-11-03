@@ -54,7 +54,6 @@ def cli(ctx, version, server, port, debug):
         )
 
 
-
 @click.command()
 @click.confirmation_option()
 @pass_proxy

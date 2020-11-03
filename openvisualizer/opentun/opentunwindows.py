@@ -236,7 +236,7 @@ class OpenTunWindows(OpenTun):
         """
         with reg.OpenKey(reg.HKEY_LOCAL_MACHINE, self.ADAPTER_KEY) as adapters:
             try:
-                for i in xrange(10000):
+                for i in range(10000):
                     key_name = reg.EnumKey(adapters, i)
                     with reg.OpenKey(adapters, key_name) as adapter:
                         try:

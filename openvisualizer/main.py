@@ -174,7 +174,7 @@ class OpenVisualizerServer(SimpleXMLRPCServer, EventBusClient):
         self.openlbr = openlbr.OpenLbr(use_page_zero)
         self.rpl = rpl.RPL()
         self.jrc = jrc.JRC()
-        self.topology = topology.Topology()
+        self.topology = topology.Topology(mqtt_broker)
         self.mote_probes = []
 
         # create opentun call last since indicates prefix

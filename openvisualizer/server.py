@@ -27,6 +27,7 @@ from openvisualizer.motehandler.motestate.motestate import MoteState
 from openvisualizer.openlbr import openlbr
 from openvisualizer.opentun.opentun import OpenTun
 from openvisualizer.opentun.opentunnull import OpenTunNull
+from openvisualizer.jrc import jrc
 from openvisualizer.rpl import rpl, topology
 from openvisualizer.simulator.simengine import SimEngine
 
@@ -74,6 +75,7 @@ class OpenVisualizer(EventBusClient):
         self.ebm = eventbusmonitor.EventBusMonitor(kwargs.get("wireshark_debug"))
         self.lbr = openlbr.OpenLbr(self.page_zero)
         self.rpl = rpl.RPL()
+        self.jrc = jrc.JRC()
         self.topology = topology.Topology()
         self.tun = OpenTun.create(config.tun)
 
@@ -94,7 +96,7 @@ class OpenVisualizer(EventBusClient):
             self.simulator.join()
 
         self.tun.close()
-        # self.jrc.close()
+        self.jrc.close()
 
         for probe in self.mote_probes:
             probe.close()

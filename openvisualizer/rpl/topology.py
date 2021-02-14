@@ -17,6 +17,10 @@ import logging
 import threading
 import time
 
+import struct
+import json
+import paho.mqtt.client as mqtt
+
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 
 log = logging.getLogger('Topology')
@@ -26,11 +30,11 @@ log.addHandler(logging.NullHandler())
 
 class Topology(EventBusClient):
 
-    def __init__(self):
+    def __init__(self, mqtt_broker):
 
         # log
-        log.debug('create instance')
 
+        log.debug('create instance')
         # local variables
         self.data_lock = threading.Lock()
         self.parents = {}
@@ -52,6 +56,39 @@ class Topology(EventBusClient):
                 },
             ],
         )
+
+        self.broker = mqtt_broker
+        self.mqtt_connected = False
+
+        if self.broker:
+
+            # connect to MQTT
+            self.mqtt_client = mqtt.Client()
+            self.mqtt_client.on_connect = self._on_mqtt_connect
+
+            try:
+                self.mqtt_client.connect(self.broker)
+            except Exception as e:
+                log.error("failed to connect to {} with error msg: {}".format(self.broker, e))
+            else:
+                # start mqtt client
+                self.mqtt_thread = threading.Thread(name='mqtt_loop_thread', target=self.mqtt_client.loop_forever)
+                self.mqtt_thread.start()
+
+
+    def publish_topology(self):
+        payload = {'token': 123}
+        payload['topology'] = str(self.parents)
+
+        if self.mqtt_connected:
+            # publish the cmd message
+            self.mqtt_client.publish(topic='opentestbed/openv-server/topology', payload=json.dumps(payload), qos=2)
+
+
+    # ======================== private =========================================
+
+    def _on_mqtt_connect(self, client, userdata, flags, rc):
+        self.mqtt_connected = True
 
     # ======================== public ==========================================
 
@@ -84,7 +121,7 @@ class Topology(EventBusClient):
             # data[0] == source address, data[1] == list of parents
             self.parents.update({data[0]: data[1]})
             self.parents_last_seen.update({data[0]: time.time()})
-
+        self.publish_topology()
         self._clear_node_timeout()
 
     def _clear_node_timeout(self):

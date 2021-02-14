@@ -101,8 +101,8 @@ class ParserData(parser.Parser):
         # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
         offset = 0
         if len(data) > 37:
-            offset -= 7
-            if self.UINJECT_MASK == ''.join(chr(i) for i in data[offset:]):
+            offset -= 26
+            if self.UINJECT_MASK == ''.join(chr(i) for i in data[offset:offset + len(self.UINJECT_MASK)]):
 
                 pkt_info = \
                     {
@@ -114,31 +114,31 @@ class ParserData(parser.Parser):
                         'numCellsUsedRx': 0,
                         'dutyCycle': 0,
                     }
+                offset += len(self.UINJECT_MASK)
 
-                offset -= 2
-                pkt_info['counter'] = data[offset - 2] + 256 * data[offset - 1]  # counter sent by mote
+                pkt_info['counter'] = data[offset] + 256 * data[offset + 1]  # counter sent by mote
+                offset += 2
+
 
                 pkt_info['asn'] = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 5:offset - 1]]))[0]
-                aux = data[offset - 5:offset]  # last 5 bytes of the packet are the ASN in the UDP latency packet
+                aux = data[offset:offset + 5]  # last 5 bytes of the packet are the ASN in the UDP latency packet
                 diff = ParserData._asn_diference(aux, asn_bytes)  # calculate difference
                 pkt_info['latency'] = diff  # compute time in slots
-                offset -= 5
+                offset += 5
 
-                pkt_info['numCellsUsedTx'] = data[offset - 1]
-                offset -= 1
+                pkt_info['numCellsUsedTx'] = data[offset]
+                offset += 1
 
-                pkt_info['numCellsUsedRx'] = data[offset - 1]
-                offset -= 1
+                pkt_info['numCellsUsedRx'] = data[offset]
+                offset += 1
 
-                pkt_info['src_id'] = ''.join(['%02x' % x for x in [data[offset - 1], data[offset - 2]]])  # mote id
+                pkt_info['src_id'] = ''.join(['%02x' % x for x in [data[offset + 1], data[offset]]])  # mote id
                 src_id = pkt_info['src_id']
-                offset -= 2
+                offset += 2
 
-                num_ticks_on = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 4:offset]]))[0]
-                offset -= 4
-
-                num_ticks_in_total = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 4:offset]]))[0]
-                offset -= 4
+                num_ticks_on = struct.unpack('<I', ''.join([chr(c) for c in data[offset:offset + 4]]))[0]
+                offset += 4
+                num_ticks_in_total = struct.unpack('<I', ''.join([chr(c) for c in data[offset:]]))[0]
 
                 pkt_info['dutyCycle'] = float(num_ticks_on) / float(num_ticks_in_total)  # duty cycle
 
@@ -208,6 +208,9 @@ class ParserData(parser.Parser):
         self.avg_kpi[src_id]['avg_latency'] = \
             sum(self.avg_kpi[src_id]['latency']) / len(self.avg_kpi[src_id]['latency'])
 
+        self.avg_kpi[src_id]['avg_duty_cycle'] = \
+            sum(self.avg_kpi[src_id]['dutyCycle']) / len(self.avg_kpi[src_id]['dutyCycle'])
+
         mote_data['counter'].sort()  # sort the counter before calculating
 
         self.avg_kpi[src_id]['avg_pdr'] = \
@@ -216,20 +219,24 @@ class ParserData(parser.Parser):
         avg_pdr_all = 0.0
         avg_latency_all = 0.0
         avg_num_cells_usage_all = 0.0
+        avg_duty_cycle_all = 0.0
 
         for mote, data in self.avg_kpi.items():
             avg_pdr_all += data['avg_pdr']
             avg_latency_all += data['avg_latency']
             avg_num_cells_usage_all += data['avg_cellsUsage']
+            avg_duty_cycle_all += data['avg_duty_cycle']
 
         num_motes = len(self.avg_kpi)
         avg_pdr_all = avg_pdr_all / float(num_motes)
         avg_latency_all = avg_latency_all / float(num_motes)
         avg_num_cells_usage_all = avg_num_cells_usage_all / float(num_motes)
+        avg_duty_cycle_all = avg_duty_cycle_all / float(num_motes)
 
         payload['avg_cellsUsage'] = avg_num_cells_usage_all
         payload['avg_latency'] = avg_latency_all
         payload['avg_pdr'] = avg_pdr_all
+        payload['avg_duty_cycle'] = avg_duty_cycle_all
         payload['src_id'] = src_id
 
         if self.mqtt_connected:

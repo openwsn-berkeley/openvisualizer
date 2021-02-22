@@ -6,7 +6,6 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 """
 
-import binascii
 import logging.handlers
 import os
 import threading
@@ -29,7 +28,7 @@ log.addHandler(logging.NullHandler())
 
 
 # ======================== Top Level jrc Class =============================
-class JRC(object):
+class JRC:
     def __init__(self):
         coap_resource = JoinResource()
         self.coap_server = CoapServer(coap_resource, ContextHandler(coap_resource).security_context_lookup)
@@ -39,7 +38,7 @@ class JRC(object):
 
 
 # ======================== Security Context Handler =========================
-class ContextHandler(object):
+class ContextHandler:
     # value of the OSCORE Master Secret from 6TiSCH TD
     master_secret = "DEADBEEFCAFEDEADBEEFCAFEDEADBEEF"
     master_salt = ""
@@ -160,8 +159,7 @@ class CoapServer(EventBusClient):
     # ======================== public ==========================================
 
     def close(self):
-        # nothing to do
-        pass
+        self.coap_server.close()
 
     # ======================== private =========================================
 

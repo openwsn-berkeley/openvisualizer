@@ -18,6 +18,7 @@ from xmlrpc.client import Fault
 
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.eventbus.eventbusclient import EventBusClient
+from openvisualizer.jrc.jrc import JRC
 from openvisualizer.motehandler.moteconnector.moteconnector import MoteConnector
 from openvisualizer.motehandler.moteprobe.emulatedmoteprobe import EmulatedMoteProbe
 from openvisualizer.motehandler.moteprobe.serialmoteprobe import SerialMoteProbe
@@ -28,8 +29,6 @@ from openvisualizer.opentun.opentun import OpenTun
 from openvisualizer.opentun.opentunnull import OpenTunNull
 from openvisualizer.rpl import rpl, topology
 from openvisualizer.simulator.simengine import SimEngine
-from openvisualizer.utils import extract_component_codes, extract_log_descriptions, extract_6top_rcs, \
-    extract_6top_states
 
 log = logging.getLogger('OpenVisualizer')
 
@@ -70,7 +69,6 @@ class OpenVisualizer(EventBusClient):
 
         # store configuration
         self.root = config.root
-        self.fw_path = config.fw_path
         self.page_zero = config.page_zero
 
         self.ebm = eventbusmonitor.EventBusMonitor(kwargs.get("wireshark_debug"))
@@ -79,14 +77,7 @@ class OpenVisualizer(EventBusClient):
         self.topology = topology.Topology()
         self.tun = OpenTun.create(config.tun)
 
-        try:
-            defines = self.extract_stack_defines()
-        except FileNotFoundError:
-            log.critical("Could not load stack definitions")
-            self.shutdown()
-            return
-
-        self.mote_connectors = [MoteConnector(mp, defines, config.mqtt_broker) for mp in self.mote_probes]
+        self.mote_connectors = [MoteConnector(mp, config.mqtt_broker) for mp in self.mote_probes]
         self.mote_states = [MoteState(mc) for mc in self.mote_connectors]
 
         self._dagroot = None
@@ -94,18 +85,6 @@ class OpenVisualizer(EventBusClient):
         if self.root:
             log.info(f"Setting DAGroot: {self.root}")
             Timer(2, self.set_dagroot, args=(self.root,)).start()
-
-    def extract_stack_defines(self):
-        """ Extract firmware definitions for the OpenVisualizer parser from the OpenWSN-FW files. """
-        log.info('extracting firmware definitions.')
-        definitions = {
-            "components": extract_component_codes(os.path.join(self.fw_path, 'inc', 'defs.h')),
-            "log_descriptions": extract_log_descriptions(os.path.join(self.fw_path, 'inc', 'defs.h')),
-            "sixtop_returncodes": extract_6top_rcs(os.path.join(self.fw_path, 'stack', '02b-MAChigh', 'sixtop.h')),
-            "sixtop_states": extract_6top_states(os.path.join(self.fw_path, 'stack', '02b-MAChigh', 'sixtop.h')),
-        }
-
-        return definitions
 
     def shutdown(self) -> None:
         """ Shutdown server and all its thread-based components. """

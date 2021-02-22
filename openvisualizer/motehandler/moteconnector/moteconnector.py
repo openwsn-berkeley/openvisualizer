@@ -21,18 +21,17 @@ log.addHandler(logging.NullHandler())
 
 class MoteConnector(EventBusClient):
 
-    def __init__(self, mote_probe, stack_defines, mqtt_broker):
+    def __init__(self, mote_probe, mqtt_broker):
 
         # log
         log.debug("create instance")
 
         self.mote_probe = mote_probe
-        self.stack_defines = stack_defines
         # store params
         self.serialport = self.mote_probe.portname
 
         # local variables
-        self.parser = openparser.OpenParser(mqtt_broker, stack_defines, self.serialport)
+        self.parser = openparser.OpenParser(mqtt_broker, self.serialport)
         self.state_lock = threading.Lock()
         self.network_prefix = None
         self._subscribed_data_for_dagroot = False

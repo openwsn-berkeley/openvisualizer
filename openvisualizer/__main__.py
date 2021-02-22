@@ -36,7 +36,6 @@ ServerConfig = namedtuple('ServerConfig',
                               'tun',
                               'lconf',
                               'page_zero',
-                              'fw_path',
                               'mqtt_broker',
                               'root'
                           ])
@@ -104,13 +103,6 @@ class ColoredFormatter(coloredlogs.ColoredFormatter):
         return res
 
 
-def prompt_fw_path(ctx, param, fw_path):
-    if not fw_path:
-        fw_path = click.prompt("Specify path to OpenWSN-FW")
-
-    return fw_path
-
-
 @click.group(invoke_without_command=True)
 @click.option('--host', default='localhost', help='Specify address of the OpenVisualizer server', show_default=True)
 @click.option('--port', default=9000, help='Specify to port to use', show_default=True)
@@ -120,12 +112,10 @@ def prompt_fw_path(ctx, param, fw_path):
 @click.option('--lconf', default=pkg_rs.resource_filename(PACKAGE_NAME, DEFAULT_LOGGING_CONF),
               help="Provide a logging configuration")
 @click.option('--page-zero', is_flag=True, help="Uses page number 0 in page dispatch (only works with single hop)")
-@click.option('--fw-path', default=lambda: os.environ.get('OPENWSN_FW_BASE'),
-              help="Specify path to the OpenWSN firmware", callback=prompt_fw_path)
 @click.option('--mqtt-broker', default=None, type=str, help='Specify address MQTT server for network stats.')
 @click.option('--root', type=str, help='Mark a mote as DAGroot, e.g. /dev/ttyUSB* or COM*')
 @click.pass_context
-def cli(ctx, host, port, version, wireshark_debug, tun, lconf, page_zero, fw_path, mqtt_broker, root):
+def cli(ctx, host, port, version, wireshark_debug, tun, lconf, page_zero, mqtt_broker, root):
     banner = [""]
     banner += [" ___                 _ _ _  ___  _ _ "]
     banner += ["| . | ___  ___ ._ _ | | | |/ __>| \\ |"]
@@ -165,7 +155,7 @@ def cli(ctx, host, port, version, wireshark_debug, tun, lconf, page_zero, fw_pat
             log.critical(err)
             return
 
-    ctx.obj = ServerConfig(host, port, wireshark_debug, tun, lconf, page_zero, fw_path, mqtt_broker, root)
+    ctx.obj = ServerConfig(host, port, wireshark_debug, tun, lconf, page_zero, mqtt_broker, root)
     load_logging_conf(ctx.obj)
 
 
@@ -213,7 +203,14 @@ def iotlab(config):
 def start_server(server_instance, config):
     global server_object
     server_object = server_instance
-    with SimpleXMLRPCServer((config.host, config.port), allow_none=True, logRequests=False) as server:
+    with SimpleXMLRPCServer((config.host, config.port), allow_none=True, logRequests=False,
+                            bind_and_activate=False) as server:
+
+        server.allow_reuse_address = True
+
+        server.server_bind()
+        server.server_activate()
+
         server.register_instance(server_instance, allow_dotted_names=False)
         try:
             server.serve_forever()
@@ -232,3 +229,6 @@ cli.add_command(hardware)
 cli.add_command(simulation)
 cli.add_command(testbed)
 cli.add_command(iotlab)
+
+if __name__ == "__main__":
+    cli()

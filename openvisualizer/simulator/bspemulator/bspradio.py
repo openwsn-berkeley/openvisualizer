@@ -353,7 +353,7 @@ class BspRadio(BspModule):
                 )
 
             elif self.frequency != channel:
-                self.logger.info(f"Wrong channel: {self.frequency} != {channel}")
+                self.logger.debug(f"Wrong channel: {self.frequency} != {channel}")
             else:
                 # just drop the packet
                 if self.logger.isEnabledFor(logging.DEBUG):

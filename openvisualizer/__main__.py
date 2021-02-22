@@ -136,7 +136,8 @@ def cli(ctx, host, port, version, wireshark_debug, tun, lconf, page_zero, mqtt_b
         sys.exit(0)
 
     if tun and os.name == 'posix' and not os.getuid() == 0:
-        res = click.prompt("TUN requires admin privileges, (C)ontinue or (A)bort", default="A")
+        res = click.prompt("TUN requires admin privileges, (C)ontinue without privileges and with TUN or (A)bort",
+                           default="A")
         if res != "C":
             sys.exit(0)
 

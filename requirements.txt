@@ -4,8 +4,8 @@ bottle
 Sphinx
 intelhex
 setuptools
-#openwsn-coap>=0.0.7
 pycryptodome
+openwsn-coap==0.0.8
 cbor
 hkdf
 paho-mqtt

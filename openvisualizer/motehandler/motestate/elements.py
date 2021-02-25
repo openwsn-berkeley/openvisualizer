@@ -89,19 +89,6 @@ class StateElem(object):
         return return_val
 
 
-class StateOutputBuffer(StateElem):
-    def update(self, notif=None, creator=None, owner=None):
-        super(StateOutputBuffer, self).update()
-
-        assert notif
-
-        if len(self.data) == 0:
-            self.data.append({})
-
-        self.data[0]['index_write'] = notif.index_write
-        self.data[0]['index_read'] = notif.index_read
-
-
 class StateAsn(StateElem):
     def update(self, notif=None, creator=None, owner=None):
         super(StateAsn, self).update()

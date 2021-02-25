@@ -178,12 +178,11 @@ def pause(proxy):
 
 
 @click.command()
-@click.argument("address", nargs=1, type=str)
 @pass_proxy
-def runtime(proxy, address):
+def runtime(proxy):
     """ [SIM-ONLY] Get real and simulated runtime. """
     try:
-        elapsed = proxy.rpc_server.get_runtime(address)
+        elapsed = proxy.rpc_server.get_runtime()
         click.echo(f"Real runtime: {elapsed[0]}")
         click.echo(f"Simulated runtime: {elapsed[1]}")
 

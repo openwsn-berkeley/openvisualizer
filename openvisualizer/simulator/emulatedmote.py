@@ -14,12 +14,19 @@ from openvisualizer.simulator.bspemulator.bspsctimer import BspSctimer
 from openvisualizer.simulator.bspemulator.bspuart import BspUart
 from openvisualizer.simulator.bspemulator.hwcrystal import HwCrystal
 from openvisualizer.simulator.bspemulator.hwsupply import HwSupply
-from openvisualizer.simulator.location import LocationManager
 
 if TYPE_CHECKING:
     from openvisualizer.simulator.moteprocess import Uart, Radio
     from openvisualizer.simulator.simengine import MoteProcessInterface
     from multiprocessing import Barrier, Event
+
+try:
+    import colorama as c
+
+    color = True
+    c.init()
+except ImportError:
+    color = False
 
 
 class EmulatedMote:
@@ -56,9 +63,6 @@ class EmulatedMote:
         self.logger = get_logger()
         self.logger.addHandler(self.handler)
         self.logger.setLevel(logging.INFO)
-
-        # assign location
-        self.loc_manager = LocationManager(self)
 
         # initialize Python BSP backend
         self.hw_supply = HwSupply(self)
@@ -173,17 +177,31 @@ class EmulatedMote:
 
     def listener(self):
         while True:
-            self.cmd_if.put(str(eval('self.' + self.cmd_if.get() + '_cmd')()))
+            rcv = self.cmd_if.get()
+            self.cmd_if.task_done()
 
-    def runtime_cmd(self) -> Tuple[float, float]:
+            res = eval('self.' + rcv + '_cmd')()
+            self.cmd_if.put(str(res))
+            self.cmd_if.join()
+
+    # commands to interact with emulated motes
+
+    def get_runtime_cmd(self) -> Tuple[float, float]:
         now = time.time()
         real = now - self.start_time
         return real, self.bsp_board.get_current_time()
 
-    def location_cmd(self) -> Tuple[float, float]:
-        return self.loc_manager.location
-
 
 def create_mote(mote_interface: 'MoteProcessInterface'):
-    import openwsn as mote
-    EmulatedMote(mote, mote_interface).start()
+    try:
+        import openwsn as mote
+        EmulatedMote(mote, mote_interface).start()
+    except ImportError:
+        if color:
+            print(c.Back.RED + c.Fore.WHITE + "Could not import python module 'openwsn'" + c.Style.RESET_ALL)
+            print(c.Back.RED + c.Fore.WHITE + "Failed to instantiate emulated mote" + c.Style.RESET_ALL)
+            print(c.Back.RED + c.Fore.WHITE + "Kill simulation with CTRL-C" + c.Style.RESET_ALL + "\n")
+        else:
+            print("Could not import python module 'openwsn'")
+            print("Failed to instantiate emulated mote")
+            print("Kill simulation with CTRL-C\n")

@@ -14,7 +14,7 @@ import threading
 
 from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.motehandler.moteconnector.openparser import parserstatus
-from openvisualizer.motehandler.motestate.elements import StateOutputBuffer, StateAsn, StateJoined, StateMacStats, \
+from openvisualizer.motehandler.motestate.elements import StateAsn, StateJoined, StateMacStats, \
     StateTable, StateScheduleRow, StateBackoff, StateQueue, StateNeighborsRow, StateIsSync, StateIdManager, \
     StateMyDagRank, StateKaPeriod, StateMSF
 
@@ -24,7 +24,6 @@ log.addHandler(logging.NullHandler())
 
 
 class MoteState(EventBusClient):
-    ST_OUPUTBUFFER = 'OutputBuffer'
     ST_ASN = 'Asn'
     ST_MACSTATS = 'MacStats'
     ST_SCHEDULEROW = 'ScheduleRow'
@@ -41,7 +40,6 @@ class MoteState(EventBusClient):
     ST_JOINED = 'Joined'
     ST_MSF = 'MSF'
     ST_ALL = [
-        ST_OUPUTBUFFER,
         ST_ASN,
         ST_MACSTATS,
         ST_SCHEDULE,
@@ -120,7 +118,6 @@ class MoteState(EventBusClient):
         self.state_lock = threading.Lock()
         self.state = {}
 
-        self.state[self.ST_OUPUTBUFFER] = StateOutputBuffer()
         self.state[self.ST_ASN] = StateAsn()
         self.state[self.ST_JOINED] = StateJoined()
         self.state[self.ST_MSF] = StateMSF()
@@ -176,8 +173,6 @@ class MoteState(EventBusClient):
         self.state[self.ST_KAPERIOD] = StateKaPeriod()
 
         self.notif_handlers = {
-            self.parser_status.named_tuple[self.ST_OUPUTBUFFER]:
-                self.state[self.ST_OUPUTBUFFER].update,
             self.parser_status.named_tuple[self.ST_ASN]:
                 self.state[self.ST_ASN].update,
             self.parser_status.named_tuple[self.ST_MACSTATS]:

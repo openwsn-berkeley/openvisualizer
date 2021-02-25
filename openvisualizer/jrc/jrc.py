@@ -103,8 +103,13 @@ class ContextHandler:
             "sequenceNumber": 0,
         }
 
-        with open(file_path, "w") as context_file:
-            json.dump(ctx_dict, context_file, indent=4, sort_keys=True)
+        try:
+            with open(file_path, "w") as context_file:
+                json.dump(ctx_dict, context_file, indent=4, sort_keys=True)
+        except PermissionError as err:
+            log.error("Permission error when opening OSCORE context storage file.")
+            log.error("Try removing the file or running openv-server with admin privileges")
+            log.error(err)
 
 
 # ======================== Interface with OpenVisualizer ======================================

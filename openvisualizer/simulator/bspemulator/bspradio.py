@@ -321,7 +321,7 @@ class BspRadio(BspModule):
         # kick the scheduler
         return True
 
-    # ======================== indication from Propagation =====================
+    # ======================== indication from Topology =====================
 
     def _listen_incoming(self):
         while True:

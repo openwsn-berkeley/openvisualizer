@@ -7,7 +7,7 @@
 """
 Contains application model for OpenVisualizer. Expects to be called by top-level UI module.  See main() for startup use.
 """
-
+import json
 import logging.config
 import os
 import signal
@@ -18,7 +18,7 @@ from xmlrpc.client import Fault
 
 from openvisualizer.eventbus import eventbusmonitor
 from openvisualizer.eventbus.eventbusclient import EventBusClient
-from openvisualizer.jrc.jrc import JRC
+from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector.moteconnector import MoteConnector
 from openvisualizer.motehandler.moteprobe.emulatedmoteprobe import EmulatedMoteProbe
 from openvisualizer.motehandler.moteprobe.serialmoteprobe import SerialMoteProbe
@@ -27,7 +27,6 @@ from openvisualizer.motehandler.motestate.motestate import MoteState
 from openvisualizer.openlbr import openlbr
 from openvisualizer.opentun.opentun import OpenTun
 from openvisualizer.opentun.opentunnull import OpenTunNull
-from openvisualizer.jrc import jrc
 from openvisualizer.rpl import rpl, topology
 from openvisualizer.simulator.simengine import SimEngine
 
@@ -57,7 +56,12 @@ class OpenVisualizer(EventBusClient):
             self.mote_probes = SerialMoteProbe.probe_serial_ports(port_mask=self.port_mask, baudrate=self.baudrate)
         elif self.mode == self.Mode.SIMULATION:
             self.num_of_motes = kwargs.get("num_of_motes")
-            self.simulator = SimEngine(self.num_of_motes)
+
+            if kwargs.get('topology') is not None:
+                self.simulator = SimEngine(self.num_of_motes, kwargs.get('topology'))
+            else:
+                self.simulator = SimEngine(self.num_of_motes)
+
             self.mote_probes = [EmulatedMoteProbe(m_if) for m_if in self.simulator.mote_interfaces]
             self.simulator.start()
         elif self.mode == self.Mode.IOTLAB:
@@ -118,16 +122,15 @@ class OpenVisualizer(EventBusClient):
         Timer(1, keyboard_interrupt, args=()).start()
 
     def get_dag(self):
-        self.topology.get_dag()
+        return self.topology.get_dag()
 
-    def get_runtime(self, address: str) -> Tuple[float, float]:
+    def get_runtime(self) -> Tuple[float, float]:
         """ Get the real and simulated runtime of the simulation """
 
         if self.mode != self.Mode.SIMULATION:
             raise Fault(faultCode='-1', faultString="Only available during simulation")
-        else:
-            self.simulator.mote_cmd_ifs[int(address)].put('runtime')
-            return eval(self.simulator.mote_cmd_ifs[int(address)].get(timeout=2))
+
+        return self.simulator.runtime_getter()
 
     def pause_simulation(self) -> bool:
         """ Pauses or unpauses simulation engine. """
@@ -203,6 +206,7 @@ class OpenVisualizer(EventBusClient):
         for ms in self.mote_states:
             id_manager = ms.get_state_elem(ms.ST_IDMANAGER)
             if id_manager and id_manager.get_16b_addr():
+                src_s = id_manager.get_16b_addr()
                 motes.append(src_s)
             neighbor_table = ms.get_state_elem(ms.ST_NEIGHBORS)
             for neighbor in neighbor_table.data:
@@ -210,6 +214,7 @@ class OpenVisualizer(EventBusClient):
                     break
                 if neighbor.data[0]['used'] == 1 and neighbor.data[0]['parentPreference'] == 1:
                     dst_s = ''.join(['%02X' % b for b in neighbor.data[0]['addr'].addr[-2:]])
+                    dst_s = ''.join(['%02X' % int(b) for b in neighbor.data[0]['addr'].addr[-2:]])
                     edges.append({'u': src_s, 'v': dst_s})
                     break
 
@@ -217,33 +222,40 @@ class OpenVisualizer(EventBusClient):
         for mote in motes:
             d = {'id': mote, 'value': {'label': mote}}
             states.append(d)
+
         return states, edges
 
     def get_network_topology(self):
-        pass
-        # motes = []
-        # address = 1
+        if self.mode != self.Mode.SIMULATION:
+            raise Fault(faultCode='-1', faultString="Only available during simulation")
 
-        # if self.mode != self.Mode.SIMULATION:
-        #     raise Fault(faultCode='-1', faultString="Only available during simulation")
-        # else:
-        #     while True:
-        #         try:
-        #             self.simulator.mote_cmd_ifs[address].put('location')
-        #             lat, lon = eval(self.simulator.mote_cmd_ifs[address].get(timeout=2))
-        #             motes += [{'id': address, 'lat': lat, 'lon': lon}]
-        #             address += 1
-        #         except IndexError:
-        #             break
+        motes = self.simulator.positions_getter()
+        connections = self.simulator.connections_getter()
 
-        # print(motes)
-        # connections
-        # connections = self.simengine.propagation.retrieve_connections()
+        return {'motes': motes, 'connections': connections}
 
-        # data = {'motes': motes, 'connections': connections}
-        return {}
+    def update_positions(self, new_positions):
+        new_positions = json.loads(new_positions)
 
-    def retrieve_routing_path(self, destination) -> Dict[str, Any]:
+        if self.mode != self.Mode.SIMULATION:
+            raise Fault(faultCode='-1', faultString="Only available during simulation")
+
+        self.simulator.positions_setter(new_positions)
+
+    def update_connections(self, from_mote, to_mote, pdr):
+        if self.mode != self.Mode.SIMULATION:
+            raise Fault(faultCode='-1', faultString="Only available during simulation")
+
+        self.simulator.connections_setter(from_mote, to_mote, pdr)
+
+    def delete_connections(self, from_mote, to_mote):
+        if self.mode != self.Mode.SIMULATION:
+            raise Fault(faultCode='-1', faultString="Only available during simulation")
+
+        # when you create a new connection, set PDR max
+        self.simulator.connections_setter(from_mote, to_mote, 0)
+
+    def get_routing_path(self, destination) -> Dict[str, Any]:
         route = self._dispatch_and_get_result(signal='getSourceRoute', data=destination)
         route = [r[-1] for r in route]
         data = {'route': route}
@@ -276,7 +288,6 @@ class OpenVisualizer(EventBusClient):
             ms.ST_ISSYNC: ms.get_state_elem(ms.ST_ISSYNC).to_json('data'),
             ms.ST_MYDAGRANK: ms.get_state_elem(ms.ST_MYDAGRANK).to_json('data'),
             ms.ST_KAPERIOD: ms.get_state_elem(ms.ST_KAPERIOD).to_json('data'),
-            ms.ST_OUPUTBUFFER: ms.get_state_elem(ms.ST_OUPUTBUFFER).to_json('data'),
             ms.ST_BACKOFF: ms.get_state_elem(ms.ST_BACKOFF).to_json('data'),
             ms.ST_MACSTATS: ms.get_state_elem(ms.ST_MACSTATS).to_json('data'),
             ms.ST_SCHEDULE: ms.get_state_elem(ms.ST_SCHEDULE).to_json('data'),

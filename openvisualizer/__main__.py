@@ -221,7 +221,8 @@ def start_server(server_instance, config):
 
 def load_logging_conf(config):
     try:
-        logging.config.fileConfig(fname=config.lconf, defaults={'log_dir': appdirs.user_log_dir(APPNAME)})
+        log_dir = appdirs.user_log_dir(APPNAME)
+        logging.config.fileConfig(fname=config.lconf, defaults={'log_dir': log_dir})
     except IOError as err:
         log.error(f"Failed to load config: {err}")
 

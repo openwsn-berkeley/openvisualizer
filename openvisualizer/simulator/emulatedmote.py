@@ -177,12 +177,16 @@ class EmulatedMote:
 
     def listener(self):
         while True:
-            rcv = self.cmd_if.get()
-            self.cmd_if.task_done()
+            try:
+                rcv = self.cmd_if.get()
+                self.cmd_if.task_done()
 
-            res = eval('self.' + rcv + '_cmd')()
-            self.cmd_if.put(str(res))
-            self.cmd_if.join()
+                res = eval('self.' + rcv + '_cmd')()
+                self.cmd_if.put(str(res))
+                self.cmd_if.join()
+            except (EOFError, BrokenPipeError):
+                self.logger.error('Queue closed')
+                break
 
     # commands to interact with emulated motes
 

@@ -58,6 +58,11 @@ class Topology(Thread):
 
                 except queue.Empty:
                     continue
+                except (EOFError, BrokenPipeError):
+                    self.logger.error('Queue closed')
+                    self.go_on = False
+                    break
+
         self.logger.info("Exiting propagation loop")
 
     def create_topology(self):

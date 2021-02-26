@@ -12,7 +12,7 @@ from openvisualizer.opentun.opentun import OpenTun
 from openvisualizer.utils import format_crash_message, format_critical_message
 
 if sys.platform.startswith("win32"):
-    import _winreg as reg  # pylint: disable=import-error
+    import winreg as reg  # pylint: disable=import-error
     import win32file  # pylint: disable=import-error
     import win32event  # pylint: disable=import-error
     import pywintypes  # pylint: disable=import-error

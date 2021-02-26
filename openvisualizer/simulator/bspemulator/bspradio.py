@@ -257,9 +257,12 @@ class BspRadio(BspModule):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"Sending packet from {self.mote.mote_id}")
 
-        self.mote.radio.tx.put([self.mote.mote_id, self.tx_buf, self.frequency])
-        # wait until we get the 'go' from the propagation thread
-        self.mote.radio.tx.join()
+        try:
+            self.mote.radio.tx.put([self.mote.mote_id, self.tx_buf, self.frequency])
+            # wait until we get the 'go' from the propagation thread
+            self.mote.radio.tx.join()
+        except (EOFError, BrokenPipeError):
+            self.logger.error('Queue closed')
 
         current_time = self.mote.bsp_board.get_current_time()
         end_of_frame_time = current_time + BspRadio._packet_length_to_duration(len(self.tx_buf))
@@ -325,7 +328,11 @@ class BspRadio(BspModule):
 
     def _listen_incoming(self):
         while True:
-            origin, packet, channel = self.mote.radio.rx.get()
+            try:
+                origin, packet, channel = self.mote.radio.rx.get()
+            except EOFError:
+                self.logger.error('Queue closed')
+                break
 
             if self.is_initialized and self.state == RadioState.LISTENING and self.frequency == channel:
 

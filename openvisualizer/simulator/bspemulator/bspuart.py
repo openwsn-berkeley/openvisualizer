@@ -126,7 +126,10 @@ class BspUart(BspModule):
             self.f_xon_xoff_escaping = True
             self.xon_xoff_escaped_byte = byte_to_write
 
-        self.mote.uart.tx.put([byte_to_write])
+        try:
+            self.mote.uart.tx.put([byte_to_write])
+        except (EOFError, BrokenPipeError):
+            self.logger.error('Queue closed')
 
     def cmd_set_cts(self, state):
         """ Emulates: void uart_setCTS(bool state) """
@@ -147,10 +150,13 @@ class BspUart(BspModule):
             cb=self.intr_tx,
             desc=self.INTR_TX)
 
-        if state:
-            self.mote.uart.tx.put([self.XON])
-        else:
-            self.mote.uart.tx.put([self.XOFF])
+        try:
+            if state:
+                self.mote.uart.tx.put([self.XON])
+            else:
+                self.mote.uart.tx.put([self.XOFF])
+        except (EOFError, BrokenPipeError):
+            self.logger.error('Queue closed')
 
     def cmd_write_circular_buffer_fastsim(self, buf):
         """ Emulates: void uart_writeCircularBuffer_FASTSIM(uint8_t* buffer, uint8_t len) """
@@ -197,7 +203,10 @@ class BspUart(BspModule):
                 temp_buf.append(buf[i])
             i += 1
 
-        self.mote.uart.tx.put([temp_buf])
+        try:
+            self.mote.uart.tx.put([temp_buf])
+        except (EOFError, BrokenPipeError):
+            self.logger.error('Queue closed')
 
     def cmd_read_byte(self):
         """ Emulates: uint8_t uart_readByte()"""
@@ -236,7 +245,10 @@ class BspUart(BspModule):
                 desc=self.INTR_TX)
 
             # add to receive buffer
-            self.mote.uart.tx.put([self.xon_xoff_escaped_byte ^ self.XONXOFF_MASK])
+            try:
+                self.mote.uart.tx.put([self.xon_xoff_escaped_byte ^ self.XONXOFF_MASK])
+            except (EOFError, BrokenPipeError):
+                self.logger.error('Queue closed')
 
         else:
             # send interrupt to mote
@@ -286,7 +298,12 @@ class BspUart(BspModule):
 
     def _listen_incoming(self):
         while True:
-            rcv_buf = self.mote.uart.rx.get()
+            try:
+                rcv_buf = self.mote.uart.rx.get()
+            except (EOFError, BrokenPipeError):
+                self.logger.error('Queue closed')
+                break
+
             with self.uart_tx_buffer_lock:
                 self.uart_tx_buffer.extend(rcv_buf)
 

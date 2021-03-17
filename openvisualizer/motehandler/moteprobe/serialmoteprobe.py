@@ -86,16 +86,18 @@ class SerialMoteProbe(MoteProbe):
 
     # ======================== private =================================
 
-    def _send_data(self, data):
-        hdlc_data = self.hdlc.hdlcify(data).encode("utf-8")
+    def _send_data(self, data: str):
+
+        hdlc_data = bytearray([ord(b) for b in self.hdlc.hdlcify(data)])
         bytes_written = 0
         self._serial.flush()
+
         while bytes_written != len(hdlc_data):
             bytes_written += self._serial.write(hdlc_data)
 
     def _rcv_data(self, rx_bytes=1):
         data = self._serial.read(rx_bytes)
-        if data == 0:
+        if data == b'':
             raise MoteProbeNoData
         else:
             return data

@@ -63,7 +63,7 @@ class OpenHdlc(object):
 
     # ============================ public ======================================
 
-    def hdlcify(self, in_buf):
+    def hdlcify(self, in_buf: str):
         """
         Build an hdlc frame.
 

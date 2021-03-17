@@ -180,37 +180,37 @@ class MoteProbe(threading.Thread):
         """ Parses bytes received from serial pipe """
         for byte in octets:
             if not self.receiving:
-                if self.hdlc_flag and byte != self.hdlc.HDLC_FLAG:
+                if self.hdlc_flag and chr(byte) != self.hdlc.HDLC_FLAG:
                     # start of frame
                     if log.isEnabledFor(logging.DEBUG):
                         log.debug("%s: start of HDLC frame %s %s",
                                   self.name,
                                   format_string_buf(self.hdlc.HDLC_FLAG),
-                                  format_string_buf(byte))
+                                  format_string_buf(chr(byte)))
                     self.receiving = True
                     # discard received self.hdlc_flag
                     self.hdlc_flag = False
                     self.xonxoff_escaping = False
                     self.rx_buf = self.hdlc.HDLC_FLAG
-                    self._rx_buf_add(byte)
-                elif byte == self.hdlc.HDLC_FLAG:
+                    self._rx_buf_add(chr(byte))
+                elif chr(byte) == self.hdlc.HDLC_FLAG:
                     # received hdlc flag
                     self.hdlc_flag = True
                 else:
                     # drop garbage
                     pass
             else:
-                if byte != self.hdlc.HDLC_FLAG:
+                if chr(byte) != self.hdlc.HDLC_FLAG:
                     # middle of frame
-                    self._rx_buf_add(byte)
+                    self._rx_buf_add(chr(byte))
                 else:
                     # end of frame, received self.hdlc_flag
                     if log.isEnabledFor(logging.DEBUG):
-                        log.debug("{}: end of hdlc frame {}".format(self.name, format_string_buf(byte)))
+                        log.debug("{}: end of hdlc frame {}".format(self.name, format_string_buf(chr(byte))))
 
                     self.hdlc_flag = True
                     self.receiving = False
-                    self._rx_buf_add(byte)
+                    self._rx_buf_add(chr(byte))
                     valid_frame = self._handle_frame()
 
                     if valid_frame:

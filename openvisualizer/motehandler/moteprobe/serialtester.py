@@ -92,10 +92,7 @@ class SerialTester(EventBusClient):
     # ===== run test
 
     def test(self, blocking=True):
-        if blocking:
-            self._run_test()
-        else:
-            threading.Thread(target=self._run_test).start()
+        self._run_test()
 
     # ===== get test results
 
@@ -142,28 +139,31 @@ class SerialTester(EventBusClient):
                 self.stats['numSent'] += 1
 
             # log
-            self._log('--- packet {0}'.format(pkt_num))
-            self._log('sent:     {0}'.format(self.format_list(self.last_sent)))
+            print('--- packet {0}'.format(pkt_num))
+            print('sent:     {0}'.format(self.format_list(self.last_sent)))
 
             # wait for answer
             self.wait_for_reply.clear()
-            if self.wait_for_reply.wait(timeout):
+            try:
+                if self.wait_for_reply.wait(timeout):
 
-                # log
-                self._log('received: {0}'.format(self.format_list(self.last_received)))
+                    # log
+                    self._log('received: {0}'.format(self.format_list(self.last_received)))
 
-                # echo received
-                with self.data_lock:
-                    if self.last_received == self.last_sent:
-                        self.stats['numOk'] += 1
-                    else:
-                        self.stats['numCorrupted'] += 1
-                        self._log('!! corrupted.')
-            else:
-                # timeout
-                with self.data_lock:
-                    self.stats['numTimeout'] += 1
-                    self._log('!! timeout.')
+                    # echo received
+                    with self.data_lock:
+                        if self.last_received == self.last_sent:
+                            self.stats['numOk'] += 1
+                        else:
+                            self.stats['numCorrupted'] += 1
+                            self._log('!! corrupted.')
+                else:
+                    # timeout
+                    with self.data_lock:
+                        self.stats['numTimeout'] += 1
+                        self._log('!! timeout.')
+            except KeyboardInterrupt:
+                break
 
         # I'm not testing
         with self.data_lock:

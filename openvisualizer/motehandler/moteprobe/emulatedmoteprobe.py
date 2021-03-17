@@ -37,13 +37,14 @@ class EmulatedMoteProbe(MoteProbe):
 
     # ======================== private =================================
 
-    def _send_data(self, data):
+    def _send_data(self, data: str):
         hdlc_data = self.hdlc.hdlcify(data)
         self.serial.rx.put([ord(b) for b in hdlc_data])
 
     def _rcv_data(self):
         try:
-            return "".join([chr(b) for b in self.serial.tx.get_nowait()[0]])
+            rcv = [b for b in self.serial.tx.get_nowait()[0]]
+            return rcv
         except queue.Empty:
             raise MoteProbeNoData()
 

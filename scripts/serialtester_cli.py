@@ -1,27 +1,14 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import logging
 import time
 
 import click
-import coloredlogs
 
-from openvisualizer.motehandler.moteprobe import serialmoteprobe
+from openvisualizer.motehandler.moteprobe.emulatedmoteprobe import EmulatedMoteProbe
 from openvisualizer.motehandler.moteprobe.serialmoteprobe import SerialMoteProbe
 from openvisualizer.motehandler.moteprobe.serialtester import SerialTester
-
-for logger in [logging.getLogger(__name__), serialmoteprobe.log]:
-    coloredlogs.install(logger=logger, fmt="%(asctime)s [%(name)s:%(levelname)s] %(message)s", datefmt="%H:%m:%S",
-                        level='WARNING')
-
-
-def serialtest_tracer(msg):
-    if '---' in msg:
-        click.secho('\n' + msg, fg='blue', bold=True)
-    elif 'received' in msg:
-        click.secho(msg, fg='green')
-    else:
-        click.secho(msg)
+from openvisualizer.simulator.simengine import SimEngine
 
 
 @click.command()
@@ -36,41 +23,39 @@ def cli(port, baudrate, verbose, runs, pktlen, timeout):
 
     click.secho("Serial Tester Script...", bold=True)
 
-    smp = SerialMoteProbe(port=port, baudrate=baudrate)
+    if port.lower().startswith('emulated'):
+        is_simulated = True
+        simulator = SimEngine(1)
+        smp = EmulatedMoteProbe(simulator.mote_interfaces[0])
+        simulator.start()
+    else:
+        is_simulated = False
+        smp = SerialMoteProbe(port=port, baudrate=baudrate)
 
     while smp.serial is None:
         time.sleep(0.1)
 
-    logger.info("initialized serial object")
-
     tester = SerialTester(smp)
-
-    if verbose:
-        tester.set_trace(serialtest_tracer)
 
     tester.set_num_test_pkt(runs)
     tester.set_test_pkt_length(pktlen)
     tester.set_timeout(timeout)
 
+    # wait until booted
+    if is_simulated:
+        click.echo('Waiting for booting node')
+        time.sleep(2)
+
+    # start test
     click.secho("\nTest Setup:", bold=True)
     click.secho("----------------")
     click.secho("Iterations: {:>6}".format(runs))
     click.secho("Packet length: {:>3}".format(pktlen))
     click.secho("Echo timeout: {:>4}".format(timeout))
 
-    click.secho("\nTest Progress:\n")
-    # start test
-    if verbose:
-        tester.test(blocking=True)
-    else:
-        tester.test(blocking=False)
+    click.echo('\n\nStart test...')
+    tester.test(blocking=True)
 
-        with click.progressbar(range(runs)) as bar:
-            for x in bar:
-                while tester.stats['numOk'] < x:
-                    time.sleep(0.2)
-
-    time.sleep(0.5)
     res = tester.get_stats()
     click.secho("\n\nTest Statistics:", bold=True)
     click.secho("----------------")
@@ -81,15 +66,8 @@ def cli(port, baudrate, verbose, runs, pktlen, timeout):
 
     click.secho("\nKill with Ctrl-C.\n")
 
-    while True:
-        try:
-            time.sleep(0.5)
-        except KeyboardInterrupt:
-            smp.close()
-            smp.join()
-            break
-
-    logger.info("quitting script")
+    smp.close()
+    smp.join()
 
 
 if __name__ == "__main__":

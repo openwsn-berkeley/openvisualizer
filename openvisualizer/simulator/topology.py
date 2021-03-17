@@ -13,8 +13,9 @@ class Topology(Thread):
     def __init__(self, mote_ifs, topology_name="fully-meshed"):
         super().__init__()
 
+        # Dict [mote-id : radio{tx,rx}]
         self.radio_qs: Dict[int, Radio] = {m_if.mote_id: m_if.radio for m_if in mote_ifs}
-        self.mote_ids = [m.mote_id for m in mote_ifs]
+        self.mote_ids = self.radio_qs.keys()
 
         self.go_on = True
 
@@ -97,7 +98,6 @@ class Topology(Thread):
         return Link(pdr=pdr, rx=self.radio_qs[to_mote].rx)
 
     def delete_link(self, from_mote, to_mote) -> None:
-        print("DELETING CONNECTION")
         self._connection_matrix[from_mote - 1][to_mote - 1] = None
         self._connection_matrix[to_mote - 1][from_mote - 1] = None
 

@@ -52,6 +52,7 @@ class BspRadio(BspModule):
         self.rssi = -50
         self.lqi = 100
         self.crc_passes = True
+        self.state = None
 
         # logging
         self.logger = get_logger()
@@ -324,8 +325,6 @@ class BspRadio(BspModule):
         # kick the scheduler
         return True
 
-    # ======================== indication from Topology =====================
-
     def _listen_incoming(self):
         while True:
             try:
@@ -333,6 +332,8 @@ class BspRadio(BspModule):
             except EOFError:
                 self.logger.error('Queue closed')
                 break
+
+            self.mote.radio.rx.task_done()
 
             if self.is_initialized and self.state == RadioState.LISTENING and self.frequency == channel:
 
@@ -367,7 +368,6 @@ class BspRadio(BspModule):
                     self.logger.debug(f"[{self.mote.mote_id - 1}] Radio not in correct state: {self.state}")
 
             # notify the propagation thread that we are done here
-            self.mote.radio.rx.task_done()
 
     # ======================== private =========================================
 

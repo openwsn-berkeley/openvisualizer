@@ -193,7 +193,8 @@ class EmulatedMote:
     def get_runtime_cmd(self) -> Tuple[float, float]:
         now = time.time()
         real = now - self.start_time
-        return real, self.bsp_board.get_current_time()
+        bsp_time = self.bsp_board.get_current_time()
+        return real, bsp_time
 
 
 def create_mote(mote_interface: 'MoteProcessInterface'):

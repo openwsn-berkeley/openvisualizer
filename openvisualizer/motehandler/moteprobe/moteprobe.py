@@ -176,7 +176,7 @@ class MoteProbe(threading.Thread):
             elif byte != chr(self.XON) and byte != chr(self.XOFF):
                 self.rx_buf += byte
 
-    def _parse_bytes(self, octets):
+    def _parse_bytes(self, octets: bytes):
         """ Parses bytes received from serial pipe """
         for byte in octets:
             if not self.receiving:

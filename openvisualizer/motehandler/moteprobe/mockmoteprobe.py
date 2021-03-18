@@ -17,7 +17,7 @@ class MockMoteProbe(MoteProbe):
         self._buffer = buffer
 
         # initialize the parent class
-        MoteProbe.__init__(self, portname=mock_name, daemon=daemon)
+        super().__init__(portname=mock_name, daemon=daemon)
 
         self.send_to_parser = self.receive_data_from_mote_probe
         self.send_to_parser_data = None

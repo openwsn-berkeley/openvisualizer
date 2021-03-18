@@ -158,8 +158,8 @@ def test_moteprobe_run_and_exit(m_attach, m_detach):
         raise e
 
 
-@pytest.mark.parametrize('prob_running', [('mock')], indirect=["prob_running"])
-def test_moteprobe_init(prob_running):
+@pytest.mark.parametrize('prob_running', ['mock'], indirect=["prob_running"])
+def test_moteprobe_init(prob_running: MockMoteProbe):
     # Verify naming
     assert prob_running.portname == 'mock'
     assert prob_running.name == 'MoteProbe@mock'
@@ -172,8 +172,8 @@ def test_moteprobe_init(prob_running):
     assert prob_running.is_alive()
 
 
-@pytest.mark.parametrize('probe_stopped', [('mock')], indirect=["probe_stopped"])
-def test_moteprobe__rx_buf_add(probe_stopped):
+@pytest.mark.parametrize('probe_stopped', ['mock'], indirect=["probe_stopped"])
+def test_moteprobe__rx_buf_add(probe_stopped: MockMoteProbe):
     assert probe_stopped.rx_buf == ''
     for c in FRAME_IN_1:
         probe_stopped._rx_buf_add(chr(c))
@@ -192,8 +192,8 @@ def test_moteprobe__rx_buf_add(probe_stopped):
     assert probe_stopped.rx_buf == ''.join(chr(c) for c in FRAME_OUT_3)
 
 
-@pytest.mark.parametrize('probe_stopped', [('mock')], indirect=["probe_stopped"])
-def test_moteprobe__handle_frame(probe_stopped):
+@pytest.mark.parametrize('probe_stopped', ['mock'], indirect=["probe_stopped"])
+def test_moteprobe__handle_frame(probe_stopped: MockMoteProbe):
     probe_stopped.rx_buf = ''.join(chr(c) for c in VALID_FRAME_1)
     valid = probe_stopped._handle_frame()
     assert valid is True
@@ -205,14 +205,15 @@ def test_moteprobe__handle_frame(probe_stopped):
     assert valid is False
 
 
-@pytest.mark.parametrize('probe_stopped', [('mock')], indirect=["probe_stopped"])
-def test_moteprobe__parse_bytes(probe_stopped):
+@pytest.mark.parametrize('probe_stopped', ['mock'], indirect=["probe_stopped"])
+def test_moteprobe__parse_bytes(probe_stopped: MockMoteProbe):
     # receive valid frame
-    probe_stopped._parse_bytes(chr(c) for c in FRAME_IN_4)
+
+    probe_stopped._parse_bytes(bytearray(FRAME_IN_4))
     assert probe_stopped.send_to_parser_data == FRAME_OUT_4
     # garbage and valid frame, this verifies that it re-uses the end hdlc
     # flag from the invalid frame
-    probe_stopped._parse_bytes(chr(c) for c in FRAME_IN_5)
+    probe_stopped._parse_bytes(bytearray(FRAME_IN_5))
     assert probe_stopped.send_to_parser_data == FRAME_OUT_5
 
 

@@ -7,6 +7,7 @@
 import logging
 import os
 import signal
+from typing import List, Optional
 
 import serial
 
@@ -32,7 +33,7 @@ class SerialMoteProbe(MoteProbe):
         self._serial = None
 
         # initialize the parent class
-        MoteProbe.__init__(self, portname=port)
+        super().__init__(portname=port)
 
     # ======================== public ==================================
 
@@ -46,7 +47,7 @@ class SerialMoteProbe(MoteProbe):
         return self._serial
 
     @classmethod
-    def probe_serial_ports(cls, baudrate, port_mask=None):
+    def probe_serial_ports(cls, baudrate: List[int], port_mask: Optional[str] = None):
         ports = cls._get_ports_from_mask(port_mask)
         mote_probes = []
         probe = None
@@ -86,7 +87,7 @@ class SerialMoteProbe(MoteProbe):
 
     # ======================== private =================================
 
-    def _send_data(self, data: str):
+    def _send_data(self, data: str) -> None:
 
         hdlc_data = bytearray([ord(b) for b in self.hdlc.hdlcify(data)])
         bytes_written = 0
@@ -95,7 +96,7 @@ class SerialMoteProbe(MoteProbe):
         while bytes_written != len(hdlc_data):
             bytes_written += self._serial.write(hdlc_data)
 
-    def _rcv_data(self, rx_bytes=1):
+    def _rcv_data(self, rx_bytes: int = 1) -> bytes:
         data = self._serial.read(rx_bytes)
         if data == b'':
             raise MoteProbeNoData
@@ -113,7 +114,7 @@ class SerialMoteProbe(MoteProbe):
         log.debug("self._serial: {}".format(self._serial))
 
     @staticmethod
-    def _get_ports_from_mask(port_mask=None):
+    def _get_ports_from_mask(port_mask: Optional[str] = None) -> List[str]:
         ports = []
 
         if port_mask is None:
@@ -132,13 +133,10 @@ class SerialMoteProbe(MoteProbe):
                     pass
             elif os.name == 'posix':
                 if platform.system() == 'Darwin':
-                    port_mask = ['/dev/tty.usbserial-*']
+                    ports += [s for s in glob.glob('/dev/tty.usbserial-*')]
                 else:
-                    port_mask = ['/dev/ttyUSB*']
-                for mask in port_mask:
-                    ports += [s for s in glob.glob(mask)]
+                    ports += [s for s in glob.glob('/dev/ttyUSB*')]
         else:
-            for mask in port_mask:
-                ports += [s for s in glob.glob(mask)]
+            ports += [s for s in glob.glob(port_mask)]
 
         return ports

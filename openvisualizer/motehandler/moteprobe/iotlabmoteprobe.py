@@ -66,7 +66,7 @@ class IotlabMoteProbe(MoteProbe):
                         iotlab_passwd=iotlab_passwd)
                     while probe.socket is None and probe.isAlive():
                         pass
-                    if probe.test_serial(pkts=2):
+                    if probe.test_serial():
                         log.success("{} Ok.".format(probe._portname))
                         mote_probes.append(probe)
                     else:

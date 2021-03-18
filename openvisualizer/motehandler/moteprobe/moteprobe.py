@@ -122,7 +122,7 @@ class MoteProbe(threading.Thread):
         tester = SerialTester(self)
         tester.set_num_test_pkt(pkts)
         tester.set_timeout(timeout)
-        tester.test(blocking=True)
+        tester.test()
         return tester.get_stats()['numOk'] >= 1
 
     # ======================== private =================================

@@ -95,7 +95,7 @@ class OpenVisualizer(EventBusClient):
     def shutdown(self) -> None:
         """ Shutdown server and all its thread-based components. """
 
-        if hasattr(self, 'simulator'):
+        if self.mode == self.Mode.SIMULATION:
             self.simulator.shutdown()
             self.simulator.join()
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import logging
 import time
 
 import click
@@ -54,7 +53,7 @@ def cli(port, baudrate, verbose, runs, pktlen, timeout):
     click.secho("Echo timeout: {:>4}".format(timeout))
 
     click.echo('\n\nStart test...')
-    tester.test(blocking=True)
+    tester.test()
 
     res = tester.get_stats()
     click.secho("\n\nTest Statistics:", bold=True)

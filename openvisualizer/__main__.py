@@ -162,10 +162,13 @@ def cli(ctx, host, port, version, wireshark_debug, tun, lconf, page_zero, mqtt_b
 
 @click.command()
 @click.option('--baudrate', default=['115200'], help='A list of baudrates to test', show_default=True)
-@click.option('--port_mask', help='Define a port mask for probing hardware, e.g., /dev/ttyUSB*')
+@click.option('--port-mask', help='Define a port mask for probing hardware, e.g., /dev/ttyUSB*', type=str)
 @pass_config
 def hardware(config, baudrate, port_mask):
     """ OpenVisualizer in hardware mode."""
+
+    if isinstance(baudrate, str):
+        baudrate = [baudrate]
 
     start_server(OpenVisualizer(config, OpenVisualizer.Mode.HARDWARE, baudrate=baudrate, port_mask=port_mask), config)
 

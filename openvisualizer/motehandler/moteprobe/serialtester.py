@@ -7,7 +7,6 @@
 import logging
 import random
 import threading
-import time
 from typing import List
 
 from openvisualizer.eventbus.eventbusclient import EventBusClient

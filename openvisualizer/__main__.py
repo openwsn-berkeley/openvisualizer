@@ -106,14 +106,14 @@ class ColoredFormatter(coloredlogs.ColoredFormatter):
 @click.group(invoke_without_command=True)
 @click.option('--host', default='localhost', help='Specify address of the OpenVisualizer server', show_default=True)
 @click.option('--port', default=9000, help='Specify to port to use', show_default=True)
-@click.option('--version', is_flag=True, help='Print version information OpenVisualizer')
+@click.option('--version', '-v', is_flag=True, help='Print version information OpenVisualizer')
 @click.option('--tun', is_flag=True, help="Enable the TUN interface")
-@click.option('--wireshark-debug', is_flag=True, help="Enable wireshark debugging")
+@click.option('--wireshark-debug', '-w', is_flag=True, help="Enable wireshark debugging")
 @click.option('--lconf', default=pkg_rs.resource_filename(PACKAGE_NAME, DEFAULT_LOGGING_CONF),
               help="Provide a logging configuration")
 @click.option('--page-zero', is_flag=True, help="Uses page number 0 in page dispatch (only works with single hop)")
 @click.option('--mqtt-broker', default=None, type=str, help='Specify address MQTT server for network stats.')
-@click.option('--root', type=str, help='Mark a mote as DAGroot, e.g. /dev/ttyUSB* or COM*')
+@click.option('--root', '-r', type=str, help='Mark a mote as DAGroot, e.g. /dev/ttyUSB* or COM*')
 @click.pass_context
 def cli(ctx, host, port, version, wireshark_debug, tun, lconf, page_zero, mqtt_broker, root):
     banner = [""]
@@ -138,7 +138,7 @@ def cli(ctx, host, port, version, wireshark_debug, tun, lconf, page_zero, mqtt_b
     if tun and os.name == 'posix' and not os.getuid() == 0:
         res = click.prompt("TUN requires admin privileges, (C)ontinue without privileges and with TUN or (A)bort",
                            default="A")
-        if res != "C":
+        if res != "C" and res != 'c':
             sys.exit(0)
 
     # create directories to store logs and application data
@@ -161,8 +161,9 @@ def cli(ctx, host, port, version, wireshark_debug, tun, lconf, page_zero, mqtt_b
 
 
 @click.command()
-@click.option('--baudrate', default=['115200'], help='A list of baudrates to test', show_default=True)
-@click.option('--port-mask', help='Define a port mask for probing hardware, e.g., /dev/ttyUSB*', type=str)
+@click.option('--baudrate', '-b', default=['115200'], help='A list of baudrates to test', show_default=True)
+@click.option('--port-mask', '-p', help='Define a port mask for probing hardware, e.g., /dev/ttyUSB*', type=str,
+              multiple=True)
 @pass_config
 def hardware(config, baudrate, port_mask):
     """ OpenVisualizer in hardware mode."""
@@ -176,7 +177,7 @@ def hardware(config, baudrate, port_mask):
 @click.command()
 @pass_config
 @click.argument('num_of_motes', nargs=1, type=int)
-@click.option('--topology', default='fully-meshed', help='Specify the simulation topology', show_default=True)
+@click.option('--topology', '-t', default='fully-meshed', help='Specify the simulation topology', show_default=True)
 def simulation(config, num_of_motes, topology):
     """ OpenVisualizer in simulation mode."""
 
@@ -188,20 +189,29 @@ def simulation(config, num_of_motes, topology):
 @pass_config
 def testbed(config):
     """ Attaches OpenVisualizer to the opentestbed. """
-    pass
-    # TODO: need to verify
-    click.secho("Temporarily disabled")
-    # start_server(OpenVisualizer(config, OpenVisualizer.Mode.TESTBED), config)
+
+    start_server(OpenVisualizer(config, OpenVisualizer.Mode.TESTBED), config)
 
 
 @click.command()
+@click.argument('mote_ids', nargs=-1, type=str)
+@click.option('--user', '-u', help='IoTLAB username')
+@click.option('--site', '-s', help='IoTLAB frontend site')
+@click.option('--key-file', '-k', help='SSH private key file, e.g., ~/.ssh/id_rsa')
+@click.option('--debug', '-d', help='Enable debugging output', is_flag=True)
 @pass_config
-def iotlab(config):
+def iotlab(config, mote_ids, debug, user, site, key_file):
     """ Attaches OpenVisualizer to IoT-LAB."""
-    pass
-    # TODO: need to verify
-    click.secho("Temporarily disabled")
-    # start_server(OpenVisualizer(config, OpenVisualizer.Mode.IOTLAB), config)
+
+    start_server(
+        OpenVisualizer(config,
+                       OpenVisualizer.Mode.IOTLAB,
+                       iotlab_user=user,
+                       iotlab_site=site,
+                       iotlab_key_file=key_file,
+                       iotlab_motes=mote_ids,
+                       debug=debug),
+        config)
 
 
 def start_server(server_instance, config):

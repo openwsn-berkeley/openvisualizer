@@ -21,6 +21,7 @@ from openvisualizer.eventbus.eventbusclient import EventBusClient
 from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector.moteconnector import MoteConnector
 from openvisualizer.motehandler.moteprobe.emulatedmoteprobe import EmulatedMoteProbe
+from openvisualizer.motehandler.moteprobe.iotlabmoteprobe import IotlabMoteProbe
 from openvisualizer.motehandler.moteprobe.serialmoteprobe import SerialMoteProbe
 from openvisualizer.motehandler.motestate import motestate
 from openvisualizer.motehandler.motestate.motestate import MoteState
@@ -51,21 +52,24 @@ class OpenVisualizer(EventBusClient):
         self.mode = mode
 
         if self.mode == self.Mode.HARDWARE:
-            self.baudrate = kwargs.get('baudrate')
-            self.port_mask = kwargs.get('port_mask')
-            self.mote_probes = SerialMoteProbe.probe_serial_ports(port_mask=self.port_mask, baudrate=self.baudrate)
+            baudrate = kwargs.get('baudrate')
+            port_mask = kwargs.get('port_mask')
+            self.mote_probes = SerialMoteProbe.probe_serial_ports(port_mask=port_mask, baudrate=baudrate)
         elif self.mode == self.Mode.SIMULATION:
-            self.num_of_motes = kwargs.get("num_of_motes")
-
             if kwargs.get('topology') is not None:
-                self.simulator = SimEngine(self.num_of_motes, kwargs.get('topology'))
+                self.simulator = SimEngine(kwargs.get("num_of_motes"), kwargs.get('topology'))
             else:
-                self.simulator = SimEngine(self.num_of_motes)
+                self.simulator = SimEngine(kwargs.get("num_of_motes"))
 
             self.mote_probes = [EmulatedMoteProbe(m_if) for m_if in self.simulator.mote_interfaces]
             self.simulator.start()
         elif self.mode == self.Mode.IOTLAB:
-            pass
+            self.mote_probes = IotlabMoteProbe.probe_iotlab_motes(
+                iotlab_motes=kwargs.get('iotlab_motes'),
+                iotlab_user=kwargs.get('iotlab_user'),
+                iotlab_site=kwargs.get('iotlab_site'),
+                iotlab_key_file=kwargs.get('iotlab_key_file'),
+                debug=kwargs.get("debug"))
         elif self.mode == self.Mode.TESTBED:
             pass
         else:

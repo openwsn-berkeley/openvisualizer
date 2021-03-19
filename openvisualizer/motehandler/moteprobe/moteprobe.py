@@ -6,7 +6,6 @@
 
 import abc
 import logging
-import sys
 import threading
 import time
 
@@ -81,7 +80,9 @@ class MoteProbe(threading.Thread):
             if log.isEnabledFor(logging.DEBUG):
                 log.debug("start running")
                 log.debug("attaching to port {0}".format(self._portname))
-            self._attach()
+
+            if not self._attach():
+                return
 
             while not self.quit:  # read bytes from serial pipe
                 try:
@@ -98,7 +99,6 @@ class MoteProbe(threading.Thread):
         except Exception as err:
             err_msg = format_crash_message(self.name, err)
             log.critical(err_msg)
-            sys.exit(-1)
         finally:
             self._detach()
 
@@ -128,15 +128,15 @@ class MoteProbe(threading.Thread):
     # ======================== private =================================
 
     @abc.abstractmethod
-    def _attach(self):
+    def _attach(self) -> bool:
         raise NotImplementedError("Should be implemented by child class")
 
     @abc.abstractmethod
-    def _detach(self):
+    def _detach(self) -> None:
         raise NotImplementedError("Should be implemented by child class")
 
     @abc.abstractmethod
-    def _send_data(self, data):
+    def _send_data(self, data: str):
         raise NotImplementedError("Should be implemented by child class")
 
     @abc.abstractmethod

@@ -8,7 +8,8 @@ import logging
 import queue
 from typing import TYPE_CHECKING
 
-from .moteprobe import MoteProbe, MoteProbeNoData
+from openvisualizer.motehandler.moteprobe.moteprobe import MoteProbe, MoteProbeNoData
+from openvisualizer.simulator.moteprocess import Uart
 
 if TYPE_CHECKING:
     from openvisualizer.simulator.simengine import MoteProcessInterface
@@ -55,5 +56,15 @@ class EmulatedMoteProbe(MoteProbe):
     def serial(self):
         return self._serial
 
-    def _attach(self):
+    def _attach(self) -> bool:
+        """
+        Attaches to the emulated mote's uart queue.
+
+        :return: True
+        """
         self._serial = self.emulated_mote.uart
+
+        if isinstance(self._serial, Uart):
+            return True
+        else:
+            return False

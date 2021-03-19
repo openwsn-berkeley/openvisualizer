@@ -11,7 +11,7 @@ import time
 
 import paho.mqtt.client as mqtt
 
-from .moteprobe import MoteProbe
+from openvisualizer.motehandler.moteprobe.moteprobe import MoteProbe
 
 log = logging.getLogger('MoteProbe')
 log.setLevel(logging.ERROR)
@@ -39,7 +39,7 @@ class OpentestbedMoteProbe(MoteProbe):
 
         name = 'opentestbed_{0}'.format(testbedmote_eui64)
         # initialize the parent class
-        MoteProbe.__init__(self, portname=name, daemon=True)
+        super().__init__(portname=name, daemon=True)
 
     @property
     def serial(self):

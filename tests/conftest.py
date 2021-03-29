@@ -6,7 +6,7 @@ import select
 import socket
 import struct
 import time
-import xmlrpclib
+import xmlrpc.client
 from fcntl import ioctl
 from subprocess import Popen
 
@@ -29,7 +29,7 @@ ADDRESSES = []
 # Connect to a running instance of openv-server and retrieve the addresses of the motes in the network
 url = 'http://{}:{}'.format(HOST, str(PORT))
 try:
-    rpc_server = xmlrpclib.ServerProxy(url)
+    rpc_server = xmlrpc.client.ServerProxy(url)
     mote_ids = rpc_server.get_mote_dict().keys()
 
     if None not in mote_ids:
@@ -62,7 +62,7 @@ except socket.error as err:
             "'--opentun'")
     else:
         log.error(err)
-except xmlrpclib as err:
+except xmlrpc as err:
     log.error("Caught server fault -- {}".format(err))
 
 
@@ -153,21 +153,7 @@ def etun():
 
 @pytest.fixture()
 def server():
-    arguments = ['openv-server', '--sim=2', '--no-boot']
-    server_proc = Popen(arguments, shell=False)
-
-    # give openv-server time to boot
-    time.sleep(3)
-
-    yield server_proc
-
-    # kill the server
-    server_proc.terminate()
-
-
-@pytest.fixture()
-def server_booted():
-    arguments = ['openv-server', '--sim=2']
+    arguments = ['openv-server', 'simulation', '2']
     server_proc = Popen(arguments, shell=False)
 
     # give openv-server time to boot

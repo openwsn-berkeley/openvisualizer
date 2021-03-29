@@ -38,7 +38,7 @@ class OpenParser(parser.Parser):
     SERFRAME_ACTION_NO = ord('N')
     SERFRAME_ACTION_TOGGLE = ord('T')
 
-    def __init__(self, mqtt_broker, stack_defines, mote_port):
+    def __init__(self, mqtt_broker, mote_port):
         # log
         log.debug("create instance")
 
@@ -47,12 +47,12 @@ class OpenParser(parser.Parser):
 
         # subparser objects
         self.parser_status = parserstatus.ParserStatus()
-        self.parser_verbose = ParserLogs(self.SERFRAME_MOTE2PC_VERBOSE, stack_defines)
-        self.parser_info = ParserLogs(self.SERFRAME_MOTE2PC_INFO, stack_defines)
-        self.parser_warning = ParserLogs(self.SERFRAME_MOTE2PC_WARNING, stack_defines)
-        self.parser_success = ParserLogs(self.SERFRAME_MOTE2PC_SUCCESS, stack_defines)
-        self.parser_error = ParserLogs(self.SERFRAME_MOTE2PC_ERROR, stack_defines)
-        self.parser_critical = ParserLogs(self.SERFRAME_MOTE2PC_CRITICAL, stack_defines)
+        self.parser_verbose = ParserLogs(self.SERFRAME_MOTE2PC_VERBOSE)
+        self.parser_info = ParserLogs(self.SERFRAME_MOTE2PC_INFO)
+        self.parser_warning = ParserLogs(self.SERFRAME_MOTE2PC_WARNING)
+        self.parser_success = ParserLogs(self.SERFRAME_MOTE2PC_SUCCESS)
+        self.parser_error = ParserLogs(self.SERFRAME_MOTE2PC_ERROR)
+        self.parser_critical = ParserLogs(self.SERFRAME_MOTE2PC_CRITICAL)
         self.parser_data = parserdata.ParserData(mqtt_broker, mote_port)
         self.parser_packet = parserpacket.ParserPacket()
         self.parser_printf = parserprintf.ParserPrintf()

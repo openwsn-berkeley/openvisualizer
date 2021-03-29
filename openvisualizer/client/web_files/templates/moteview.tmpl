@@ -284,7 +284,6 @@
 									            idJson       = $.parseJSON(json.IdManager)[0];
 									            syncJson     = $.parseJSON(json.IsSync)[0];
 									            dagrankJson  = $.parseJSON(json.MyDagRank)[0];
-									            outbufJson   = $.parseJSON(json.OutputBuffer)[0];
 									            backoffJson  = $.parseJSON(json.Backoff)[0];
 									            macstatsJson = $.parseJSON(json.MacStats)[0];
 									            schedJson    = $.parseJSON(json.Schedule);
@@ -305,8 +304,6 @@
 									        $("#asn_fld").text(          hasJson ? asnJson.asn                     : '');
 									        $("#join_fld").text(         hasJson ? joinedJson.joinedAsn                     : '');
 									        $("#dagrank_fld").text(      hasJson ? dagrankJson.myDAGrank           : '');
-									        $("#outread_fld").text(      hasJson ? outbufJson.index_read           : '');
-									        $("#outwrite_fld").text(     hasJson ? outbufJson.index_write          : '');
 									        $("#backexp_fld").text(      hasJson ? backoffJson.backoffExponent     : '');
 									        $("#backoff_fld").text(      hasJson ? backoffJson.backoff             : '');
 									        $("#mincorrection_fld").text(hasJson ? macstatsJson.minCorrection      : '');

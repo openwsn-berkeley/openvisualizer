@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import logging
 
 from openvisualizer.client.plugins.plugin import Plugin

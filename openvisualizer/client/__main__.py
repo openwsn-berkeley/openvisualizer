@@ -2,12 +2,14 @@ import errno
 import json
 import logging
 import socket
+import sys
 import time
-import xmlrpclib
+from xmlrpc.client import ServerProxy, Fault
 
 import bottle
 import click
 
+from openvisualizer import VERSION
 from openvisualizer.client.plugins.plugin import Plugin
 from openvisualizer.client.utils import transform_into_ipv6
 from openvisualizer.client.webserver import WebServer
@@ -17,20 +19,31 @@ from openvisualizer.motehandler.motestate.motestate import MoteState
 class Proxy(object):
     def __init__(self, host, port):
         url = 'http://{}:{}'.format(host, str(port))
-        self.rpc_server = xmlrpclib.ServerProxy(url)
+        self.rpc_server = ServerProxy(url)
 
 
 pass_proxy = click.make_pass_decorator(Proxy, ensure=True)
 pass_plugins = click.make_pass_decorator(Plugin, ensure=True)
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.option('--server', default='localhost', help='Specify address of the Openvisualizer server')
+@click.option('--version', is_flag=True, help='Print the OpenVisualizer version')
 @click.option('--port', default=9000, help='Specify to port to use')
 @click.option('--debug', is_flag=True, help="Enable debugging")
 @click.pass_context
-def cli(ctx, server, port, debug):
+def cli(ctx, version, server, port, debug):
     ctx.obj = Proxy(server, port)
+
+    if version:
+        click.echo(f"OpenVisualizer (client) v{VERSION}")
+        sys.exit(0)
+
+    if ctx.invoked_subcommand is None:
+        click.echo('Use one of the following subcommands: ', nl=False)
+        click.secho('network, view, or shutdown', bold=True)
+        sys.exit(0)
+
     if debug:
         logging.basicConfig(
             filename='openv-client.log',
@@ -47,31 +60,18 @@ def cli(ctx, server, port, debug):
 def shutdown(proxy):
     """Shutdown the Openvisualizer server"""
 
-    click.echo("Shutting down Openvisualizer server ...  ", nl=False)
+    click.echo("Shutting down OpenVisualizer server... ", nl=False)
     try:
-        proxy.rpc_server.shutdown()
-    except socket.error:
+        proxy.rpc_server.remote_shutdown()
+    except Fault:
         pass
     click.secho("Ok!", fg='green', bold=True)
 
 
-@click.command()
-@pass_proxy
-def list_methods(proxy):
-    """List all methods supported by the Openvisualizer server."""
-
-    try:
-        methods = proxy.rpc_server.system.listMethods()
-    except socket.error as err:
-        if errno.ECONNREFUSED:
-            click.secho("Connection refused. Is server running?", fg='red')
-        else:
-            click.echo(err)
-    else:
-        click.secho("List of support calls:", bold=True, underline=True)
-        for method in methods:
-            if not str(method).startswith("system"):
-                click.echo(" - {}".format(method))
+@click.group()
+def network():
+    """ Commands to interact with the network behind the OpenVisualizer server. """
+    pass
 
 
 @click.command()
@@ -86,7 +86,7 @@ def wireshark_debug(proxy):
             _ = proxy.rpc_server.enable_wireshark_debug()
 
         click.echo("{} --> {}".format(status, proxy.rpc_server.get_wireshark_debug()))
-    except xmlrpclib.Fault as err:
+    except Fault as err:
         click.secho("Server fault: {}".format(err.faultString), fg='red')
         return
     except socket.error as err:
@@ -103,39 +103,39 @@ def wireshark_debug(proxy):
 @pass_proxy
 def motes(proxy):
     """Print the address and serial-port of each mote connected to the Openvisualizer server."""
+
     try:
         temp_mote_dict = proxy.rpc_server.get_mote_dict()
-        addr_port_dict = {}
+        address_port_dict = {}
 
         # check if we have all the info resolve the entire IPv6 address
         if None not in temp_mote_dict.values():
-            for addr in temp_mote_dict:
-                mote_state = proxy.rpc_server.get_mote_state(addr)
+            for address in temp_mote_dict:
+                mote_state = proxy.rpc_server.get_mote_state(address)
                 id_manager = json.loads(mote_state[MoteState.ST_IDMANAGER])[0]
-                full_addr = transform_into_ipv6(id_manager['myPrefix'][:-9] + '-' + id_manager['my64bID'][:-5])
-                addr_port_dict[full_addr] = temp_mote_dict[addr]
+                full_address = transform_into_ipv6(id_manager['myPrefix'][:-9] + '-' + id_manager['my64bID'][:-5])
+                address_port_dict[full_address] = temp_mote_dict[address]
         else:
             logging.warning("Not all addresses could be resolved.")
-
     except socket.error as err:
         if errno.ECONNREFUSED:
             click.secho("Connection refused. Is server running?", fg='red')
         else:
             click.echo(err)
-    except xmlrpclib.Fault as err:
+    except Fault as err:
         click.secho("Caught server fault -- {}".format(err), fg='red')
     else:
         # if we were unable to resolve all the IPv6 addresses, use the intermediate results
-        if len(addr_port_dict) != len(temp_mote_dict):
-            addr_port_dict = temp_mote_dict
+        if len(address_port_dict) != len(temp_mote_dict):
+            address_port_dict = temp_mote_dict
 
-        i = 0
-        port, addr = None, None
-        while port is None and i < len(addr_port_dict):
-            addr, port = addr_port_dict.items()[i]
-            i += 1
+        port, address = None, None
+        for key in address_port_dict:
+            address, port = key, address_port_dict[key]
+            if port is not None:
+                break
 
-        len_addr = len(addr) if addr is not None else 0
+        len_addr = len(address) if address is not None else 0
         len_port = len(port) if port is not None else 0
 
         heading = " | {:^{}} | {:^{}} | {:^13} |".format("MOTE ID",
@@ -145,77 +145,71 @@ def motes(proxy):
         click.echo("".join([" "] + ["-"] * (len(heading) - 1)))
         click.echo(heading)
         click.echo("".join([" "] + ["-"] * (len(heading) - 1)))
-        for addr, port in addr_port_dict.items():
+        for address, port in address_port_dict.items():
             if port is None:
-                click.echo(" | {:^15} | {:^15} | ".format(port, addr), nl='')
+                click.echo(" | {:^15} | {:^15} | ".format(str(port), str(address)), nl='')
                 click.secho("{:^13}".format('No response'), fg='red', nl='')
                 click.echo(" |")
             else:
-                click.echo(" | {:^15} | {:^15} | ".format(addr, port), nl='')
+                click.echo(" | {:^15} | {:^15} | ".format(str(address), str(port)), nl='')
                 click.secho("{:^13}".format('Ok!'), fg='green', nl='')
                 click.echo(" |")
         click.echo("".join([" "] + ["-"] * (len(heading) - 1)))
 
 
 @click.command()
-@click.option('--mote', default='all', help='Specify the mote(s) to (re)boot', show_default=True, type=str)
 @pass_proxy
-def boot(proxy, mote):
-    """Boot motes attached to Openvisualizer."""
-    addresses = mote.split(',')
+def pause(proxy):
+    """ [SIM-ONLY] Pauses or unpauses the simulation engine. """
     try:
-        _ = proxy.rpc_server.boot_motes(addresses)
+        paused = proxy.rpc_server.pause_simulation()
+        if paused:
+            click.secho("Paused", fg='yellow')
+        else:
+            click.secho("Unpaused", fg="green")
+
     except socket.error as err:
         if errno.ECONNREFUSED:
             click.secho("Connection refused. Is server running?", fg='red')
         else:
             click.echo(err)
-    except xmlrpclib.Fault as err:
+    except Fault as err:
         click.secho("Caught server fault -- {}".format(err.faultString), fg='red')
-    else:
-        for a in addresses:
-            click.echo("Booting mote: {} ... ".format(a), nl=False)
-            click.secho("Ok!", bold=True, fg='green')
 
 
 @click.command()
-@click.option('--rpc-host', default='localhost', help='Host address for webserver', show_default=True)
-@click.option('--rpc-port', default='9000', help='Port number for webserver', show_default=True)
-@click.option('--web-host', default='localhost', help='Host address for webserver', show_default=True)
-@click.option('--web-port', default='8080', help='Port number for webserver', show_default=True)
-@click.option('--debug', default='DEBUG', help='provide debug level [DEBUG, INFO, WARNING, ERROR, CRITICAL]',
-              show_default=True)
-def web(rpc_host, rpc_port, web_port, web_host, debug):
-    """ Start a web server which acts as an RPC client for OpenVisualizer Server."""
+@pass_proxy
+def runtime(proxy):
+    """ [SIM-ONLY] Get real and simulated runtime. """
+    try:
+        elapsed = proxy.rpc_server.get_runtime()
+        click.echo(f"Real runtime: {elapsed[0]}")
+        click.echo(f"Simulated runtime: {elapsed[1]}")
 
-    bottle_server = bottle.Bottle()
-
-    WebServer(bottle_server, (rpc_host, rpc_port), debug)
-
-    if debug != 'DEBUG':
-        bottle.debug(False)
-        bottle_server.run(host=web_host, port=web_port, quiet=True)
-    else:
-        bottle.debug(True)
-        bottle_server.run(host=web_host, port=web_port)
+    except socket.error as err:
+        if errno.ECONNREFUSED:
+            click.secho("Connection refused. Is server running?", fg='red')
+        else:
+            click.echo(err)
+    except Fault as err:
+        click.secho("Caught server fault -- {}".format(err.faultString), fg='red')
 
 
 @click.command()
 @click.argument("port_or_address", nargs=1, type=str, required=False)
 @pass_proxy
 def root(proxy, port_or_address):
-    """Set a mote as dagroot or get the current's DAG root address."""
+    """Set a mote as DAGroot or return the current DAGroot address."""
 
     if port_or_address is None:
         try:
             dag_root = proxy.rpc_server.get_dagroot()
 
             if dag_root is None:
-                click.echo("No DAG root configured\n")
+                click.secho("No DAGroot configured\n", fg='yellow')
                 click.echo(click.get_current_context().get_help())
                 return
 
-            dag_root = "".join('%02x' % b for b in dag_root)
             mote_state = proxy.rpc_server.get_mote_state(dag_root)
         except socket.error as err:
             if errno.ECONNREFUSED:
@@ -223,24 +217,24 @@ def root(proxy, port_or_address):
             else:
                 click.echo(err)
             return
-        except xmlrpclib.Fault as err:
+        except Fault as err:
             click.secho("Caught server fault -- {}".format(err.faultString), fg='red')
         else:
             id_manager = json.loads(mote_state[MoteState.ST_IDMANAGER])[0]
 
-            click.echo('Current DAG root: {}'.format(
+            click.echo('Current DAGroot: {}'.format(
                 transform_into_ipv6(id_manager['myPrefix'][:-9] + '-' + id_manager['my64bID'][:-5])))
 
     else:
         try:
-            _ = proxy.rpc_server.set_root(port_or_address)
+            _ = proxy.rpc_server.set_dagroot(port_or_address)
         except socket.error as err:
             if errno.ECONNREFUSED:
                 click.secho("Connection refused. Is server running?", fg='red')
             else:
                 click.echo(err)
             return
-        except xmlrpclib.Fault as err:
+        except Fault as err:
             click.secho("Caught server fault -- {}".format(err.faultString), fg='red')
             click.secho("\nMake sure the motes are booted and provide a 16B mote address or a port ID to set the DAG "
                         "root.", fg='red')
@@ -286,6 +280,28 @@ def start_view(proxy, mote, refresh_rate, graphic=None):
 
     if view_thread.error_msg != '':
         click.secho(view_thread.error_msg, fg='red')
+
+
+@click.command()
+@click.option('--rpc-host', default='localhost', help='Host address for webserver', show_default=True)
+@click.option('--rpc-port', default='9000', help='Port number for webserver', show_default=True)
+@click.option('--web-host', default='localhost', help='Host address for webserver', show_default=True)
+@click.option('--web-port', default='8080', help='Port number for webserver', show_default=True)
+@click.option('--debug', default='DEBUG', help='provide debug level [DEBUG, INFO, WARNING, ERROR, CRITICAL]',
+              show_default=True)
+def web(rpc_host, rpc_port, web_port, web_host, debug):
+    """ Start a web server which acts as an RPC client for OpenVisualizer Server."""
+
+    bottle_server = bottle.Bottle()
+
+    WebServer(bottle_server, (rpc_host, rpc_port), debug)
+
+    if debug != 'DEBUG':
+        bottle.debug(False)
+        bottle_server.run(host=web_host, port=web_port, quiet=True)
+    else:
+        bottle.debug(True)
+        bottle_server.run(host=web_host, port=web_port)
 
 
 @click.command()
@@ -344,12 +360,14 @@ def neighbors(proxy, mote, refresh_rate):
 
 
 cli.add_command(shutdown)
-# cli.add_command(list_methods)
-cli.add_command(wireshark_debug)
-cli.add_command(motes)
-cli.add_command(boot)
-cli.add_command(root)
+cli.add_command(network)
 cli.add_command(view)
+
+network.add_command(wireshark_debug)
+network.add_command(motes)
+network.add_command(pause)
+network.add_command(root)
+network.add_command(runtime)
 
 view.add_command(macstats)
 view.add_command(pktqueue)
@@ -358,3 +376,6 @@ view.add_command(motestatus)
 view.add_command(msf)
 view.add_command(neighbors)
 view.add_command(web)
+
+if __name__ == "__main__":
+    cli()

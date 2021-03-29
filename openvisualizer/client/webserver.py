@@ -10,7 +10,7 @@ import json
 import logging
 import re
 import socket
-import xmlrpclib
+from xmlrpc.client import ServerProxy, Fault
 
 import bottle
 import pkg_resources
@@ -37,8 +37,10 @@ class WebServer:
         logger.debug('create instance')
 
         # store params
-        self.rpc_server = xmlrpclib.ServerProxy('http://{}:{}'.format(*rpc_server_addr))
+        self.rpc_server = ServerProxy('http://{}:{}'.format(*rpc_server_addr))
         self.bottle_srv = bottle_srv
+
+        _ = debug
 
         self._define_routes()
 
@@ -53,7 +55,7 @@ class WebServer:
 
     def _define_routes(self):
         """
-        Matches web URL to impelementing method. Cannot use @route annotations on the methods due to the class-based
+        Matches web URL to implementing method. Cannot use @route annotations on the methods due to the class-based
         implementation.
         """
         self.bottle_srv.route(path='/', callback=self._show_moteview)
@@ -72,11 +74,11 @@ class WebServer:
         self.bottle_srv.route(path='/topology', callback=self._topology_page)
         self.bottle_srv.route(path='/topology/data', callback=self._topology_data)
         self.bottle_srv.route(path='/topology/download', callback=self._topology_download)
-        self.bottle_srv.route(path='/topology/motes', method='POST', callback=self._topology_motes_update)
-        self.bottle_srv.route(path='/topology/connections', method='PUT', callback=self._topology_connections_create)
-        self.bottle_srv.route(path='/topology/connections', method='POST', callback=self._topology_connections_update)
-        self.bottle_srv.route(path='/topology/connections', method='DELETE', callback=self._topology_connections_delete)
-        self.bottle_srv.route(path='/topology/route', method='GET', callback=self._topology_route_retrieve)
+        self.bottle_srv.route(path='/topology/motes', method='POST', callback=self._topology_update_positions)
+        self.bottle_srv.route(path='/topology/connections', method='PUT', callback=self._topology_create_connections)
+        self.bottle_srv.route(path='/topology/connections', method='POST', callback=self._topology_update_connections)
+        self.bottle_srv.route(path='/topology/connections', method='DELETE', callback=self._topology_delete_connections)
+        self.bottle_srv.route(path='/topology/route', method='GET', callback=self._topology_get_route)
         self.bottle_srv.route(path='/static/<filepath:path>', callback=WebServer._server_static)
 
     @bottle.view('moteview.tmpl')
@@ -116,21 +118,19 @@ class WebServer:
         logger.debug('Toggle root status for moteid {0}'.format(moteid))
         try:
             ms = self.rpc_server.get_mote_state(moteid)
-        except xmlrpclib.Fault as err:
-            logger.error("A fault occurred: {}".format(err))
-            return '{"result" : "fail"}'
-        except socket.error as err:
+        except (socket.error, Fault) as err:
             logger.error(err)
-            return '{}'
+            return '{"result" : "fail"}'
 
         if ms:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('Found mote {0} in mote_states'.format(moteid))
             try:
-                self.rpc_server.set_root(moteid)
-            except socket.error as err:
+                self.rpc_server.set_dagroot(moteid)
+            except (socket.error, Fault) as err:
                 logger.error(err)
-                return '{}'
+                return '{"result" : "fail"}'
+
             return '{"result" : "success"}'
         else:
             if logger.isEnabledFor(logging.DEBUG):
@@ -148,14 +148,12 @@ class WebServer:
             logger.debug('Get JSON data for moteid {0}'.format(moteid))
         try:
             states = self.rpc_server.get_mote_state(moteid)
-        except xmlrpclib.Fault as err:
-            logger.error("Could not fetch mote state for mote {}: {}".format(moteid, err))
-            return states
-        except socket.error as err:
+        except (Fault, socket.error) as err:
             logger.error(err)
-            return {}
+
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug('Found mote {0} in mote_states'.format(moteid))
+
         return states
 
     def _set_wireshark_debug(self, enabled):
@@ -171,15 +169,12 @@ class WebServer:
                 _ = self.rpc_server.disable_wireshark_debug()
             else:
                 logger.error('Illegal value for \'_set_wireshark_debug\'')
-        except xmlrpclib.Fault as err:
-            logger.error("Caught a server fault: {}".format(err))
-        except socket.error as err:
+        except (Fault, socket.error) as err:
             logger.error(err)
 
     @staticmethod
     def _set_gologic_debug(enabled):
         logger.info('Enable GoLogic debug : {0}'.format(enabled))
-        # vcdlogger.VcdLogger().set_enabled(enabled == 'true')
         return '{"result" : "success"}'
 
     @bottle.view('eventBus.tmpl')
@@ -191,7 +186,7 @@ class WebServer:
     def _show_dag(self):
         try:
             states, edges = self.rpc_server.get_dag()
-        except socket.error as err:
+        except (Fault, socket.error) as err:
             logger.error(err)
             return {}
 
@@ -204,9 +199,10 @@ class WebServer:
     def _show_motes_connectivity(self):
         try:
             states, edges = self.rpc_server.get_motes_connectivity()
-        except socket.error as err:
+        except (Fault, socket.error) as err:
             logger.error(err)
             return {}
+
         return {'states': states, 'edges': edges}
 
     @bottle.view('routing.tmpl')
@@ -223,11 +219,12 @@ class WebServer:
         data = {}
         try:
             data = self.rpc_server.get_network_topology()
-        except socket.error as err:
+        except (socket.error, Fault) as err:
             logger.error(err)
+
         return data
 
-    def _topology_motes_update(self):
+    def _topology_update_positions(self):
         """ Update the network topology (simulation only)"""
 
         motes_temp = {}
@@ -249,11 +246,11 @@ class WebServer:
             motes_temp[index][param] = v
 
         try:
-            _ = self.rpc_server.update_network_topology(json.dumps(motes_temp))
-        except socket.error as err:
+            _ = self.rpc_server.update_positions(json.dumps(motes_temp))
+        except (socket.error, Fault) as err:
             logger.error(err)
 
-    def _topology_connections_create(self):
+    def _topology_create_connections(self):
         data = bottle.request.forms
         assert sorted(data.keys()) == sorted(['fromMote', 'toMote'])
 
@@ -265,7 +262,7 @@ class WebServer:
         except socket.error as err:
             logger.error(err)
 
-    def _topology_connections_update(self):
+    def _topology_update_connections(self):
         data = bottle.request.forms
         assert sorted(data.keys()) == sorted(['fromMote', 'toMote', 'pdr'])
 
@@ -274,11 +271,11 @@ class WebServer:
         pdr = float(data['pdr'])
 
         try:
-            _ = self.rpc_server.update_motes_connection(from_mote, to_mote, pdr)
-        except socket.error as err:
+            _ = self.rpc_server.update_connections(from_mote, to_mote, pdr)
+        except (socket.error, Fault) as err:
             logger.error(err)
 
-    def _topology_connections_delete(self):
+    def _topology_delete_connections(self):
         data = bottle.request.forms
         assert sorted(data.keys()) == sorted(['fromMote', 'toMote'])
 
@@ -286,21 +283,20 @@ class WebServer:
         to_mote = int(data['toMote'])
 
         try:
-            _ = self.rpc_server.delete_motes_connection(from_mote, to_mote)
-        except socket.error as err:
+            _ = self.rpc_server.delete_connections(from_mote, to_mote)
+        except (Fault, socket.error) as err:
             logger.error(err)
 
-    def _topology_route_retrieve(self):
+    def _topology_get_route(self):
         data = bottle.request.query
-        assert data.keys() == ['destination']
 
         destination_eui = [0x14, 0x15, 0x92, 0xcc, 0x00, 0x00, 0x00, int(data['destination'])]
 
         route = {}
         try:
-            route = self.rpc_server.retrieve_routing_path(destination_eui)
-        except socket.error:
-            pass
+            route = self.rpc_server.get_routing_path(destination_eui)
+        except (socket.error, Fault) as err:
+            logger.error(err)
 
         return route
 
@@ -314,9 +310,6 @@ class WebServer:
         except socket.error as err:
             logger.error(err)
             return {}
-
-        if dagroot is not None:
-            dagroot = ''.join('%02x' % b for b in dagroot)
 
         data['DAGroot'] = dagroot
 

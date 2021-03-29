@@ -22,9 +22,9 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-class EventBusMonitor(object):
+class EventBusMonitor:
 
-    def __init__(self):
+    def __init__(self, wireshark_debug):
 
         # log
         log.debug("create instance")
@@ -34,7 +34,7 @@ class EventBusMonitor(object):
         # local variables
         self.data_lock = threading.Lock()
         self.stats = {}
-        self.wireshark_debug_enabled = True
+        self.wireshark_debug_enabled = wireshark_debug
         self.dagoot_eui64 = [0x00] * 8
         self.sim_mode = False
 
@@ -52,7 +52,7 @@ class EventBusMonitor(object):
         with self.data_lock:
             temp_stats = copy.deepcopy(self.stats)
 
-        # format as a dictionnary
+        # format as a dictionary
         return_val = [
             {
                 'sender': k[0],
@@ -70,7 +70,7 @@ class EventBusMonitor(object):
         Well-suited to viewing the packets in Wireshark. See http://wiki.wireshark.org/IEEE_802.15.4 for ZEP details.
         """
         with self.data_lock:
-            self.wireshark_debug_enabled = (True and is_enabled)
+            self.wireshark_debug_enabled = is_enabled
         log.info('%s export of ZEP mesh debug packets to Internet',
                  'Enabled' if self.wireshark_debug_enabled else 'Disabled')
 
@@ -149,14 +149,15 @@ class EventBusMonitor(object):
                     zep = self._wrap_mac_and_zep(previous_hop=self.dagoot_eui64, next_hop=next_hop, lowpan=lowpan)
                     self._dispatch_mesh_debug_packet(zep)
 
-    def _wrap_mac_and_zep(self, previous_hop, next_hop, lowpan):
+    @staticmethod
+    def _wrap_mac_and_zep(previous_hop: bytes, next_hop: bytes, lowpan: bytes):
         """
         Returns Exegin ZEP protocol header and dummy 802.15.4 header wrapped around outgoing 6LoWPAN layer packet.
         """
 
-        phop = previous_hop[:]
+        phop = list(previous_hop[:])
         phop.reverse()
-        nhop = next_hop[:]
+        nhop = list(next_hop[:])
         nhop.reverse()
 
         # ZEP
@@ -178,13 +179,14 @@ class EventBusMonitor(object):
         mac += [0xfe, 0xca]  # destination PAN ID
         mac += nhop  # destination address
         mac += phop  # source address
-        mac += lowpan
+        mac += list(lowpan)
         # CRC
         mac += calculate_fcs(mac)
 
         return zep + mac
 
-    def _wrap_zep_crc(self, body, frequency):
+    @staticmethod
+    def _wrap_zep_crc(body, frequency):
 
         # ZEP header
         zep = [ord('E'), ord('X')]  # Protocol ID String
@@ -207,13 +209,13 @@ class EventBusMonitor(object):
 
     def _dispatch_mesh_debug_packet(self, zep):
         """
-        Wraps ZEP-based debug packet, for outgoing mesh 6LoWPAN message,  with UDP and IPv6 headers. Then forwards as
+        Wraps ZEP-based debug packet, for outgoing mesh 6LoWPAN message, with UDP and IPv6 headers. Then forwards as
         an event to the Internet interface.
         """
 
         # UDP
         udp = UDP(sport=0, dport=17754)
-        udp.add_payload("".join([chr(i) for i in zep]))
+        udp.add_payload(bytes(zep))
 
         # Common address for source and destination
         addr = []
@@ -225,6 +227,6 @@ class EventBusMonitor(object):
         ip = IPv6(version=6, tc=0, src=addr, hlim=64, dst=addr)
         ip = ip / udp
 
-        data = [ord(b) for b in raw(ip)]
+        data = [b for b in raw(ip)]
 
         dispatcher.send(sender=self.name, signal='v6ToInternet', data=data)

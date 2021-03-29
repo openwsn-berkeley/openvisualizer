@@ -5,24 +5,29 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
 import logging
+from multiprocessing import get_logger
 
-from openvisualizer.bspemulator.bspmodule import BspModule
+from openvisualizer.simulator.bspemulator.bspmodule import BspModule
 
 
 class BspLeds(BspModule):
     """ Emulates the 'leds' BSP module """
-    _name = 'BspLeds'
 
-    def __init__(self, motehandler):
+    def __init__(self, mote):
 
         # initialize the parent
-        super(BspLeds, self).__init__(motehandler)
+        super(BspLeds, self).__init__(mote)
 
         # local variables
         self.error_led_on = False
         self.radio_led_on = False
         self.sync_led_on = False
         self.debug_led_on = False
+
+        # logging
+        self.logger = get_logger()
+        self.logger.addHandler(self.handler)
+        self.logger.setLevel(logging.INFO)
 
     # ======================== public ==========================================
 
@@ -32,8 +37,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_init() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_init')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_init')
 
         # remember that module has been intialized
         self.is_initialized = True
@@ -44,8 +49,8 @@ class BspLeds(BspModule):
         """ Emulates void leds_error_on() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_error_on')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_error_on')
 
         # change the internal state
         self.error_led_on = True
@@ -54,8 +59,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_error_off() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_error_off')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_error_off')
 
         # change the internal state
         self.error_led_on = False
@@ -64,8 +69,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_error_toggle() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_error_toggle')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_error_toggle')
 
         # change the internal state
         self.error_led_on = not self.error_led_on
@@ -74,8 +79,8 @@ class BspLeds(BspModule):
         """ Emulates: uint8_t leds_error_isOn() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_error_isOn')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_error_isOn')
 
         if self.error_led_on:
             return_val = 1
@@ -90,8 +95,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_radio_on() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_radio_on')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_radio_on')
 
         # change the internal state
         self.radio_led_on = True
@@ -100,8 +105,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_radio_off() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_radio_off')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_radio_off')
 
         # change the internal state
         self.radio_led_on = False
@@ -110,8 +115,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_radio_toggle() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_radio_toggle')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_radio_toggle')
 
         # change the internal state
         self.radio_led_on = not self.radio_led_on
@@ -120,8 +125,8 @@ class BspLeds(BspModule):
         """ Emulates: uint8_t leds_radio_isOn() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_radio_isOn')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_radio_isOn')
 
         if self.radio_led_on:
             return_val = 1
@@ -136,8 +141,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_sync_on() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_sync_on')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_sync_on')
 
         # change the internal state
         self.sync_led_on = True
@@ -147,8 +152,8 @@ class BspLeds(BspModule):
            void leds_sync_off()"""
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_sync_off')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_sync_off')
 
         # change the internal state
         self.sync_led_on = False
@@ -157,8 +162,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_sync_toggle() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_sync_toggle')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_sync_toggle')
 
         # change the internal state
         self.sync_led_on = not self.sync_led_on
@@ -167,8 +172,8 @@ class BspLeds(BspModule):
         """ Emulates: uint8_t leds_sync_isOn() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_sync_isOn')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_sync_isOn')
 
         if self.sync_led_on:
             return_val = 1
@@ -183,8 +188,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_debug_on() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_debug_on')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_debug_on')
 
         # change the internal state
         self.debug_led_on = True
@@ -193,8 +198,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_debug_off() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_debug_off')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_debug_off')
 
         # change the internal state
         self.debug_led_on = False
@@ -203,8 +208,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_debug_toggle() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_debug_toggle')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_debug_toggle')
 
         # change the internal state
         self.debug_led_on = not self.debug_led_on
@@ -213,8 +218,8 @@ class BspLeds(BspModule):
         """ Emulates: uint8_t leds_debug_isOn() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_debug_isOn')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_debug_isOn')
 
         if self.debug_led_on:
             return_val = 1
@@ -229,8 +234,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_all_on() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_all_on')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_all_on')
 
         # change the internal state
         self.error_led_on = True
@@ -242,8 +247,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_all_off() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_all_off')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_all_off')
 
         # change the internal state
         self.error_led_on = False
@@ -255,8 +260,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_all_toggle() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_all_toggle')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_all_toggle')
 
         # change the internal state
         self.error_led_on = not self.error_led_on
@@ -268,8 +273,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_circular_shift() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_circular_shift')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_circular_shift')
 
         (self.error_led_on,
          self.radio_led_on,
@@ -283,8 +288,8 @@ class BspLeds(BspModule):
         """ Emulates: void leds_increment() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_increment')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_increment')
 
         # get the current value
         val = 0

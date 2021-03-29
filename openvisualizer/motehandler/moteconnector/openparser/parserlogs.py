@@ -3,10 +3,12 @@
 #
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
-
+import json
 import logging
+import os
 import struct
 
+import appdirs
 import verboselogs
 from enum import IntEnum
 
@@ -31,7 +33,7 @@ class ParserLogs(Parser):
         SEVERITY_ERROR = ord('E')
         SEVERITY_CRITICAL = ord('C')
 
-    def __init__(self, severity, stack_defines):
+    def __init__(self, severity):
         assert self.LogSeverity(severity)
 
         # log
@@ -42,7 +44,20 @@ class ParserLogs(Parser):
 
         # store params
         self.severity = severity
-        self.stack_defines = stack_defines
+
+        app_dir = appdirs.user_data_dir("openvisualizer")
+
+        with open(os.path.join(app_dir, 'component-codes.json'), 'r') as f:
+            self.component_codes = json.load(f)
+
+        with open(os.path.join(app_dir, 'log-descriptions.json'), 'r') as f:
+            self.log_descriptions = json.load(f)
+
+        with open(os.path.join(app_dir, 'sixtop-rcs.json'), 'r') as f:
+            self.sixtop_rcs = json.load(f)
+
+        with open(os.path.join(app_dir, 'sixtop-states.json'), 'r') as f:
+            self.sixtop_states = json.load(f)
 
         # store error info
         self.error_info = {}
@@ -56,7 +71,7 @@ class ParserLogs(Parser):
 
         # parse packet
         try:
-            mote_id, component, error_code, arg1, arg2 = struct.unpack('>HBBhH', ''.join([chr(c) for c in data]))
+            mote_id, component, error_code, arg1, arg2 = struct.unpack('>HBBhH', bytes(data))
         except struct.error:
             raise ParserException(ParserException.ExceptionType.DESERIALIZE.value,
                                   "could not extract data from {0}".format(data))
@@ -68,8 +83,8 @@ class ParserLogs(Parser):
 
         if error_code == 0x25:
             # replace args of sixtop command/return code id by string
-            arg1 = self.stack_defines["sixtop_returncodes"][arg1]
-            arg2 = self.stack_defines["sixtop_states"][arg2]
+            arg1 = self.sixtop_rcs[str(arg1)]
+            arg2 = self.sixtop_states[str(arg2)]
 
         # turn into string
         output = "{MOTEID:x} [{COMPONENT}] {ERROR_DESC}".format(
@@ -100,13 +115,13 @@ class ParserLogs(Parser):
 
     def _translate_component(self, component):
         try:
-            return self.stack_defines["components"][component]
+            return self.component_codes[str(component)]
         except KeyError:
             return "unknown component code {0}".format(component)
 
     def _translate_log_description(self, error_code, arg1, arg2):
         try:
-            return self.stack_defines["log_descriptions"][error_code].format(
+            return self.log_descriptions[str(error_code)].format(
                 arg1, arg2)
         except KeyError:
             return "unknown error {0} arg1={1} arg2={2}".format(error_code, arg1, arg2)

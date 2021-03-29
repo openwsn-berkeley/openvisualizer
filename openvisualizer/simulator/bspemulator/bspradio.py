@@ -5,10 +5,10 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
 import logging
+import threading
+from multiprocessing import get_logger
 
-from openvisualizer.bspemulator.bspmodule import BspModule
-from openvisualizer.simengine import propagation
-from openvisualizer.eventbus.eventbusclient import EventBusClient
+from openvisualizer.simulator.bspemulator.bspmodule import BspModule
 
 
 class RadioState:
@@ -28,26 +28,20 @@ class RadioState:
     TURNING_OFF = 'TURNING_OFF'  # Turning the RF chain off.
 
 
-class BspRadio(BspModule, EventBusClient):
+class BspRadio(BspModule):
     """ Emulates the 'radio' BSP module """
-
-    _name = 'BspRadio'
 
     INTR_STARTOFFRAME_MOTE = 'radio.startofframe_fromMote'
     INTR_ENDOFFRAME_MOTE = 'radio.endofframe_fromMote'
     INTR_STARTOFFRAME_PROPAGATION = 'radio.startofframe_fromPropagation'
     INTR_ENDOFFRAME_PROPAGATION = 'radio.endofframe_fromPropagation'
 
-    def __init__(self, motehandler):
+    def __init__(self, mote):
 
         # initialize the parents
-        BspModule.__init__(self, motehandler)
-        EventBusClient.__init__(self, name='BspRadio_{0}'.format(self.motehandler.get_id()), registrations=[])
+        BspModule.__init__(self, mote)
 
         # local variables
-        self.timeline = self.engine.timeline
-        self.propagation = self.engine.propagation
-        self.sctimer = self.motehandler.bsp_sctimer
 
         # local variables
         self.frequency = None  # frequency the radio is tuned to
@@ -58,9 +52,19 @@ class BspRadio(BspModule, EventBusClient):
         self.rssi = -50
         self.lqi = 100
         self.crc_passes = True
+        self.state = None
+
+        # logging
+        self.logger = get_logger()
+        self.logger.addHandler(self.handler)
+        self.logger.setLevel(logging.INFO)
 
         # set initial state
         self._change_state(RadioState.STOPPED)
+
+        rx_thread = threading.Thread(target=self._listen_incoming)
+        rx_thread.setDaemon(True)
+        rx_thread.start()
 
     # ======================== public ==========================================
 
@@ -70,8 +74,8 @@ class BspRadio(BspModule, EventBusClient):
         """ Emulates: void radio_init() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_init')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_init')
 
         # change state
         self._change_state(RadioState.STOPPED)
@@ -86,21 +90,21 @@ class BspRadio(BspModule, EventBusClient):
         """ Emulates: void radio_reset() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_reset')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_reset')
 
         # change state
         self._change_state(RadioState.STOPPED)
 
     def cmd_set_frequency(self, frequency):
-        """ Emulates: void radio_setrequency(uint8_t frequency) """
+        """ Emulates: void radio_setFrequency(uint8_t frequency) """
 
         # store params
         self.frequency = frequency
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_set_frequency frequency=' + str(self.frequency))
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_set_frequency frequency=' + str(self.frequency))
 
         # change state
         self._change_state(RadioState.SETTING_FREQUENCY)
@@ -112,8 +116,8 @@ class BspRadio(BspModule, EventBusClient):
         """ Emulates: void radio_rfOn() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_rf_on')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_rf_on')
 
         # update local variable
         self.is_rf_on = True
@@ -122,8 +126,8 @@ class BspRadio(BspModule, EventBusClient):
         """ Emulates: void radio_rfOff() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_rf_off')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_rf_off')
 
         # change state
         self._change_state(RadioState.TURNING_OFF)
@@ -135,7 +139,7 @@ class BspRadio(BspModule, EventBusClient):
         self._change_state(RadioState.RFOFF)
 
         # wiggle de debugpin
-        self.motehandler.bsp_debugpins.cmd_radio_clr()
+        self.mote.bsp_debugpins.cmd_radio_clr()
 
     def cmd_load_packet(self, packet_to_load):
         """ Emulates: void radio_loadPacket(uint8_t* packet, uint8_t len) """
@@ -144,8 +148,8 @@ class BspRadio(BspModule, EventBusClient):
         assert (len(packet_to_load) <= 127)
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_load_packet len={0}'.format(len(packet_to_load)))
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_load_packet len={0}'.format(len(packet_to_load)))
 
         # change state
         self._change_state(RadioState.LOADING_PACKET)
@@ -154,8 +158,8 @@ class BspRadio(BspModule, EventBusClient):
         self.tx_buf = [len(packet_to_load)] + packet_to_load
 
         # log
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('tx_buf={0}'.format(self.tx_buf))
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('tx_buf={0}'.format(self.tx_buf))
 
         # change state
         self._change_state(RadioState.PACKET_LOADED)
@@ -164,8 +168,8 @@ class BspRadio(BspModule, EventBusClient):
         """ Emulates: void radio_txEnable() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_tx_enable')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_tx_enable')
 
         # change state
         self._change_state(RadioState.ENABLING_TX)
@@ -174,36 +178,37 @@ class BspRadio(BspModule, EventBusClient):
         self._change_state(RadioState.TX_ENABLED)
 
         # wiggle de debugpin
-        self.motehandler.bsp_debugpins.cmd_radio_set()
+        self.mote.bsp_debugpins.cmd_radio_set()
 
     def cmd_tx_now(self):
         """ Emulates: void radio_txNow() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_tx_now')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_tx_now')
 
         # change state
         self._change_state(RadioState.TRANSMITTING)
 
         # get current time
-        current_time = self.timeline.get_current_time()
+        current_time = self.mote.bsp_board.get_current_time()
 
         # calculate when the "start of frame" event will take place
         start_of_frame_time = current_time + self.delay_tx
 
         # schedule "start of frame" event
-        self.timeline.schedule_event(start_of_frame_time,
-                                     self.motehandler.get_id(),
-                                     self.intr_start_of_frame_from_mote,
-                                     self.INTR_STARTOFFRAME_MOTE)
+        self.mote.bsp_board.schedule_intr(
+            at_time=start_of_frame_time,
+            mote_id=self.mote.mote_id,
+            cb=self.intr_start_of_frame_from_mote,
+            desc=self.INTR_STARTOFFRAME_MOTE)
 
     def cmd_rx_enable(self):
         """ Emulates: void radio_rxEnable() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_rx_enable')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_rx_enable')
 
         # change state
         self._change_state(RadioState.ENABLING_RX)
@@ -212,14 +217,14 @@ class BspRadio(BspModule, EventBusClient):
         self._change_state(RadioState.LISTENING)
 
         # wiggle de debugpin
-        self.motehandler.bsp_debugpins.cmd_radio_set()
+        self.mote.bsp_debugpins.cmd_radio_set()
 
     def cmd_rx_now(self):
         """ Emulates: void radio_rxNow() """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_rx_now')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_rx_now')
 
         # change state
         self._change_state(RadioState.LISTENING)
@@ -235,43 +240,46 @@ class BspRadio(BspModule, EventBusClient):
            uint8_t* pCrc) """
 
         # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_get_received_frame')
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('cmd_get_received_frame')
 
         # ==== prepare response
-        rx_buffer = self.rx_buf[1:]
         rssi = self.rssi
         lqi = self.lqi
         crc = self.crc_passes
 
         # respond
-        return rx_buffer, rssi, lqi, crc
+        return self.rx_buf, rssi, lqi, crc
 
     # ======================== interrupts ======================================
 
     def intr_start_of_frame_from_mote(self):
 
-        # indicate transmission starts on eventBus
-        self.dispatch(
-            signal=propagation.Propagation.SIGNAL_WIRELESSTXSTART,
-            data=(self.motehandler.get_id(), self.tx_buf, self.frequency),
-        )
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug(f"Sending packet from {self.mote.mote_id}")
 
-        # schedule the "end of frame" event
-        current_time = self.timeline.get_current_time()
+        try:
+            self.mote.radio.tx.put([self.mote.mote_id, self.tx_buf, self.frequency])
+            # wait until we get the 'go' from the propagation thread
+            self.mote.radio.tx.join()
+        except (EOFError, BrokenPipeError):
+            self.logger.error('Queue closed')
+
+        current_time = self.mote.bsp_board.get_current_time()
         end_of_frame_time = current_time + BspRadio._packet_length_to_duration(len(self.tx_buf))
-        self.timeline.schedule_event(
-            end_of_frame_time,
-            self.motehandler.get_id(),
-            self.intr_end_of_frame_from_mote,
-            self.INTR_ENDOFFRAME_MOTE,
+
+        self.mote.bsp_board.schedule_intr(
+            at_time=end_of_frame_time,
+            mote_id=self.mote.mote_id,
+            cb=self.intr_end_of_frame_from_mote,
+            desc=self.INTR_ENDOFFRAME_MOTE,
         )
 
         # signal start of frame to mote
-        counter_val = self.sctimer.cmd_read_counter()
+        counter_val = self.mote.bsp_sctimer.cmd_read_counter()
 
         # indicate to the mote
-        self.motehandler.mote.radio_isr_startFrame(counter_val)
+        self.mote.mote.radio_isr_startFrame(counter_val)
 
         # kick the scheduler
         return True
@@ -279,27 +287,25 @@ class BspRadio(BspModule, EventBusClient):
     def intr_start_of_frame_from_propagation(self):
 
         # signal start of frame to mote
-        counter_val = self.sctimer.cmd_read_counter()
+        counter_val = self.mote.bsp_sctimer.cmd_read_counter() + 36
 
-        # indicate to the mote
-        self.motehandler.mote.radio_isr_startFrame(counter_val)
+        # log
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('intr_start_of_frame_from_propagation counter_val={0}'.format(counter_val))
 
-        # do NOT kick the scheduler
+        # indicate to mote
+        self.mote.mote.radio_isr_startFrame(counter_val)
+
+        # kick the scheduler
         return True
 
     def intr_end_of_frame_from_mote(self):
 
-        # indicate transmission ends on eventBus
-        self.dispatch(
-            signal=propagation.Propagation.SIGNAL_WIRELESSTXEND,
-            data=self.motehandler.get_id(),
-        )
-
         # signal end of frame to mote
-        counter_val = self.sctimer.cmd_read_counter()
+        counter_val = self.mote.bsp_sctimer.cmd_read_counter()
 
         # indicate to the mote
-        self.motehandler.mote.radio_isr_endFrame(counter_val)
+        self.mote.mote.radio_isr_endFrame(counter_val)
 
         # kick the scheduler
         return True
@@ -307,58 +313,61 @@ class BspRadio(BspModule, EventBusClient):
     def intr_end_of_frame_from_propagation(self):
 
         # signal end of frame to mote
-        counter_val = self.sctimer.cmd_read_counter()
+        counter_val = self.mote.bsp_sctimer.cmd_read_counter()
 
         # log
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('intr_end_of_frame_from_propagation counter_val={0}'.format(counter_val))
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('intr_end_of_frame_from_propagation counter_val={0}'.format(counter_val))
 
         # indicate to the mote
-        self.motehandler.mote.radio_isr_endFrame(counter_val)
+        self.mote.mote.radio_isr_endFrame(counter_val)
 
-        # do NOT kick the scheduler
+        # kick the scheduler
         return True
 
-    # ======================== indication from Propagation =====================
+    def _listen_incoming(self):
+        while True:
+            try:
+                origin, packet, channel = self.mote.radio.rx.get()
+            except EOFError:
+                self.logger.error('Queue closed')
+                break
 
-    def indicate_tx_start(self, mote_id, packet, channel):
+            self.mote.radio.rx.task_done()
 
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug(
-                'indicate_tx_start from mote_id={0} channel={1} len={2}'.format(mote_id, channel, len(packet)))
+            if self.is_initialized and self.state == RadioState.LISTENING and self.frequency == channel:
 
-        if self.is_initialized and self.state == RadioState.LISTENING and self.frequency == channel:
-            self._change_state(RadioState.RECEIVING)
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug(f"Got message from mote_{origin} length {packet[0]} bytes (channel={channel})")
 
-            self.rx_buf = packet
+                self.rx_buf = [i[0] for i in packet[1:]]
 
-            # log
-            if self.log.isEnabledFor(logging.DEBUG):
-                self.log.debug('rx_buf={0}'.format(self.rx_buf))
+                # schedule start of frame
+                self.mote.bsp_board.schedule_intr(
+                    at_time=self.mote.bsp_board.get_current_time(),
+                    mote_id=self.mote.mote_id,
+                    cb=self.intr_start_of_frame_from_propagation,
+                    desc=self.INTR_STARTOFFRAME_PROPAGATION,
+                )
 
-            # schedule start of frame
-            self.timeline.schedule_event(
-                self.timeline.get_current_time(),
-                self.motehandler.get_id(),
-                self.intr_start_of_frame_from_propagation,
-                self.INTR_STARTOFFRAME_PROPAGATION,
-            )
+                # schedule end of frame
+                end_of_frame_time = \
+                    self.mote.bsp_board.get_current_time() + BspRadio._packet_length_to_duration(len(self.rx_buf))
+                self.mote.bsp_board.schedule_intr(
+                    at_time=end_of_frame_time,
+                    mote_id=self.mote.mote_id,
+                    cb=self.intr_end_of_frame_from_propagation,
+                    desc=self.INTR_ENDOFFRAME_PROPAGATION,
+                )
 
-    def indicate_tx_end(self, mote_id):
+            elif self.frequency != channel:
+                self.logger.debug(f"Wrong channel: {self.frequency} != {channel}")
+            else:
+                # just drop the packet
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug(f"[{self.mote.mote_id - 1}] Radio not in correct state: {self.state}")
 
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('indicate_tx_end from mote_id={0}'.format(mote_id))
-
-        if self.is_initialized and self.state == RadioState.RECEIVING:
-            self._change_state(RadioState.LISTENING)
-
-            # schedule end of frame
-            self.timeline.schedule_event(
-                self.timeline.get_current_time(),
-                self.motehandler.get_id(),
-                self.intr_end_of_frame_from_propagation,
-                self.INTR_ENDOFFRAME_PROPAGATION,
-            )
+            # notify the propagation thread that we are done here
 
     # ======================== private =========================================
 
@@ -368,5 +377,5 @@ class BspRadio(BspModule, EventBusClient):
 
     def _change_state(self, new_state):
         self.state = new_state
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('state={0}'.format(self.state))
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('state={0}'.format(self.state))

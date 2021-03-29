@@ -78,7 +78,7 @@ class ParserData(parser.Parser):
         # asn comes in the next 5bytes.
 
         asn_bytes = data[2:7]
-        (self._asn) = struct.unpack('<BHH', ''.join([chr(c) for c in asn_bytes]))
+        (self._asn) = struct.unpack('<BHH', bytes(asn_bytes))
 
         # source and destination of the message
         dest = data[7:15]

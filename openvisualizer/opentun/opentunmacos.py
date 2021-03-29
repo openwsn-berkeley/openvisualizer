@@ -53,9 +53,6 @@ class TunReadThread(threading.Thread):
                 # wait for data
                 p = os.read(self.tun_if, self.ETHERNET_MTU)
 
-                # convert input from a string to a byte list
-                p = [ord(b) for b in p]
-
                 # debug info
                 log.debug('packet captured on tun interface: {0}'.format(format_buf(p)))
 
@@ -113,7 +110,7 @@ class OpenTunMACOS(OpenTun):
 
         try:
             # write over tuntap interface
-            os.write(self.tun_if, data)
+            os.write(self.tun_if, data.encode('utf-8'))
             log.debug("data dispatched to tun correctly {0}, {1}".format(signal, sender))
         except Exception as err:
             err_msg = format_critical_message(err)

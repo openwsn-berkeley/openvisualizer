@@ -199,7 +199,7 @@ class EmulatedMote:
 
 def create_mote(mote_interface: 'MoteProcessInterface'):
     try:
-        import openwsn as mote
+        import openmote as mote
         EmulatedMote(mote, mote_interface).start()
     except ImportError:
         if color:

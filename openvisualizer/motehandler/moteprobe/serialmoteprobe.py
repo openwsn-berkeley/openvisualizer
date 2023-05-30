@@ -13,11 +13,11 @@ import serial
 
 from openvisualizer.motehandler.moteprobe.moteprobe import MoteProbe, MoteProbeNoData
 
-try:
-    import _winreg as winreg
-except ImportError:
-    import glob
-    import platform
+if os.name=='nt':       # Windows
+   import winreg as winreg
+elif os.name=='posix':  # Linux
+   import glob
+   import platform      # To recognize MAC OS X
 
 log = logging.getLogger('MoteProbe')
 log.setLevel(logging.ERROR)
@@ -129,7 +129,7 @@ class SerialMoteProbe(MoteProbe):
     def _get_ports_from_mask(port_mask: Optional[List[str]] = None) -> List[str]:
         ports = []
 
-        if port_mask is None:
+        if len(port_mask) == 0:
             if os.name == 'nt':
                 path = 'HARDWARE\\DEVICEMAP\\SERIALCOMM'
                 try:

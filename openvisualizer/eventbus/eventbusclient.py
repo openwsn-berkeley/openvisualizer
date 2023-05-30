@@ -14,7 +14,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 
-class EventBusClient(object):
+class EventBusClient:
     WILDCARD = '*'
 
     PROTO_ICMPv6 = 'icmpv6'
@@ -24,10 +24,14 @@ class EventBusClient(object):
         PROTO_UDP,
     ]
 
-    def __init__(self, name, registrations):
+    def __init__(self, name, registrations=None, **kwargs):
+
+        if registrations is None:
+            registrations = []
 
         assert type(name) == str
         assert type(registrations) == list
+
         for r in registrations:
             assert type(r) == dict
             for k in r.keys():
@@ -114,7 +118,6 @@ class EventBusClient(object):
         except TypeError as err:
             output = "ERROR could not call {0}, err={1}".format(callback, err)
             log.critical(output)
-            print output
 
     def _signals_equivalent(self, s1, s2):
         return_val = True

@@ -7,7 +7,7 @@ import socket
 import threading
 import time
 from abc import ABCMeta, abstractmethod
-from xmlrpclib import Fault
+from xmlrpc.client import Fault
 
 from blessed import Terminal
 

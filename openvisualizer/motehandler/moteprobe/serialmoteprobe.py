@@ -7,16 +7,17 @@
 import logging
 import os
 import signal
+from typing import List, Optional
 
 import serial
 
-from moteprobe import MoteProbe, MoteProbeNoData
+from openvisualizer.motehandler.moteprobe.moteprobe import MoteProbe, MoteProbeNoData
 
-try:
-    import _winreg as winreg
-except ImportError:
-    import glob
-    import platform
+if os.name=='nt':       # Windows
+   import winreg as winreg
+elif os.name=='posix':  # Linux
+   import glob
+   import platform      # To recognize MAC OS X
 
 log = logging.getLogger('MoteProbe')
 log.setLevel(logging.ERROR)
@@ -32,7 +33,7 @@ class SerialMoteProbe(MoteProbe):
         self._serial = None
 
         # initialize the parent class
-        MoteProbe.__init__(self, portname=port)
+        super().__init__(portname=port, daemon=True)
 
     # ======================== public ==================================
 
@@ -46,7 +47,7 @@ class SerialMoteProbe(MoteProbe):
         return self._serial
 
     @classmethod
-    def probe_serial_ports(cls, baudrate, port_mask=None):
+    def probe_serial_ports(cls, baudrate: List[int], port_mask: Optional[List[str]] = None):
         ports = cls._get_ports_from_mask(port_mask)
         mote_probes = []
         probe = None
@@ -86,16 +87,18 @@ class SerialMoteProbe(MoteProbe):
 
     # ======================== private =================================
 
-    def _send_data(self, data):
-        hdlc_data = self.hdlc.hdlcify(data)
+    def _send_data(self, data: str) -> None:
+
+        hdlc_data = bytearray([ord(b) for b in self.hdlc.hdlcify(data)])
         bytes_written = 0
         self._serial.flush()
-        while bytes_written != len(bytearray(hdlc_data)):
+
+        while bytes_written != len(hdlc_data):
             bytes_written += self._serial.write(hdlc_data)
 
-    def _rcv_data(self, rx_bytes=1):
+    def _rcv_data(self, rx_bytes: int = 1) -> bytes:
         data = self._serial.read(rx_bytes)
-        if data == 0:
+        if data == b'':
             raise MoteProbeNoData
         else:
             return data
@@ -105,16 +108,28 @@ class SerialMoteProbe(MoteProbe):
             log.warning('closing serial port {}'.format(self._portname))
             self._serial.close()
 
-    def _attach(self):
+    def _attach(self) -> bool:
+        """
+        Tries to connect to the motes serial port.
+
+        :return: True if successful else False
+        """
         log.debug("attaching to serial port: {} @ {}".format(self._port, self._baudrate))
+
         self._serial = serial.Serial(self._port, self._baudrate, timeout=1, xonxoff=True, rtscts=False, dsrdtr=False)
+
         log.debug("self._serial: {}".format(self._serial))
 
+        if self._serial is None:
+            return False
+        else:
+            return True
+
     @staticmethod
-    def _get_ports_from_mask(port_mask=None):
+    def _get_ports_from_mask(port_mask: Optional[List[str]] = None) -> List[str]:
         ports = []
 
-        if port_mask is None:
+        if len(port_mask) == 0:
             if os.name == 'nt':
                 path = 'HARDWARE\\DEVICEMAP\\SERIALCOMM'
                 try:
@@ -130,13 +145,11 @@ class SerialMoteProbe(MoteProbe):
                     pass
             elif os.name == 'posix':
                 if platform.system() == 'Darwin':
-                    port_mask = ['/dev/tty.usbserial-*']
+                    ports += [s for s in glob.glob('/dev/tty.usbserial-*')]
                 else:
-                    port_mask = ['/dev/ttyUSB*']
-                for mask in port_mask:
-                    ports += [s for s in glob.glob(mask)]
+                    ports += [s for s in glob.glob('/dev/ttyUSB*')]
         else:
-            for mask in port_mask:
-                ports += [s for s in glob.glob(mask)]
+            for p in port_mask:
+                ports += [s for s in glob.glob(p)]
 
         return ports

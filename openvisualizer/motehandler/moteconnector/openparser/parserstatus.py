@@ -92,16 +92,6 @@ class ParserStatus(parser.Parser):
         self._add_fields_parser(
             3,
             3,
-            'OutputBuffer',
-            '<HH',
-            [
-                'index_write',  # H
-                'index_read',  # H
-            ],
-        )
-        self._add_fields_parser(
-            3,
-            4,
             'Asn',
             '<BHH',
             [
@@ -112,7 +102,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            5,
+            4,
             'MacStats',
             '<BBhhBII',
             [
@@ -127,7 +117,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            6,
+            5,
             'ScheduleRow',
             # '<BHBBBBBQQBBBBHH',
             '<BHBBBBQQBBBBHH',
@@ -151,7 +141,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            7,
+            6,
             'Backoff',
             '<BB',
             [
@@ -161,7 +151,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            8,
+            7,
             'QueueRow',
             '<BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
             [
@@ -209,7 +199,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            9,
+            8,
             'NeighborsRow',
             '<BBBBBBBQQHbBBBBBHHBBBBB',
             [
@@ -240,7 +230,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            10,
+            9,
             'kaPeriod',
             '<H',
             [
@@ -249,7 +239,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            11,
+            10,
             'Joined',
             '<BHH',
             [
@@ -260,7 +250,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            12,
+            11,
             'MSF',
             '<BB',
             [
@@ -282,7 +272,7 @@ class ParserStatus(parser.Parser):
 
         # extract mote_id and status_elem
         try:
-            (mote_id, status_elem) = struct.unpack('<HB', ''.join([chr(c) for c in header_bytes]))
+            (mote_id, status_elem) = struct.unpack('<HB', bytes(header_bytes))
         except struct.error:
             raise ParserException(ParserException.ExceptionType.DESERIALIZE.value,
                                   "could not extract moteId and statusElem from {0}".format(header_bytes))
@@ -301,7 +291,7 @@ class ParserStatus(parser.Parser):
 
                 # parse byte array
                 try:
-                    fields = struct.unpack(key.structure, ''.join([chr(c) for c in data]))
+                    fields = struct.unpack(key.structure, bytes(data))
                 except struct.error as err:
                     raise ParserException(
                         ParserException.ExceptionType.DESERIALIZE.value,

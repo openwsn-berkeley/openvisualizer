@@ -4,14 +4,14 @@
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
-import Queue
+import queue
 import json
 import logging
 import time
 
 import paho.mqtt.client as mqtt
 
-from moteprobe import MoteProbe
+from openvisualizer.motehandler.moteprobe.moteprobe import MoteProbe
 
 log = logging.getLogger('MoteProbe')
 log.setLevel(logging.ERROR)
@@ -39,7 +39,7 @@ class OpentestbedMoteProbe(MoteProbe):
 
         name = 'opentestbed_{0}'.format(testbedmote_eui64)
         # initialize the parent class
-        MoteProbe.__init__(self, portname=name, daemon=True)
+        super().__init__(portname=name, daemon=True)
 
     @property
     def serial(self):
@@ -71,7 +71,7 @@ class OpentestbedMoteProbe(MoteProbe):
 
     def _attach(self):
         # create queue for receiving serialbytes messages
-        self.serialbytes_queue = Queue.Queue(maxsize=10)
+        self.serialbytes_queue = queue.Queue(maxsize=10)
 
         self.mqtt_client.loop_start()
 
@@ -90,7 +90,7 @@ class OpentestbedMoteProbe(MoteProbe):
         else:
             try:
                 self.serialbytes_queue.put(serial_bytes, block=False)
-            except Queue.Full:
+            except queue.Full:
                 log.warning("queue overflow/full")
 
 

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from openvisualizer.client.view import View
 
 

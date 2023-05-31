@@ -16,7 +16,7 @@ blessed
 ipaddr
 scapy
 sshtunnel
-iotlabcli
+iotlabcli<=3.2.1
 appdirs
 pywin32; sys_platform == 'win32'
 colorama; sys_platform == 'win32'

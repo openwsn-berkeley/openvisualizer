@@ -162,8 +162,6 @@ class ParserData(parser.Parser):
                         'avg_pdr': 0.0,
                     }
 
-                print(self.avg_kpi)
-
                 if self.mqtt_connected:
                     self.publish_kpi(src_id)
 

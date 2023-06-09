@@ -130,7 +130,7 @@ class SerialMoteProbe(MoteProbe):
                     pass
             elif os.name == 'posix':
                 if platform.system() == 'Darwin':
-                    port_mask = ['/dev/tty.usbserial-*']
+                    port_mask = ['/dev/tty.usb*']
                 else:
                     port_mask = ['/dev/ttyUSB*']
                 for mask in port_mask:

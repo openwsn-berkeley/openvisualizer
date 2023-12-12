@@ -25,7 +25,7 @@ import appdirs
 import coloredlogs
 import pkg_resources
 import verboselogs
-from iotlabcli.parser import common
+# from iotlabcli.parser import common
 
 from openvisualizer import PACKAGE_NAME, WINDOWS_COLORS, UNIX_COLORS, DEFAULT_LOGGING_CONF, APPNAME
 from openvisualizer.eventbus import eventbusmonitor
@@ -34,7 +34,7 @@ from openvisualizer.jrc import jrc
 from openvisualizer.motehandler.moteconnector import moteconnector
 from openvisualizer.motehandler.moteprobe import emulatedmoteprobe
 from openvisualizer.motehandler.moteprobe import testbedmoteprobe
-from openvisualizer.motehandler.moteprobe.iotlabmoteprobe import IotlabMoteProbe
+# from openvisualizer.motehandler.moteprobe.iotlabmoteprobe import IotlabMoteProbe
 from openvisualizer.motehandler.moteprobe.serialmoteprobe import SerialMoteProbe
 from openvisualizer.motehandler.motestate import motestate
 from openvisualizer.motehandler.motestate.motestate import MoteState
@@ -881,7 +881,7 @@ def main():
 
     parser = ArgumentParser()
     _add_parser_args(parser)
-    _add_iotlab_parser_args(parser)
+    # _add_iotlab_parser_args(parser)
     args = parser.parse_args()
 
     # create directories to store logs and application data
@@ -985,9 +985,9 @@ def main():
         auto_boot=args.auto_boot,
         root=args.set_root,
         topo_file=args.topo_file,
-        iotlab_motes=args.iotlab_motes,
-        iotlab_user=args.username,
-        iotlab_passwd=args.password,
+        iotlab_motes=None,
+        iotlab_user=None,
+        iotlab_passwd=None,
     )
 
     try:

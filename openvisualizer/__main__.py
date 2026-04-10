@@ -4,7 +4,7 @@ import os
 import signal
 import sys
 from collections import namedtuple
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 from typing import Optional
 from xmlrpc.server import SimpleXMLRPCServer
 
@@ -47,7 +47,7 @@ class ColoredFormatter(coloredlogs.ColoredFormatter):
     """ Class that matches coloredlogs.ColoredFormatter arguments with logging.Formatter """
 
     def __init__(self, fmt=None, datefmt=None, style=None):
-        self.parser = SafeConfigParser()
+        self.parser = ConfigParser()
 
         if sys.platform.startswith('win32'):
             log_colors_conf = pkg_rs.resource_filename(PACKAGE_NAME, WINDOWS_COLORS)

@@ -3,7 +3,7 @@ PyDispatcher
 bottle
 Sphinx
 intelhex
-setuptools
+setuptools<80.0.0
 pycryptodome
 openwsn-coap==0.0.8
 cbor

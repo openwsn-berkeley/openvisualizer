@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		%include head.tmpl
+		% include('head.tmpl')
 	</head>
 	<body>
 		<div id="wrapper">
-			%include navbar.tmpl ovVersion=ovVersion
+			% include('navbar.tmpl', ovVersion=ovVersion)
 
 			<div id="page-wrapper">
 	            <div class="row">

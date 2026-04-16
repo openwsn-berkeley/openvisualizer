@@ -110,10 +110,10 @@ class OpenVisualizer(EventBusClient):
         """ Extract firmware definitions for the OpenVisualizer parser from the OpenWSN-FW files. """
         log.info('extracting firmware definitions.')
         definitions = {
-            "components": extract_component_codes(os.path.join(self.fw_path, 'inc', 'defs.h')),
-            "log_descriptions": extract_log_descriptions(os.path.join(self.fw_path, 'inc', 'defs.h')),
-            "sixtop_returncodes": extract_6top_rcs(os.path.join(self.fw_path, 'stack', '02b-MAChigh', 'sixtop.h')),
-            "sixtop_states": extract_6top_states(os.path.join(self.fw_path, 'stack', '02b-MAChigh', 'sixtop.h')),
+            "components": extract_component_codes(os.path.join(self.fw_path, 'inc', 'opendefs.h')),
+            "log_descriptions": extract_log_descriptions(os.path.join(self.fw_path, 'inc', 'opendefs.h')),
+            "sixtop_returncodes": extract_6top_rcs(os.path.join(self.fw_path, 'openstack', '02b-MAChigh', 'sixtop.h')),
+            "sixtop_states": extract_6top_states(os.path.join(self.fw_path, 'openstack', '02b-MAChigh', 'sixtop.h')),
         }
 
         return definitions

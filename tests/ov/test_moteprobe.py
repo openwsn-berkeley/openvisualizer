@@ -3,7 +3,7 @@
 import logging.handlers
 import time
 
-import mock
+from unittest import mock
 import pytest
 
 from openvisualizer.motehandler.moteprobe.mockmoteprobe import MockMoteProbe

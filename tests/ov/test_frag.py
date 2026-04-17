@@ -77,25 +77,21 @@ def test_fragment_packet(random_6lwp_fragments):
     ip_pkt, frag_list = random_6lwp_fragments
 
     log.debug("test_fragment_packet")
-
-    fragmentor = sixlowpan_frag.Fragmentor()
-
     log.debug("Original packet (len: {}) -- {}".format(len(ip_pkt), ip_pkt))
 
-    frags = []
-    for frag in fragmentor.do_fragment(ip_pkt):
-        frags.append(lo.SixLoWPAN(bytes(frag)))
+    fragmentor = sixlowpan_frag.Fragmentor()
+    assembler = sixlowpan_frag.Fragmentor()
 
-    log.debug(frags)
+    frags = list(fragmentor.do_fragment(ip_pkt))
 
-    reassembled = lo.sixlowpan_defragment(frags)
+    result = None
+    for frag in frags:
+        result = assembler.do_reassemble(frag)
+        if result is not None:
+            break
 
-    if len(reassembled) == 0:
-        # the packet was not fragmented
-        log.debug([int(b) for b in (raw(frags[0]))])
-        log.debug(ip_pkt)
-        assert ip_pkt == [int(b) for b in (raw(frags[0]))]
+    if result is None:
+        # packet was small enough to not be fragmented
+        assert ip_pkt == frags[0]
     else:
-        log.debug([int(b) for b in raw(reassembled[1])])
-        log.debug(ip_pkt)
-        assert ip_pkt == [int(b) for b in raw(reassembled[1])]
+        assert ip_pkt == result

@@ -74,4 +74,4 @@ class MockMoteProbe(MoteProbe):
         pass
 
     def _attach(self):
-        pass
+        return True

@@ -4,7 +4,7 @@ import logging.handlers
 import socket
 import time
 
-import mock
+from unittest import mock
 
 from openvisualizer.motehandler.moteprobe.iotlabmoteprobe import IotlabMoteProbe
 
@@ -38,12 +38,10 @@ def test_iotlabmoteprobe__get_free_port():
 @mock.patch("{}.IotlabMoteProbe._detach".format(MODULE_PATH))
 @mock.patch("{}.MoteProbe.__init__".format(MODULE_PATH))
 def test_iotlabmoteprobe___init__(m_parent_init, m_detach, m_attach):
-    test_node_url = 'm3-10'
-    mote = IotlabMoteProbe(test_node_url)
-    assert not hasattr(mote, 'iotlab_site')
+    mote = IotlabMoteProbe('m3-10', iotlab_user='user', iotlab_key_file='/tmp/key')
+    assert mote.iotlab_site is None
 
-    test_node_url = 'm3-10.saclay.iot-lab.info'
-    mote = IotlabMoteProbe(test_node_url)
+    mote = IotlabMoteProbe('m3-10', iotlab_user='user', iotlab_key_file='/tmp/key', iotlab_site='saclay')
     assert mote.iotlab_site == 'saclay'
 
 
@@ -51,7 +49,7 @@ def test_iotlabmoteprobe__attach_error_on_frontend(caplog):
     # Invalid URL provided while "on" ssh frontend
     try:
         with caplog.at_level(logging.DEBUG, logger="MoteProbe"):
-            mote = IotlabMoteProbe('dummy-10')
+            mote = IotlabMoteProbe('dummy-10', iotlab_user='user', iotlab_key_file='/tmp/key')
             timeout = 100
             while mote.is_alive() and timeout:
                 time.sleep(0.01)

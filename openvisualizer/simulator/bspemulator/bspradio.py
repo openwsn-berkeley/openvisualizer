@@ -63,7 +63,7 @@ class BspRadio(BspModule):
         self._change_state(RadioState.STOPPED)
 
         rx_thread = threading.Thread(target=self._listen_incoming)
-        rx_thread.setDaemon(True)
+        rx_thread.daemon = True
         rx_thread.start()
 
     # ======================== public ==========================================

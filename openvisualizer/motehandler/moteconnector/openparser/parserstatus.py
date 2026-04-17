@@ -91,7 +91,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            3,
+            4,
             'Asn',
             '<BHH',
             [
@@ -102,7 +102,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            4,
+            5,
             'MacStats',
             '<BBhhBII',
             [
@@ -117,7 +117,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            5,
+            6,
             'ScheduleRow',
             # '<BHBBBBBQQBBBBHH',
             '<BHBBBBQQBBBBHH',
@@ -141,7 +141,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            6,
+            7,
             'Backoff',
             '<BB',
             [
@@ -151,7 +151,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            7,
+            8,
             'QueueRow',
             '<BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
             [
@@ -199,7 +199,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            8,
+            9,
             'NeighborsRow',
             '<BBBBBBBQQHbBBBBBHHBBBBB',
             [
@@ -230,7 +230,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            9,
+            10,
             'kaPeriod',
             '<H',
             [
@@ -239,7 +239,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            10,
+            11,
             'Joined',
             '<BHH',
             [
@@ -250,7 +250,7 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
-            11,
+            12,
             'MSF',
             '<BB',
             [

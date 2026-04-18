@@ -1,7 +1,6 @@
 pyserial
 PyDispatcher
 bottle
-Sphinx
 intelhex
 setuptools<80.0.0
 pycryptodome

@@ -33,7 +33,7 @@ with open(os.path.join(this_directory, 'README.md')) as f:
 setup(
     name=PACKAGE_NAME,
     packages=find_packages(exclude=['tests', '*.tests', 'tests.*', '*.tests.*']),
-    python_requires='>=3.6',
+    python_requires='>=3.9',
     include_package_data=True,
     entry_points={
         'console_scripts': [
@@ -57,12 +57,18 @@ setup(
     platforms=['platform-independent'],
     license='BSD 3-Clause',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
         'Topic :: Communications',
         'Topic :: Home Automation',
         'Topic :: Internet',

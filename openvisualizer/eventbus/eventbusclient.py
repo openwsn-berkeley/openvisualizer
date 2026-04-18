@@ -29,11 +29,11 @@ class EventBusClient:
         if registrations is None:
             registrations = []
 
-        assert type(name) == str
-        assert type(registrations) == list
+        assert isinstance(name, str)
+        assert isinstance(registrations, list)
 
         for r in registrations:
-            assert type(r) == dict
+            assert isinstance(r, dict)
             for k in r.keys():
                 assert k in ['signal', 'sender', 'callback']
 
@@ -121,10 +121,10 @@ class EventBusClient:
 
     def _signals_equivalent(self, s1, s2):
         return_val = True
-        if type(s1) == type(s2) == str:
+        if isinstance(s1, str) and isinstance(s2, str):
             if (s1 != s2) and (s1 != self.WILDCARD) and (s2 != self.WILDCARD):
                 return_val = False
-        elif type(s1) == type(s2) == tuple:
+        elif isinstance(s1, tuple) and isinstance(s2, tuple):
             if len(s1) == len(s2) == 3:
                 for i in range(3):
                     if (s1[i] != s2[i]) and (s1[i] != self.WILDCARD) and (s2[i] != self.WILDCARD):

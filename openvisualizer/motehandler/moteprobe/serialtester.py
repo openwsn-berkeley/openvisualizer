@@ -60,15 +60,15 @@ class SerialTester(EventBusClient):
     # ===== setup test
 
     def set_test_pkt_length(self, new_length: int):
-        assert type(new_length) == int
+        assert isinstance(new_length, int)
         self.test_pkt_len = new_length
 
     def set_num_test_pkt(self, new_num: int):
-        assert type(new_num) == int
+        assert isinstance(new_num, int)
         self.num_test_pkt = new_num
 
     def set_timeout(self, new_timeout: int):
-        assert type(new_timeout) == int
+        assert isinstance(new_timeout, int)
         self.timeout = new_timeout
 
     def get_stats(self):

@@ -112,7 +112,7 @@ def hex2buf(s):
 
     :returns: A list of integers, each element in [0x00..0xff].
     """
-    assert type(s) == str
+    assert isinstance(s, str)
     assert len(s) % 2 == 0
 
     return_val = []

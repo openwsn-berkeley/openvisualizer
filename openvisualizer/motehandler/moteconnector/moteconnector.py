@@ -135,7 +135,7 @@ class MoteConnector(EventBusClient):
                 raise SystemError('unexpected action={0}'.format(data['action']))
 
     def _bytes_to_mesh_handler(self, sender, signal, data):
-        assert type(data) == tuple
+        assert isinstance(data, tuple)
         assert len(data) == 2
 
         next_hop, lowpan = data

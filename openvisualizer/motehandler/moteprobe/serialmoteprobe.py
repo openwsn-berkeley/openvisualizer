@@ -13,11 +13,11 @@ import serial
 
 from openvisualizer.motehandler.moteprobe.moteprobe import MoteProbe, MoteProbeNoData
 
-if os.name=='nt':       # Windows
-   import winreg as winreg
-elif os.name=='posix':  # Linux
-   import glob
-   import platform      # To recognize MAC OS X
+if os.name == 'nt':       # Windows
+    import winreg as winreg
+elif os.name == 'posix':  # Linux
+    import glob
+    import platform      # To recognize MAC OS X
 
 log = logging.getLogger('MoteProbe')
 log.setLevel(logging.ERROR)

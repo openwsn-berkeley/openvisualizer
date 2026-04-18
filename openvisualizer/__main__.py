@@ -38,7 +38,7 @@ ServerConfig = namedtuple('ServerConfig',
                               'page_zero',
                               'fw_path',
                               'mqtt_broker',
-                              'root'
+                              'root',
                           ])
 
 pass_config = click.make_pass_decorator(ServerConfig, ensure=True)

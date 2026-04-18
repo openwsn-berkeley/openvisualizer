@@ -138,8 +138,8 @@ class SimEngine(Thread):
                     {
                         'id': m,
                         'lat': self.topology_t.position_list[m - 1].lat,
-                        'lon': self.topology_t.position_list[m - 1].lon
-                    }
+                        'lon': self.topology_t.position_list[m - 1].lon,
+                    },
                 ]
 
         return mote_positions

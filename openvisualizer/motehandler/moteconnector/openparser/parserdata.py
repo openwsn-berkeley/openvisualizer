@@ -119,7 +119,7 @@ class ParserData(parser.Parser):
                 pkt_info['counter'] = data[offset] + 256 * data[offset+1]  # counter sent by mote
                 offset += 2
 
-                pkt_info['asn'] = struct.unpack('<I', ''.join([chr(c) for c in data[offset : offset+4]]))[0]
+                pkt_info['asn'] = struct.unpack('<I', bytes(data[offset:offset+4]))[0]
                 aux = data[offset:offset+5]  # last 5 bytes of the packet are the ASN in the UDP latency packet
                 diff = ParserData._asn_diference(aux, asn_bytes)  # calculate difference
                 pkt_info['latency'] = diff  # compute time in slots
@@ -135,10 +135,10 @@ class ParserData(parser.Parser):
                 src_id = pkt_info['src_id']
                 offset += 2
 
-                num_ticks_on = struct.unpack('<I', ''.join([chr(c) for c in data[offset : offset+4]]))[0]
+                num_ticks_on = struct.unpack('<I', bytes(data[offset:offset+4]))[0]
                 offset += 4
 
-                num_ticks_in_total = struct.unpack('<I', ''.join([chr(c) for c in data[offset : offset+4]]))[0]
+                num_ticks_in_total = struct.unpack('<I', bytes(data[offset:offset+4]))[0]
                 offset += 4
 
                 pkt_info['dutyCycle'] = float(num_ticks_on) / float(num_ticks_in_total)  # duty cycle
@@ -161,8 +161,6 @@ class ParserData(parser.Parser):
                         'avg_latency': 0.0,
                         'avg_pdr': 0.0,
                     }
-
-                print(self.avg_kpi)
 
                 if self.mqtt_connected:
                     self.publish_kpi(src_id)
@@ -188,8 +186,8 @@ class ParserData(parser.Parser):
     @staticmethod
     def _asn_diference(init, end):
 
-        asn_init = struct.unpack('<HHB', ''.join([chr(c) for c in init]))
-        asn_end = struct.unpack('<HHB', ''.join([chr(c) for c in end]))
+        asn_init = struct.unpack('<HHB', bytes(init))
+        asn_end = struct.unpack('<HHB', bytes(end))
         if asn_end[2] != asn_init[2]:  # 'byte4'
             return 0xFFFFFFFF
         else:

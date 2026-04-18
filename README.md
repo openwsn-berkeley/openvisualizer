@@ -1,7 +1,7 @@
 OpenVisualizer
 ==============
 
-![](https://img.shields.io/badge/python-2.7-green)
+![](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-green)
 
 
 OpenVisualizer (OV) is part of UC Berkeley's OpenWSN project. It provides monitoring, visualization and simulation of OpenWSN-based wireless sensor network. See the project [home page][] for more information. The project works in tandem with the OpenWSN firmware hosted at [openwsn-fw][]. OpenVisualizer interfaces with locally connected hardware, the OpenTestBed infrastructure, [IoT-LAB][] or an emulated OpenWSN network.

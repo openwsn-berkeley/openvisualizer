@@ -25,9 +25,10 @@ jobs:
         flake8 --config=tox.ini openvisualizer
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
 
     steps:
@@ -41,6 +42,7 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f tests-requirements.txt ]; then pip install -r tests-requirements.txt; fi
+      shell: bash
     - name: Test with pytest
       run: |
         pytest tests/ov

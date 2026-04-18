@@ -5,10 +5,13 @@ import os
 import select
 import socket
 import struct
+import sys
 import time
 import xmlrpc.client
-from fcntl import ioctl
 from subprocess import Popen
+
+if sys.platform != 'win32':
+    from fcntl import ioctl
 
 import pytest
 from ipaddr import IPv6Address

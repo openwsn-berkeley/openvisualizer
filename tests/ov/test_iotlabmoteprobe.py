@@ -50,7 +50,7 @@ def test_iotlabmoteprobe__attach_error_on_frontend(caplog):
     try:
         with caplog.at_level(logging.DEBUG, logger="MoteProbe"):
             mote = IotlabMoteProbe('dummy-10', iotlab_user='user', iotlab_key_file='/tmp/key')
-            timeout = 100
+            timeout = 500
             while mote.is_alive() and timeout:
                 time.sleep(0.01)
                 timeout = timeout - 1

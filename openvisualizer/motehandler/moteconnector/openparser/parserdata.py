@@ -78,7 +78,7 @@ class ParserData(parser.Parser):
         # asn comes in the next 5bytes.
 
         asn_bytes = data[2:7]
-        (self._asn) = struct.unpack('<BHH', ''.join([chr(c) for c in asn_bytes]))
+        (self._asn) = struct.unpack('<BHH', bytes(asn_bytes))
 
         # source and destination of the message
         dest = data[7:15]
@@ -101,9 +101,10 @@ class ParserData(parser.Parser):
         # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
         offset = 0
         if len(data) > 37:
-            offset -= 7
-            if self.UINJECT_MASK == ''.join(chr(i) for i in data[offset:]):
+            offset += 31
+            if self.UINJECT_MASK == ''.join(chr(i) for i in data[offset:offset+len(self.UINJECT_MASK)]):
 
+                offset += len(self.UINJECT_MASK)
                 pkt_info = \
                     {
                         'asn': 0,
@@ -115,30 +116,30 @@ class ParserData(parser.Parser):
                         'dutyCycle': 0,
                     }
 
-                offset -= 2
-                pkt_info['counter'] = data[offset - 2] + 256 * data[offset - 1]  # counter sent by mote
+                pkt_info['counter'] = data[offset] + 256 * data[offset+1]  # counter sent by mote
+                offset += 2
 
-                pkt_info['asn'] = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 5:offset - 1]]))[0]
-                aux = data[offset - 5:offset]  # last 5 bytes of the packet are the ASN in the UDP latency packet
+                pkt_info['asn'] = struct.unpack('<I', bytes(data[offset:offset+4]))[0]
+                aux = data[offset:offset+5]  # last 5 bytes of the packet are the ASN in the UDP latency packet
                 diff = ParserData._asn_diference(aux, asn_bytes)  # calculate difference
                 pkt_info['latency'] = diff  # compute time in slots
-                offset -= 5
+                offset += 5
 
-                pkt_info['numCellsUsedTx'] = data[offset - 1]
-                offset -= 1
+                pkt_info['numCellsUsedTx'] = data[offset]
+                offset += 1
 
-                pkt_info['numCellsUsedRx'] = data[offset - 1]
-                offset -= 1
+                pkt_info['numCellsUsedRx'] = data[offset]
+                offset += 1
 
-                pkt_info['src_id'] = ''.join(['%02x' % x for x in [data[offset - 1], data[offset - 2]]])  # mote id
+                pkt_info['src_id'] = ''.join(['%02x' % x for x in [data[offset], data[offset+1]]])  # mote id
                 src_id = pkt_info['src_id']
-                offset -= 2
+                offset += 2
 
-                num_ticks_on = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 4:offset]]))[0]
-                offset -= 4
+                num_ticks_on = struct.unpack('<I', bytes(data[offset:offset+4]))[0]
+                offset += 4
 
-                num_ticks_in_total = struct.unpack('<I', ''.join([chr(c) for c in data[offset - 4:offset]]))[0]
-                offset -= 4
+                num_ticks_in_total = struct.unpack('<I', bytes(data[offset:offset+4]))[0]
+                offset += 4
 
                 pkt_info['dutyCycle'] = float(num_ticks_on) / float(num_ticks_in_total)  # duty cycle
 
@@ -185,8 +186,8 @@ class ParserData(parser.Parser):
     @staticmethod
     def _asn_diference(init, end):
 
-        asn_init = struct.unpack('<HHB', ''.join([chr(c) for c in init]))
-        asn_end = struct.unpack('<HHB', ''.join([chr(c) for c in end]))
+        asn_init = struct.unpack('<HHB', bytes(init))
+        asn_end = struct.unpack('<HHB', bytes(end))
         if asn_end[2] != asn_init[2]:  # 'byte4'
             return 0xFFFFFFFF
         else:

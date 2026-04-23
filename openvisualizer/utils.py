@@ -85,7 +85,7 @@ def format_buf(buf):
 
 def format_ipv6_addr(addr):
     # group by 2 bytes
-    addr = [buf2int(addr[2 * i:2 * i + 2]) for i in range(len(addr) / 2)]
+    addr = [buf2int(addr[2 * i:2 * i + 2]) for i in range(int(len(addr) / 2))]
     return ':'.join(["%x" % b for b in addr])
 
 
@@ -112,12 +112,12 @@ def hex2buf(s):
 
     :returns: A list of integers, each element in [0x00..0xff].
     """
-    assert type(s) == str
+    assert isinstance(s, str)
     assert len(s) % 2 == 0
 
     return_val = []
 
-    for i in range(len(s) / 2):
+    for i in range(int(len(s) / 2)):
         real_idx = i * 2
         return_val.append(int(s[real_idx:real_idx + 2], 16))
 

@@ -1,11 +1,10 @@
 pyserial
 PyDispatcher
 bottle
-Sphinx
 intelhex
-setuptools<=44.1.1
-openwsn-coap>=0.0.7
+setuptools<80.0.0
 pycryptodome
+openwsn-coap==0.0.8
 cbor
 hkdf
 paho-mqtt

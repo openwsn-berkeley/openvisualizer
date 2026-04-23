@@ -88,12 +88,6 @@ class RPL(eventbusclient.EventBusClient):
         self.latency_stats = {}
         self.parents_dao_seq = {}
 
-    # ======================== public ==========================================
-
-    def close(self):
-        # nothing to do
-        pass
-
     # ======================== private =========================================
 
     # ==== handle EventBus notifications

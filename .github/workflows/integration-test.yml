@@ -1,0 +1,56 @@
+name: Integration Test with openwsn-fw
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout openvisualizer
+      uses: actions/checkout@v4
+      with:
+        path: openvisualizer
+
+    - name: Checkout openwsn-fw
+      uses: actions/checkout@v4
+      with:
+        repository: openwsn-berkeley/openwsn-fw
+        ref: develop
+        path: openwsn-fw
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install openvisualizer
+      working-directory: openvisualizer
+      run: |
+        pip install -r requirements.txt
+        pip install .
+
+    - name: Build openmote firmware
+      working-directory: openwsn-fw
+      run: pip install .
+
+    - name: Start openv-server in simulation mode
+      run: |
+        openv-server --fw-path ${{ github.workspace }}/openwsn-fw simulation 2 &
+        echo "Waiting for server to initialise..."
+        sleep 10
+
+    - name: Set DAGroot
+      run: |
+        for i in $(seq 1 10); do
+          openv-client network root 0001 && break || sleep 3
+        done
+      shell: bash
+
+    - name: Monitor for mote sync and RPL DAO
+      run: python openvisualizer/tests/integration/check_simulation.py openv-server.log

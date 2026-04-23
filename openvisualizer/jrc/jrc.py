@@ -6,7 +6,6 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 """
 
-import binascii
 import logging.handlers
 import os
 import threading
@@ -29,7 +28,7 @@ log.addHandler(logging.NullHandler())
 
 
 # ======================== Top Level jrc Class =============================
-class JRC(object):
+class JRC:
     def __init__(self):
         coap_resource = JoinResource()
         self.coap_server = CoapServer(coap_resource, ContextHandler(coap_resource).security_context_lookup)
@@ -39,7 +38,7 @@ class JRC(object):
 
 
 # ======================== Security Context Handler =========================
-class ContextHandler(object):
+class ContextHandler:
     # value of the OSCORE Master Secret from 6TiSCH TD
     master_secret = "DEADBEEFCAFEDEADBEEFCAFEDEADBEEF"
     master_salt = ""
@@ -51,8 +50,8 @@ class ContextHandler(object):
     def security_context_lookup(self, kid, kid_context):
 
         eui64 = kid_context
-        sender_id = "JRC"
-        recipient_id = ""
+        sender_id = b"JRC"
+        recipient_id = b""
 
         # if eui-64 is found in the list of joined nodes, return the appropriate context
         # this is important for replay protection
@@ -69,21 +68,21 @@ class ContextHandler(object):
         # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET
         # handler of the join resource
         file_path = os.path.abspath(os.path.join(user_data_dir('openvisualizer'), "oscore_context_{0}.json".
-                                                 format(binascii.hexlify(eui64))))
+                                                 format(eui64.hex())))
         if not os.path.exists(os.path.dirname(file_path)):
             os.makedirs(os.path.dirname(file_path))
 
         log.verbose("New node: {0}. Creating new OSCORE context in {1}.".
-                    format(format_ipv6_addr(Utils.str2buf(eui64)), file_path))
+                    format(format_ipv6_addr(eui64), file_path))
 
         # FIXME: until persistency is implemented in firmware, we need to overwrite the security context for each run
         # FIXME: this is a security issue as AEAD nonces get reused and should not be used in a production environment
         self.security_context_create_overwrite(file_path,
-                                               binascii.hexlify(eui64),
+                                               eui64.hex(),
                                                self.master_salt,
                                                self.master_secret,
-                                               binascii.hexlify(sender_id),
-                                               binascii.hexlify(recipient_id))
+                                               sender_id.hex(),
+                                               recipient_id.hex())
 
         context = Oscoap.SecurityContext(securityContextFilePath=file_path)
 
@@ -104,8 +103,13 @@ class ContextHandler(object):
             "sequenceNumber": 0,
         }
 
-        with open(file_path, "w") as context_file:
-            json.dump(ctx_dict, context_file, indent=4, sort_keys=True)
+        try:
+            with open(file_path, "w") as context_file:
+                json.dump(ctx_dict, context_file, indent=4, sort_keys=True)
+        except PermissionError as err:
+            log.error("Permission error when opening OSCORE context storage file.")
+            log.error("Try removing the file or running openv-server with admin privileges")
+            log.error(err)
 
 
 # ======================== Interface with OpenVisualizer ======================================
@@ -160,8 +164,7 @@ class CoapServer(EventBusClient):
     # ======================== public ==========================================
 
     def close(self):
-        # nothing to do
-        pass
+        self.coap_server.close()
 
     # ======================== private =========================================
 
@@ -170,7 +173,7 @@ class CoapServer(EventBusClient):
     def _get_l2_security_key_notif(self, sender, signal, data):
         """ Return L2 security key for the network. """
 
-        return {'index': [self.coap_resource.networkKeyIndex], 'value': self.coap_resource.networkKey}
+        return {'index': [self.coap_resource.networkKeyIndex], 'value': list(self.coap_resource.networkKey)}
 
     def _register_dagroot_notif(self, sender, signal, data):
         # register for the global address of the DAG root
@@ -226,14 +229,13 @@ class CoapServer(EventBusClient):
         Receive packet from the mesh destined for jrc's CoAP server.
         Forwards the packet to the virtual CoAP server running in test mode (PyDispatcher).
         """
-
         sender = format_ipv6_addr(data[0])
         # FIXME pass source port within the signal and open coap client at this port
         self.coap_client = \
             coap.coap(ipAddress=sender, udpPort=Defs.DEFAULT_UDP_PORT, testing=True,
                       receiveCallback=self._receive_from_coap)
         # low level forward of the CoAP message
-        self.coap_client.socketUdp.sendUdp(destIp='', destPort=Defs.DEFAULT_UDP_PORT, msg=data[1])
+        self.coap_client.socketUdp.sendUdp(destIp='', destPort=Defs.DEFAULT_UDP_PORT, msg=bytes(data[1]))
         return True
 
     def _receive_from_coap(self, timestamp, sender, data):
@@ -290,7 +292,7 @@ class JoinResource(coapResource.coapResource):
     def __init__(self):
         self.joinedNodes = []
 
-        self.networkKey = Utils.str2buf(os.urandom(16))  # random key every time OpenVisualizer is initialized
+        self.networkKey = os.urandom(16)  # random key every time OpenVisualizer is initialized
         self.networkKeyIndex = 0x01  # L2 key index
 
         # initialize parent class
@@ -302,19 +304,17 @@ class JoinResource(coapResource.coapResource):
 
         log.verbose("received JRC join request")
 
-        link_layer_keyset = [self.networkKeyIndex, Utils.buf2str(self.networkKey)]
+        link_layer_keyset = [self.networkKeyIndex, self.networkKey]
 
         configuration = {CoJPLabel.COJP_PARAMETERS_LABELS_LLKEYSET: link_layer_keyset}
 
-        configuration_serialized = cbor.dumps(configuration)
-
-        resp_payload = [ord(b) for b in configuration_serialized]
+        resp_payload = cbor.dumps(configuration)
 
         object_security = Oscoap.objectSecurityOptionLookUp(options)
 
         if object_security:
             # we need to add the pledge to a list of joined nodes, if not present already
-            eui64 = Utils.buf2str(object_security.kidContext)
+            eui64 = object_security.kidContext
             found = False
             for node in self.joinedNodes:
                 if node['eui64'] == eui64:

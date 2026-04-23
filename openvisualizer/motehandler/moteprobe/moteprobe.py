@@ -6,7 +6,6 @@
 
 import abc
 import logging
-import sys
 import threading
 import time
 
@@ -78,9 +77,12 @@ class MoteProbe(threading.Thread):
 
     def run(self):
         try:
-            log.debug("start running")
-            log.debug("attach to port {0}".format(self._portname))
-            self._attach()
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug("start running")
+                log.debug("attaching to port {0}".format(self._portname))
+
+            if not self._attach():
+                return
 
             while not self.quit:  # read bytes from serial pipe
                 try:
@@ -88,18 +90,15 @@ class MoteProbe(threading.Thread):
                 except MoteProbeNoData:
                     continue
                 except Exception as err:
-                    log.warning(err)
+                    log.error(err)
                     time.sleep(1)
                     break
                 else:
                     self._parse_bytes(rx_bytes)
-                if hasattr(self, 'emulated_mote'):
-                    self.serial.done_reading()
-            log.warning('{}; exit loop'.format(self._portname))
+            log.info('{}; exit loop'.format(self._portname))
         except Exception as err:
             err_msg = format_crash_message(self.name, err)
             log.critical(err_msg)
-            sys.exit(-1)
         finally:
             self._detach()
 
@@ -123,21 +122,21 @@ class MoteProbe(threading.Thread):
         tester = SerialTester(self)
         tester.set_num_test_pkt(pkts)
         tester.set_timeout(timeout)
-        tester.test(blocking=True)
+        tester.test()
         return tester.get_stats()['numOk'] >= 1
 
     # ======================== private =================================
 
     @abc.abstractmethod
-    def _attach(self):
+    def _attach(self) -> bool:
         raise NotImplementedError("Should be implemented by child class")
 
     @abc.abstractmethod
-    def _detach(self):
+    def _detach(self) -> None:
         raise NotImplementedError("Should be implemented by child class")
 
     @abc.abstractmethod
-    def _send_data(self, data):
+    def _send_data(self, data: str):
         raise NotImplementedError("Should be implemented by child class")
 
     @abc.abstractmethod
@@ -177,42 +176,41 @@ class MoteProbe(threading.Thread):
             elif byte != chr(self.XON) and byte != chr(self.XOFF):
                 self.rx_buf += byte
 
-    def _parse_bytes(self, octets):
+    def _parse_bytes(self, octets: bytes):
         """ Parses bytes received from serial pipe """
         for byte in octets:
             if not self.receiving:
-                if self.hdlc_flag and byte != self.hdlc.HDLC_FLAG:
+                if self.hdlc_flag and chr(byte) != self.hdlc.HDLC_FLAG:
                     # start of frame
                     if log.isEnabledFor(logging.DEBUG):
                         log.debug("%s: start of HDLC frame %s %s",
                                   self.name,
                                   format_string_buf(self.hdlc.HDLC_FLAG),
-                                  format_string_buf(byte),
-                                  )
+                                  format_string_buf(chr(byte)))
                     self.receiving = True
                     # discard received self.hdlc_flag
                     self.hdlc_flag = False
                     self.xonxoff_escaping = False
                     self.rx_buf = self.hdlc.HDLC_FLAG
-                    self._rx_buf_add(byte)
-                elif byte == self.hdlc.HDLC_FLAG:
+                    self._rx_buf_add(chr(byte))
+                elif chr(byte) == self.hdlc.HDLC_FLAG:
                     # received hdlc flag
                     self.hdlc_flag = True
                 else:
                     # drop garbage
                     pass
             else:
-                if byte != self.hdlc.HDLC_FLAG:
+                if chr(byte) != self.hdlc.HDLC_FLAG:
                     # middle of frame
-                    self._rx_buf_add(byte)
+                    self._rx_buf_add(chr(byte))
                 else:
                     # end of frame, received self.hdlc_flag
                     if log.isEnabledFor(logging.DEBUG):
-                        log.debug("{}: end of hdlc frame {}".format(self.name, format_string_buf(byte)))
+                        log.debug("{}: end of hdlc frame {}".format(self.name, format_string_buf(chr(byte))))
 
                     self.hdlc_flag = True
                     self.receiving = False
-                    self._rx_buf_add(byte)
+                    self._rx_buf_add(chr(byte))
                     valid_frame = self._handle_frame()
 
                     if valid_frame:

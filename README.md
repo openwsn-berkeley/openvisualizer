@@ -1,7 +1,7 @@
 OpenVisualizer
 ==============
 
-![](https://img.shields.io/badge/python-2.7-green)
+![](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-green)
 
 
 OpenVisualizer (OV) is part of UC Berkeley's OpenWSN project. It provides monitoring, visualization and simulation of OpenWSN-based wireless sensor network. See the project [home page][] for more information. The project works in tandem with the OpenWSN firmware hosted at [openwsn-fw][]. OpenVisualizer interfaces with locally connected hardware, the OpenTestBed infrastructure, [IoT-LAB][] or an emulated OpenWSN network.
@@ -28,7 +28,7 @@ OpenVisualizer (OV) is part of UC Berkeley's OpenWSN project. It provides monito
 
 
 ## Installation <a name="installation"></a>
-OpenVisualizer is distributed through [PyPi][]. The only thing you need is a working Python 2.7 installation and pip. We recommend installing OpenVisualizer in a virtual environment. It makes it easier to manage multiple Python projects which require different Python versions and if something goes wrong you can simply delete the virtual environment without affecting your OS.
+OpenVisualizer is distributed through [PyPi][]. The only thing you need is a working Python 3.9+ installation and pip. We recommend installing OpenVisualizer in a virtual environment. It makes it easier to manage multiple Python projects which require different Python versions and if something goes wrong you can simply delete the virtual environment without affecting your OS.
 
 ### Setting up the virtualenv <a name="setting-up-the-virtualenv"></a>
 Install the virtualenv package, in case you do not already have it:

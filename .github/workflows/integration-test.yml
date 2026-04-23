@@ -2,9 +2,9 @@ name: Integration Test with openwsn-fw
 
 on:
   push:
-    branches: [ python3 ]
+    branches: [ develop ]
   pull_request:
-    branches: [ python3 ]
+    branches: [ develop ]
 
 jobs:
   integration:

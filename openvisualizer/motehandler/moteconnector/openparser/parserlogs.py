@@ -58,7 +58,7 @@ class ParserLogs(Parser):
         try:
             mote_id, component, error_code, arg1, arg2 = struct.unpack('>HBBhH', bytes(data))
         except struct.error:
-            raise ParserException(ParserException.ExceptionType.DESERIALIZE.value,
+            raise ParserException(ParserException.ExceptionType.DESERIALIZE,
                                   "could not extract data from {0}".format(data))
 
         if (component, error_code) in self.error_info.keys():

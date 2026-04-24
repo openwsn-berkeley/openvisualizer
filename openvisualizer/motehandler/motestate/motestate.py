@@ -39,6 +39,7 @@ class MoteState(EventBusClient):
     ST_KAPERIOD = 'kaPeriod'
     ST_JOINED = 'Joined'
     ST_MSF = 'MSF'
+    ST_OUTBUFFERINDEXES = 'OutBufferIndexes'
     ST_ALL = [
         ST_ASN,
         ST_MACSTATS,
@@ -197,6 +198,8 @@ class MoteState(EventBusClient):
                 self.state[self.ST_JOINED].update,
             self.parser_status.named_tuple[self.ST_MSF]:
                 self.state[self.ST_MSF].update,
+            self.parser_status.named_tuple[self.ST_OUTBUFFERINDEXES]:
+                lambda data: None,
 
         }
 

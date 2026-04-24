@@ -91,6 +91,16 @@ class ParserStatus(parser.Parser):
         )
         self._add_fields_parser(
             3,
+            3,
+            'OutBufferIndexes',
+            '<HH',
+            [
+                'outputBufIdxW',  # H
+                'outputBufIdxR',  # H
+            ],
+        )
+        self._add_fields_parser(
+            3,
             4,
             'Asn',
             '<BHH',
@@ -274,7 +284,7 @@ class ParserStatus(parser.Parser):
         try:
             (mote_id, status_elem) = struct.unpack('<HB', bytes(header_bytes))
         except struct.error:
-            raise ParserException(ParserException.ExceptionType.DESERIALIZE.value,
+            raise ParserException(ParserException.ExceptionType.DESERIALIZE,
                                   "could not extract moteId and statusElem from {0}".format(header_bytes))
 
         log.debug("moteId={0} statusElem={1}".format(mote_id, status_elem))
@@ -294,7 +304,7 @@ class ParserStatus(parser.Parser):
                     fields = struct.unpack(key.structure, bytes(data))
                 except struct.error as err:
                     raise ParserException(
-                        ParserException.ExceptionType.DESERIALIZE.value,
+                        ParserException.ExceptionType.DESERIALIZE,
                         "could not extract tuple {0} by applying {1} to {2}; error: {3}".format(
                             key.name,
                             key.structure,
@@ -313,7 +323,7 @@ class ParserStatus(parser.Parser):
                 return 'status', return_tuple
 
         # if you get here, no key was found
-        raise ParserException(ParserException.ExceptionType.NO_KEY.value,
+        raise ParserException(ParserException.ExceptionType.NO_KEY,
                               "type={0} (\"{1}\")".format(data[0], chr(data[0])))
 
     # ======================== private =========================================

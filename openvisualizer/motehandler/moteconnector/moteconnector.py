@@ -144,6 +144,9 @@ class MoteConnector(EventBusClient):
 
     # ======================== public ==========================================
 
+    def close(self):
+        self.parser.close()
+
     def quit(self):
         raise NotImplementedError()
 

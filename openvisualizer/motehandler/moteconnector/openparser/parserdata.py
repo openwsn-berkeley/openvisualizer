@@ -60,6 +60,11 @@ class ParserData(parser.Parser):
 
     # ======================== private =========================================
 
+    def close(self):
+        if self.broker and self.mqtt_connected:
+            self.mqtt_client.loop_stop()
+            self.mqtt_client.disconnect()
+
     def _on_mqtt_connect(self, client, userdata, flags, rc):
         log.success("connected to broker ({}) for mote on port: {}".format(self.broker, self.mote_port))
 

@@ -128,6 +128,9 @@ class OpenVisualizer(EventBusClient):
         self.tun.close()
         self.jrc.close()
 
+        for connector in self.mote_connectors:
+            connector.close()
+
         for probe in self.mote_probes:
             probe.close()
             probe.join()

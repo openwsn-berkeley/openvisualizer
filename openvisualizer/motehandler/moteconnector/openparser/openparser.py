@@ -108,3 +108,6 @@ class OpenParser(parser.Parser):
             val=self.SERFRAME_MOTE2PC_PRINTF,
             parser=self.parser_printf,
         )
+
+    def close(self):
+        self.parser_data.close()
